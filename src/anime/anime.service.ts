@@ -1,27 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
-import { InjectRepository } from '@nestjs/typeorm';
+import { AnimeRepository } from './anime.repository';
+import { UserRepository } from '../user/user.repository';
 
 @Injectable()
 export class AnimeService {
-  create(createAnimeDto: CreateAnimeDto) {
-    return 'This action adds a new anime';
+  constructor(
+    private animeRepository: AnimeRepository,
+    private userRepository: UserRepository,
+  ) {}
+  async createAnime(createAnimeDto: CreateAnimeDto) {
+    const user = await this.userRepository.getOneByEmail(
+      createAnimeDto.userEmail,
+    );
+
+    const newAnime = await this.animeRepository.create(user, {
+      title: createAnimeDto.title,
+      tag: createAnimeDto.tag,
+      author: createAnimeDto.author,
+      source: createAnimeDto.source,
+    });
+
+    return await this.animeRepository.save(newAnime);
   }
 
-  findAll() {
-    return `This action returns all anime`;
+  async getAllAnime() {
+    return await this.animeRepository.getAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} anime`;
+  async getAnime(id: number) {
+    return await this.animeRepository.getOneById(id);
   }
 
-  update(id: number, updateAnimeDto: UpdateAnimeDto) {
-    return `This action updates a #${id} anime`;
+  async updateAnime(id: number, updateAnimeDto: UpdateAnimeDto) {
+    const anime = await this.animeRepository.getOneById(id);
+    const newAnime = {
+      ...anime,
+      title: updateAnimeDto.title,
+      author: updateAnimeDto.author,
+      tag: updateAnimeDto.tag,
+      source: updateAnimeDto.source,
+    };
+
+    return await this.animeRepository.save(newAnime);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} anime`;
+  async removeAnime(id: number) {
+    const anime = await this.animeRepository.getOneById(id);
+
+    return await this.animeRepository.remove(anime);
   }
 }

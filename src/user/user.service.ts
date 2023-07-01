@@ -13,26 +13,23 @@ export class UserService {
   }
 
   async getAllUser() {
-    return await this.userRepository.getAllUser();
+    return await this.userRepository.getAll();
   }
 
   async getUser(id: number) {
-    return await this.userRepository.getUserById(id);
+    return await this.userRepository.getOneById(id);
   }
 
   async updateUser(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.getUser(id);
-    const newUser: User = {
-      ...user,
-      ...updateUserDto,
-    };
+    const user = await this.userRepository.getOneById(id);
+    const newUser: User = Object.assign(user, updateUserDto);
 
     return await this.userRepository.save(newUser);
   }
 
   async removeUser(id: number) {
-    const user = await this.userRepository.getUserById(id);
+    const user = await this.userRepository.getOneById(id);
 
-    return await this.userRepository.removeUser(user);
+    return await this.userRepository.remove(user);
   }
 }

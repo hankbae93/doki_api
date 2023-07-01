@@ -5,25 +5,29 @@ import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserRepository {
-  private userRepository: Repository<User>;
+  private repository: Repository<User>;
 
   constructor(private readonly dataSource: DataSource) {
-    this.userRepository = this.dataSource.getRepository(User);
+    this.repository = this.dataSource.getRepository(User);
   }
 
-  async save(user: User | CreateUserDto) {
-    return await this.userRepository.save(user);
+  save(user: User | CreateUserDto) {
+    return this.repository.save(user);
   }
 
-  async getUserById(id: number) {
-    return await this.userRepository.findOneBy({ id });
+  getOneById(id: number) {
+    return this.repository.findOneBy({ id });
   }
 
-  async getAllUser() {
-    return await this.userRepository.find();
+  getOneByEmail(email: string) {
+    return this.repository.findOneBy({ email });
   }
 
-  async removeUser(user: User) {
-    return await this.userRepository.remove(user);
+  getAll() {
+    return this.repository.find();
+  }
+
+  remove(user: User) {
+    return this.repository.remove(user);
   }
 }

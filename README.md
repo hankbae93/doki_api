@@ -1,5 +1,10 @@
 # 도키도키망가부 api-server
 
+## settings
+
+db: mariaDB
+tools: dbeaver, docker, erd-cloud
+
 ## 해야되는 목록들
 
 - API마다 예외 케이스 처리
@@ -12,10 +17,7 @@
     - password
     - nickname, description
     - 구분해서 개발하기
-- 
 
-## etc
 
-- Service에서 repository 코드가 반복되고, DB 로직을 서비스에서 같이 봐야하고 반복되는 코드가 싫어서 서비스 함수를 재사용하자니 그것만의 컨텍스트가 생겨서 재사용못할 케이스가 바로 예상된다. 
-=> Nest Repository pattern 사용
+
 

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { AnimeService } from './anime.service';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
@@ -7,28 +15,28 @@ import { UpdateAnimeDto } from './dto/update-anime.dto';
 export class AnimeController {
   constructor(private readonly animeService: AnimeService) {}
 
-  @Post()
-  create(@Body() createAnimeDto: CreateAnimeDto) {
-    return this.animeService.create(createAnimeDto);
-  }
-
   @Get()
-  findAll() {
-    return this.animeService.findAll();
+  getAllAnime() {
+    return this.animeService.getAllAnime();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.animeService.findOne(+id);
+  getAnime(@Param('id') id: string) {
+    return this.animeService.getAnime(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAnimeDto: UpdateAnimeDto) {
-    return this.animeService.update(+id, updateAnimeDto);
+  @Post()
+  create(@Body() createAnimeDto: CreateAnimeDto) {
+    return this.animeService.createAnime(createAnimeDto);
+  }
+
+  @Post(':id')
+  updateAnime(@Param('id') id: string, @Body() updateAnimeDto: UpdateAnimeDto) {
+    return this.animeService.updateAnime(+id, updateAnimeDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.animeService.remove(+id);
+  removeAnime(@Param('id') id: string) {
+    return this.animeService.removeAnime(+id);
   }
 }

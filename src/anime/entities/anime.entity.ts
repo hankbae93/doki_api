@@ -2,6 +2,7 @@ import {
   Column,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -12,9 +13,8 @@ export class Anime {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
   @Column()
-  userId: string;
+  title: string;
 
   @Column()
   author: string;
@@ -26,5 +26,6 @@ export class Anime {
   source: string;
 
   @ManyToOne(() => User, (user) => user.id)
+  @JoinColumn({ referencedColumnName: 'id' })
   user: User;
 }
