@@ -1,15 +1,15 @@
 import {
+  BaseEntity,
   Column,
   Entity,
-  Index,
-  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
+import { User } from '../../auth/entities/user.entity';
+import { AnimeResource } from '../anime.enum';
 
 @Entity()
-export class Anime {
+export class Anime extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -23,9 +23,8 @@ export class Anime {
   tag: string;
 
   @Column()
-  source: string;
+  source: AnimeResource;
 
   @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ referencedColumnName: 'id' })
   user: User;
 }

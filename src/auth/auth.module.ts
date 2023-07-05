@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { UserModule } from '../user/user.module';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './auth.constants';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './entities/user.entity';
 
 @Module({
   imports: [
-    UserModule,
+    TypeOrmModule.forFeature([User]),
     JwtModule.register({
       global: true,
       secret: 'COOKIE_SECRET',
-      signOptions: { expiresIn: '60s' },
+      signOptions: { expiresIn: '360s' },
     }),
   ],
   controllers: [AuthController],

@@ -1,19 +1,18 @@
 import {
   Column,
   Entity,
-  Index,
   OneToMany,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 import { Anime } from '../../anime/entities/anime.entity';
 
 @Entity()
+@Unique(['email', 'nickname'])
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
   @Column()
   email: string;
 
