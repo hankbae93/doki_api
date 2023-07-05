@@ -25,6 +25,6 @@ export class Anime extends BaseEntity {
   @Column()
   source: AnimeResource;
 
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.animes, { eager: false })
   user: User;
 }
