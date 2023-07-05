@@ -46,7 +46,12 @@ export class AuthService {
     const isCorrectPassword = await bcrypt.compare(password, user.password);
 
     if (user && isCorrectPassword) {
-      return 'login success';
+      const payload = { email };
+      const accessToken = await this.jwtService.signAsync(payload);
+
+      return {
+        accessToken,
+      };
     } else {
       throw new UnauthorizedException('login Failed');
     }
