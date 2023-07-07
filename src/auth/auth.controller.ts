@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Get,
+  Param,
   Post,
   UseGuards,
   ValidationPipe,
@@ -17,6 +19,11 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get('/user/:nickname')
+  getUserProfile(@Param('nickname') nickname) {
+    return this.authService.getUserProfile(nickname);
+  }
 
   @Post('/signup')
   signUp(@Body(ValidationPipe) signUpDto: SignUpDto) {
@@ -44,5 +51,11 @@ export class AuthController {
     @GetUser() user: User,
   ) {
     return this.authService.updateProfile(updateProfileDto, user);
+  }
+
+  @Post('/delete_account')
+  @UseGuards(AuthGuard())
+  deleteAccount(@GetUser() user: User) {
+    return this.authService.deleteAccount(user);
   }
 }
