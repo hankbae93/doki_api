@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   UseGuards,
+  UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -26,6 +27,7 @@ export class AuthController {
   }
 
   @Post('/signup')
+  @UsePipes(ValidationPipe)
   signUp(@Body(ValidationPipe) signUpDto: SignUpDto) {
     return this.authService.signUp(signUpDto);
   }
@@ -37,6 +39,7 @@ export class AuthController {
 
   @Post('/password')
   @UseGuards(AuthGuard())
+  @UsePipes(ValidationPipe)
   changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
     @GetUser() user: User,
@@ -46,6 +49,7 @@ export class AuthController {
 
   @Post('/profile')
   @UseGuards(AuthGuard())
+  @UsePipes(ValidationPipe)
   updateProfile(
     @Body() updateProfileDto: UpdateProfileDto,
     @GetUser() user: User,

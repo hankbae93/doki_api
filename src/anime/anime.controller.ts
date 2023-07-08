@@ -42,6 +42,7 @@ export class AnimeController {
 
   @Post(':id')
   @UseGuards(AuthGuard())
+  @UsePipes(ValidationPipe)
   updateAnime(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateAnimeDto: UpdateAnimeDto,
