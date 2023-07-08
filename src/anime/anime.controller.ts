@@ -16,7 +16,7 @@ import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/entities/user.entity';
-import { GetAnimeByPageDto } from './dto/get-anime-by-page.dto';
+import { GetAllAnimeDto } from './dto/get-all-anime.dto';
 
 @Controller('anime')
 export class AnimeController {
@@ -24,8 +24,8 @@ export class AnimeController {
 
   @Get()
   @UsePipes(ValidationPipe)
-  getAllAnime(@Body() getAnimeByPageDto: GetAnimeByPageDto) {
-    return this.animeService.getAllAnimeByPage(getAnimeByPageDto);
+  getAllAnime(@Body() getAnimeByPageDto: GetAllAnimeDto) {
+    return this.animeService.getAllAnime(getAnimeByPageDto);
   }
 
   @Get(':id')

@@ -1,5 +1,10 @@
-export enum AnimeResource {
-  ORIGINAL = 'ORIGINAL',
-  MANGA = 'MANGA',
-  NOVEL = 'NOVEL',
+export enum AnimeSource {
+  ORIGINAL = 'original',
+  MANGA = 'manga',
+  NOVEL = 'novel',
+}
+
+export enum AnimeOrder {
+  RECENT = 'recent',
+  OLD = 'old',
 }

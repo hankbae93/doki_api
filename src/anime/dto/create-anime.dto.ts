@@ -1,4 +1,4 @@
-import { AnimeResource } from '../anime.enum';
+import { AnimeSource } from '../anime.enum';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateAnimeDto {
@@ -13,6 +13,6 @@ export class CreateAnimeDto {
 
   @IsNotEmpty()
   @IsString()
-  @IsEnum(AnimeResource)
-  source: AnimeResource;
+  @IsEnum(AnimeSource)
+  source: AnimeSource;
 }

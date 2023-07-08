@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -8,15 +7,16 @@ import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
-import { GetAnimeByPageDto } from './dto/get-anime-by-page.dto';
+import { GetAllAnimeDto } from './dto/get-all-anime.dto';
 import { ResponseDto } from '../common/dto/responseDto';
 import { StatusCodeEnum } from '../common/enum/status.enum';
 import {
   ErrorMessageEnum,
   ResponseMessageEnum,
 } from '../common/enum/message.enum';
+import { AnimeOrder } from './anime.enum';
 
 @Injectable()
 export class AnimeService {
@@ -44,16 +44,41 @@ export class AnimeService {
     );
   }
 
-  async getAllAnimeByPage(getAnimeByPageDto: GetAnimeByPageDto) {
-    const { page, limit } = getAnimeByPageDto;
+  getOrderBy = (order: AnimeOrder) => {
+    switch (order) {
+      case AnimeOrder.RECENT:
+        return 'DESC';
+
+      case AnimeOrder.OLD:
+        return 'ASC';
+
+      default:
+        return 'DESC';
+    }
+  };
+
+  async getAllAnime(getAnimeByPageDto: GetAllAnimeDto) {
+    const {
+      page,
+      limit,
+      tag,
+      source = null,
+      title = null,
+      order = null,
+    } = getAnimeByPageDto;
+
     const [animes, total] = await this.animeRepository.findAndCount({
+      where: {
+        ...(source && { source }),
+        ...(tag && { tag }),
+        ...(title && { title: Like(`%${title}%`) }),
+      },
+      order: {
+        id: this.getOrderBy(order),
+      },
       take: limit,
       skip: (page - 1) * limit,
     });
-
-    if (animes.length === 0) {
-      throw new ConflictException(ErrorMessageEnum.NOT_FOUND);
-    }
 
     const data = {
       animes,

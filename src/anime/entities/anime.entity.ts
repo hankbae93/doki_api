@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
-import { AnimeResource } from '../anime.enum';
+import { AnimeSource } from '../anime.enum';
 
 @Entity()
 export class Anime extends BaseEntity {
@@ -23,7 +23,7 @@ export class Anime extends BaseEntity {
   tag: string;
 
   @Column()
-  source: AnimeResource;
+  source: AnimeSource;
 
   @ManyToOne(() => User, (user) => user.animes, { eager: true })
   user: User;
