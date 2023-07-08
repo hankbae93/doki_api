@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { AnimeResource } from '../anime.enum';
+import { IsEnum } from 'class-validator';
 
 @Entity()
 export class Anime extends BaseEntity {
@@ -23,6 +24,7 @@ export class Anime extends BaseEntity {
   tag: string;
 
   @Column()
+  @IsEnum(AnimeResource)
   source: AnimeResource;
 
   @ManyToOne(() => User, (user) => user.animes, { eager: false })

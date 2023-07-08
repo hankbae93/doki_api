@@ -8,7 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from './dto/sign-up.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { SignInDto } from './dto/sign-in.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -23,6 +23,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
+    private dataSource: DataSource,
   ) {}
 
   async signUp(signUpDto: SignUpDto) {
@@ -49,7 +50,13 @@ export class AuthService {
 
   async signIn(signInDto: SignInDto) {
     const { email, password } = signInDto;
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.dataSource
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .select('*')
+      .where('email = :email', { email: email })
+      .getRawOne();
+
     const isCorrectPassword = await bcrypt.compare(password, user.password);
 
     if (user && isCorrectPassword) {
