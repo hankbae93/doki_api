@@ -13,9 +13,12 @@ import * as bcrypt from 'bcryptjs';
 import { SignInDto } from './dto/sign-in.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Response } from '../common/dto/response';
-import { Status } from '../common/enum/status.enum';
-import { ErrorMessage, Message } from '../common/enum/message.enum';
+import { ResponseDto } from '../common/dto/responseDto';
+import { StatusCodeEnum } from '../common/enum/status.enum';
+import {
+  ErrorMessageEnum,
+  ResponseMessageEnum,
+} from '../common/enum/message.enum';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +43,11 @@ export class AuthService {
 
     try {
       await this.userRepository.save(user);
-      return new Response(Status.CREATED, null, Message.SUCCESS);
+      return new ResponseDto(
+        StatusCodeEnum.CREATED,
+        null,
+        ResponseMessageEnum.SUCCESS,
+      );
     } catch (err) {
       if (err.errno === 1062) {
         throw new ConflictException('Existing User Email');
@@ -82,7 +89,11 @@ export class AuthService {
 
     await this.userRepository.save(newUser);
 
-    return new Response(Status.OK, null, Message.PASSWORD_UPDATE_SUCCESS);
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      null,
+      ResponseMessageEnum.PASSWORD_UPDATE_SUCCESS,
+    );
   }
 
   async updateProfile(updateProfileDto: UpdateProfileDto, user: User) {
@@ -93,7 +104,11 @@ export class AuthService {
 
     await this.userRepository.save(newUser);
 
-    return new Response(Status.OK, null, Message.USER_UPDATE_SUCCESS);
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      null,
+      ResponseMessageEnum.USER_UPDATE_SUCCESS,
+    );
   }
 
   async deleteAccount(user: User) {
@@ -101,7 +116,11 @@ export class AuthService {
 
     await this.userRepository.remove(currentUser);
 
-    return new Response(Status.OK, null, Message.DELETE_ACCOUNT);
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      null,
+      ResponseMessageEnum.DELETE_ACCOUNT,
+    );
   }
 
   async getUserProfile(nickname: string) {
@@ -111,9 +130,13 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException(ErrorMessage.NOT_FOUND_USER);
+      throw new NotFoundException(ErrorMessageEnum.NOT_FOUND_USER);
     }
 
-    return new Response(Status.OK, user, Message.SUCCESS);
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      user,
+      ResponseMessageEnum.SUCCESS,
+    );
   }
 }

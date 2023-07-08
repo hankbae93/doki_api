@@ -16,14 +16,16 @@ import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/entities/user.entity';
+import { GetAnimeByPageDto } from './dto/get-anime-by-page.dto';
 
 @Controller('anime')
 export class AnimeController {
   constructor(private readonly animeService: AnimeService) {}
 
   @Get()
-  getAllAnime() {
-    return this.animeService.getAllAnime();
+  @UsePipes(ValidationPipe)
+  getAllAnime(@Body() getAnimeByPageDto: GetAnimeByPageDto) {
+    return this.animeService.getAllAnimeByPage(getAnimeByPageDto);
   }
 
   @Get(':id')

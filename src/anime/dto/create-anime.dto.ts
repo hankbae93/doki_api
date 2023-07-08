@@ -1,5 +1,5 @@
 import { AnimeResource } from '../anime.enum';
-import { IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateAnimeDto {
   @IsNotEmpty()
@@ -12,5 +12,7 @@ export class CreateAnimeDto {
   tag: string;
 
   @IsNotEmpty()
+  @IsString()
+  @IsEnum(AnimeResource)
   source: AnimeResource;
 }

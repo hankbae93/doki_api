@@ -20,5 +20,6 @@ tools: dbeaver, docker, erd-cloud, postman
 - sorting
 - 검색?
 
+- 생성 시 이게 중복데이터면 어떻게 거르지?
 
 

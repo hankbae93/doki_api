@@ -1,15 +1,22 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
-import { AnimeErrorText } from './anime.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
+import { GetAnimeByPageDto } from './dto/get-anime-by-page.dto';
+import { ResponseDto } from '../common/dto/responseDto';
+import { StatusCodeEnum } from '../common/enum/status.enum';
+import {
+  ErrorMessageEnum,
+  ResponseMessageEnum,
+} from '../common/enum/message.enum';
 
 @Injectable()
 export class AnimeService {
@@ -20,7 +27,7 @@ export class AnimeService {
   async createAnime(createAnimeDto: CreateAnimeDto, user: User) {
     const { title, author, tag, source } = createAnimeDto;
 
-    const anime = this.animeRepository.create({
+    const newAnime = this.animeRepository.create({
       title,
       author,
       tag,
@@ -28,21 +35,50 @@ export class AnimeService {
       user,
     });
 
-    return await this.animeRepository.save(anime);
+    const anime = await this.animeRepository.save(newAnime);
+
+    return new ResponseDto(
+      StatusCodeEnum.CREATED,
+      anime,
+      ResponseMessageEnum.SUCCESS,
+    );
   }
 
-  async getAllAnime() {
-    return await this.animeRepository.find();
+  async getAllAnimeByPage(getAnimeByPageDto: GetAnimeByPageDto) {
+    const { page, limit } = getAnimeByPageDto;
+    const [animes, total] = await this.animeRepository.findAndCount({
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    if (animes.length === 0) {
+      throw new ConflictException(ErrorMessageEnum.NOT_FOUND);
+    }
+
+    const data = {
+      animes,
+      total,
+    };
+
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      data,
+      ResponseMessageEnum.SUCCESS,
+    );
   }
 
   async getAnime(id: number) {
     const anime = await this.animeRepository.findOneBy({ id });
 
     if (!anime) {
-      throw new NotFoundException(AnimeErrorText.NOT_FOUND_ANIME);
+      throw new NotFoundException(ErrorMessageEnum.NOT_FOUND);
     }
 
-    return anime;
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      anime,
+      ResponseMessageEnum.SUCCESS,
+    );
   }
 
   async updateAnime(id: number, updateAnimeDto: UpdateAnimeDto, user) {
@@ -50,31 +86,39 @@ export class AnimeService {
       where: {
         id,
       },
-      relations: ['user'],
     });
 
     if (anime.user.id !== user.id) {
       throw new ForbiddenException();
     }
 
-    const newAnime = {
+    const newAnime = await this.animeRepository.save({
       ...anime,
       ...updateAnimeDto,
-    };
+    });
 
-    return await this.animeRepository.save(newAnime);
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      newAnime,
+      ResponseMessageEnum.UPDATE_SUCCESS,
+    );
   }
 
   async removeAnime(id: number, user: User) {
     const anime = await this.animeRepository.findOne({
       where: { id },
-      relations: ['user'],
     });
 
     if (user.id !== anime.user.id) {
       throw new ForbiddenException();
     }
 
-    return await this.animeRepository.remove(anime);
+    await this.animeRepository.remove(anime);
+
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      null,
+      ResponseMessageEnum.DELETE_ITEM,
+    );
   }
 }

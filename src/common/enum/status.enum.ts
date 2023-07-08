@@ -1,4 +1,4 @@
-export enum Status {
+export enum StatusCodeEnum {
   OK = 200,
   CREATED = 201,
   FORBIDEN = 403,
