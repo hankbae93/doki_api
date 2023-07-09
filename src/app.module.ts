@@ -10,20 +10,17 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mariadb',
       host: 'localhost',
       port: 3306,
-      username: 'root',
-      password: '1234',
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
       database: 'data',
       entities: [User, Anime],
       synchronize: true,
       logging: true,
-    }),
-    ConfigModule.forRoot({
-      envFilePath: '.env',
-      isGlobal: true,
     }),
     AnimeModule,
     UserModule,
