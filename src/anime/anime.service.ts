@@ -8,7 +8,7 @@ import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
 import { Like, Repository } from 'typeorm';
-import { User } from '../auth/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { GetAllAnimeDto } from './dto/get-all-anime.dto';
 import { ResponseDto } from '../common/dto/responseDto';
 import { StatusCodeEnum } from '../common/enum/status.enum';

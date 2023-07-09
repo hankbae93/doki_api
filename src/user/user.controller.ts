@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -8,7 +9,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { UserService } from './user.service';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -17,27 +18,27 @@ import { GetUser } from './get-user.decorator';
 import { User } from './entities/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
-@Controller('auth')
-export class AuthController {
-  constructor(private authService: AuthService) {}
+@Controller('user')
+export class UserController {
+  constructor(private authService: UserService) {}
 
-  @Get('/user/:nickname')
+  @Get(':nickname')
   getUserProfile(@Param('nickname') nickname) {
     return this.authService.getUserProfile(nickname);
   }
 
-  @Post('/signup')
+  @Post('signup')
   @UsePipes(ValidationPipe)
   signUp(@Body(ValidationPipe) signUpDto: SignUpDto) {
     return this.authService.signUp(signUpDto);
   }
 
-  @Post('/signin')
+  @Post('signin')
   signIn(@Body() signInDto: SignInDto) {
     return this.authService.signIn(signInDto);
   }
 
-  @Post('/password')
+  @Post('password')
   @UseGuards(AuthGuard())
   @UsePipes(ValidationPipe)
   changePassword(
@@ -47,7 +48,7 @@ export class AuthController {
     return this.authService.changePassword(changePasswordDto, user);
   }
 
-  @Post('/profile')
+  @Post('profile')
   @UseGuards(AuthGuard())
   @UsePipes(ValidationPipe)
   updateProfile(
@@ -57,7 +58,7 @@ export class AuthController {
     return this.authService.updateProfile(updateProfileDto, user);
   }
 
-  @Post('/delete_account')
+  @Delete('delete')
   @UseGuards(AuthGuard())
   deleteAccount(@GetUser() user: User) {
     return this.authService.deleteAccount(user);

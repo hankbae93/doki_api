@@ -5,7 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from '../../auth/entities/user.entity';
+import { User } from '../../user/entities/user.entity';
 import { AnimeSource } from '../anime.enum';
 
 @Entity()

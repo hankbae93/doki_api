@@ -3,10 +3,10 @@ import { AnimeService } from './anime.service';
 import { AnimeController } from './anime.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
-import { AuthModule } from '../auth/auth.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Anime]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Anime]), UserModule],
   controllers: [AnimeController],
   providers: [AnimeService],
 })

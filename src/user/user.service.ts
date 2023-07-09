@@ -21,7 +21,7 @@ import {
 } from '../common/enum/message.enum';
 
 @Injectable()
-export class AuthService {
+export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,

@@ -3,9 +3,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AnimeModule } from './anime/anime.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './auth/entities/user.entity';
+import { User } from './user/entities/user.entity';
 import { Anime } from './anime/entities/anime.entity';
-import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -26,7 +26,7 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true,
     }),
     AnimeModule,
-    AuthModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

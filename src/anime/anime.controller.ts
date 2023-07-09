@@ -14,8 +14,8 @@ import { AnimeService } from './anime.service';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from '../auth/get-user.decorator';
-import { User } from '../auth/entities/user.entity';
+import { GetUser } from '../user/get-user.decorator';
+import { User } from '../user/entities/user.entity';
 import { GetAllAnimeDto } from './dto/get-all-anime.dto';
 
 @Controller('anime')
