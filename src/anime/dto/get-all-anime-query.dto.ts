@@ -6,15 +6,19 @@ import {
   IsString,
 } from 'class-validator';
 import { AnimeOrder, AnimeSource } from '../anime.enum';
+import { Transform } from 'class-transformer';
+import { toNumber } from '../../common/utils/format-data';
 
-export class GetAllAnimeDto {
+export class GetAllAnimeQueryDto {
+  @Transform(({ value }) => toNumber(value, { default: 1, min: 1 }))
+  @IsNumber()
+  @IsOptional()
+  page: number = 1;
+
+  @Transform(({ value }) => toNumber(value, { default: 10, min: 10 }))
   @IsNumber()
   @IsNotEmpty()
-  page: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  limit: number;
+  limit: number = 10;
 
   @IsOptional()
   @IsString()

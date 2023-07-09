@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
 import { Like, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
-import { GetAllAnimeDto } from './dto/get-all-anime.dto';
+import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { ResponseDto } from '../common/dto/responseDto';
 import { StatusCodeEnum } from '../common/enum/status.enum';
 import {
@@ -57,7 +57,7 @@ export class AnimeService {
     }
   };
 
-  async getAllAnime(getAnimeByPageDto: GetAllAnimeDto) {
+  async getAllAnime(getAnimeByPageDto: GetAllAnimeQueryDto) {
     const {
       page,
       limit,
