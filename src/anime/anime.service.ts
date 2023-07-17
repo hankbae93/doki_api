@@ -29,7 +29,6 @@ export class AnimeService {
 
     const newAnime = this.animeRepository.create({
       title,
-      author,
       tag,
       source,
       user,
