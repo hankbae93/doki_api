@@ -31,6 +31,9 @@ export class AnimeService {
       title,
       tag,
       source,
+      averageScore: 0,
+      animeParentId: null,
+      thumbnail: null,
       user,
     });
 

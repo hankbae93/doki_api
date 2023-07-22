@@ -26,9 +26,9 @@ export class User {
   @Column()
   description: string;
 
-  @OneToMany(() => Anime, (anime) => anime.user, { eager: false })
+  @OneToMany(() => Anime, (anime) => anime.user)
   animes: Anime[];
 
-  @OneToMany(() => Scrap, (scrap) => scrap.user, { eager: false })
+  @OneToMany(() => Scrap, (scrap) => scrap.user)
   scrap: Scrap[];
 }

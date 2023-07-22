@@ -57,12 +57,17 @@ export class UserService {
 
   async signIn(signInDto: SignInDto) {
     const { email, password } = signInDto;
+
     const user = await this.dataSource
       .getRepository(User)
       .createQueryBuilder('user')
       .select('*')
       .where('email = :email', { email: email })
       .getRawOne();
+
+    if (!user) {
+      throw new NotFoundException('login Failed');
+    }
 
     const isCorrectPassword = await bcrypt.compare(password, user.password);
 
@@ -127,6 +132,7 @@ export class UserService {
     const user = await this.userRepository.findOne({
       select: ['id', 'nickname', 'description'],
       where: { nickname },
+      relations: ['animes'],
     });
 
     if (!user) {

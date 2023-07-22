@@ -42,10 +42,10 @@ export class Anime extends BaseEntity {
   @OneToMany(() => Scrap, (scrap) => scrap.anime)
   scraps: Scrap[];
 
-  @ManyToOne(() => User, (user) => user.animes, { eager: true })
+  @ManyToOne(() => User, (user) => user.animes, { eager: false })
   user: User;
 
-  @ManyToOne(() => Crew, (crew) => crew.animes, { eager: true })
+  @ManyToOne(() => Crew, (crew) => crew.animes, { eager: false })
   crew: Crew;
 
   @ManyToOne(() => Song, (song) => song.anime)
