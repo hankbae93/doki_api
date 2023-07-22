@@ -11,6 +11,7 @@ import { AnimeSource } from '../anime.enum';
 import { Crew } from '../../crew/entities/crew.entity';
 import { Review } from '../../review/entities/review.entity';
 import { Song } from '../../song/entities/song.entity';
+import { Scrap } from '../../scrap/entities/scrap.entity';
 
 @Entity()
 export class Anime extends BaseEntity {
@@ -37,6 +38,9 @@ export class Anime extends BaseEntity {
 
   @OneToMany(() => Review, (review) => review.anime)
   reviews: Review[];
+
+  @OneToMany(() => Scrap, (scrap) => scrap.anime)
+  scraps: Scrap[];
 
   @ManyToOne(() => User, (user) => user.animes, { eager: true })
   user: User;

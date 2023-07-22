@@ -6,6 +6,7 @@ import {
   Unique,
 } from 'typeorm';
 import { Anime } from '../../anime/entities/anime.entity';
+import { Scrap } from '../../scrap/entities/scrap.entity';
 
 @Entity()
 @Unique(['email', 'nickname'])
@@ -27,4 +28,7 @@ export class User {
 
   @OneToMany(() => Anime, (anime) => anime.user, { eager: false })
   animes: Anime[];
+
+  @OneToMany(() => Scrap, (scrap) => scrap.user, { eager: false })
+  scrap: Scrap[];
 }
