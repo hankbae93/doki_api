@@ -1,5 +1,6 @@
 export enum ResponseMessageEnum {
   SUCCESS = 'success',
+  LOGIN_SUCCESS = 'login success',
   UPDATE_SUCCESS = 'update success',
   PASSWORD_UPDATE_SUCCESS = 'password updated.',
   USER_UPDATE_SUCCESS = 'user profile updated.',

@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -30,15 +31,15 @@ export class UserService {
   ) {}
 
   async signUp(signUpDto: SignUpDto) {
-    const { email, password, description, nickname } = signUpDto;
+    const { email, password, nickname } = signUpDto;
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
-      description,
       nickname,
+      description: '',
     });
 
     try {
@@ -52,6 +53,7 @@ export class UserService {
       if (err.errno === 1062) {
         throw new ConflictException('Existing User Email');
       }
+      throw new ConflictException('Server Error');
     }
   }
 
@@ -74,10 +76,17 @@ export class UserService {
     if (user && isCorrectPassword) {
       const payload = { email };
       const accessToken = await this.jwtService.signAsync(payload);
-
-      return {
-        accessToken,
+      const newUser = {
+        ...user,
       };
+
+      delete newUser.password;
+
+      return new ResponseDto(
+        StatusCodeEnum.OK,
+        { accessToken, user: newUser },
+        ResponseMessageEnum.LOGIN_SUCCESS,
+      );
     } else {
       throw new UnauthorizedException('login Failed');
     }

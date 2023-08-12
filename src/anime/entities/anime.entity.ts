@@ -25,6 +25,12 @@ export class Anime extends BaseEntity {
   tag: string;
 
   @Column({ nullable: true })
+  author: string;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ nullable: true })
   thumbnail: string;
 
   @Column()

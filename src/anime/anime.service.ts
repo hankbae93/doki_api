@@ -25,15 +25,24 @@ export class AnimeService {
     private animeRepository: Repository<Anime>,
   ) {}
   async createAnime(createAnimeDto: CreateAnimeDto, user: User) {
-    const { title, author, tag, source } = createAnimeDto;
+    const {
+      title,
+      author = null,
+      thumbnail,
+      tag,
+      source,
+      description,
+    } = createAnimeDto;
 
     const newAnime = this.animeRepository.create({
       title,
       tag,
+      author,
       source,
       averageScore: 0,
       animeParentId: null,
-      thumbnail: null,
+      thumbnail,
+      description,
       user,
     });
 

@@ -26,8 +26,4 @@ export class SignUpDto {
   @IsString()
   @IsNotEmpty()
   nickname: string;
-
-  @IsString()
-  @IsOptional()
-  description: string;
 }
