@@ -17,22 +17,42 @@ import {
   ResponseMessageEnum,
 } from '../common/enum/message.enum';
 import { AnimeOrder } from './anime.enum';
+import { Crew } from '../crew/entities/crew.entity';
 
 @Injectable()
 export class AnimeService {
   constructor(
     @InjectRepository(Anime)
     private animeRepository: Repository<Anime>,
+    @InjectRepository(Crew)
+    private crewRepository: Repository<Crew>,
   ) {}
   async createAnime(createAnimeDto: CreateAnimeDto, user: User) {
     const {
       title,
       author = null,
       thumbnail,
-      tag,
+      crew,
+      tag = null,
       source,
       description,
     } = createAnimeDto;
+
+    let crewWithRelations: Crew;
+
+    const originCrew = await this.crewRepository.findOne({
+      where: {
+        name: crew,
+      },
+    });
+
+    if (!originCrew) {
+      crewWithRelations = await this.crewRepository.create({
+        name: crew,
+      });
+
+      await this.crewRepository.save(crewWithRelations);
+    }
 
     const newAnime = this.animeRepository.create({
       title,
@@ -43,6 +63,7 @@ export class AnimeService {
       animeParentId: null,
       thumbnail,
       description,
+      crew: crewWithRelations || originCrew,
       user,
     });
 

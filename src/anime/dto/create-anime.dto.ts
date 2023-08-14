@@ -1,5 +1,11 @@
 import { AnimeSource } from '../anime.enum';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  isNotEmpty,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateAnimeDto {
   @IsString()
@@ -13,6 +19,10 @@ export class CreateAnimeDto {
   @IsString()
   @IsNotEmpty()
   thumbnail: string;
+
+  @IsString()
+  @IsNotEmpty()
+  crew: string;
 
   @IsString()
   @IsNotEmpty()
