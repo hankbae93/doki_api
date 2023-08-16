@@ -1,7 +1,7 @@
 import { AnimeSource } from '../anime.enum';
 import {
+  IsArray,
   IsEnum,
-  isNotEmpty,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -24,13 +24,12 @@ export class CreateAnimeDto {
   @IsNotEmpty()
   crew: string;
 
-  @IsString()
-  @IsNotEmpty()
-  tag: string;
+  @IsArray()
+  tags: string[];
 
-  @IsNotEmpty()
   @IsString()
   @IsEnum(AnimeSource)
+  @IsNotEmpty()
   source: AnimeSource;
 
   @IsString()

@@ -36,7 +36,7 @@ export class AnimeService {
       author = null,
       thumbnail,
       crew,
-      tag = null,
+      tags = [],
       source,
       description,
     } = createAnimeDto;
@@ -58,20 +58,31 @@ export class AnimeService {
       await this.crewRepository.save(crewWithRelations);
     }
 
-    if (tag) {
-      const originTag = await this.tagRepository.findOne({
-        where: {
-          name: tag,
-        },
-      });
-      tagWithRelations = originTag;
+    const tagsData: Tag[] = [];
+    if (tags.length !== 0) {
+      const tagsWithRelation = await Promise.all(
+        tags.map((value) => {
+          return this.tagRepository.findOne({
+            where: {
+              name: value,
+            },
+          });
+        }),
+      );
 
-      if (!originTag) {
-        tagWithRelations = await this.tagRepository.create({
-          name: tag,
-        });
-        await this.tagRepository.save(tagWithRelations);
-      }
+      await Promise.all(
+        tagsWithRelation.map(async (data, index) => {
+          if (data) {
+            return tagsData.push(data);
+          } else {
+            const createdTag = await this.tagRepository.create({
+              name: tags[index],
+            });
+            await this.tagRepository.save(createdTag);
+            tagsData.push(createdTag);
+          }
+        }),
+      );
     }
 
     const newAnime = this.animeRepository.create({
@@ -83,7 +94,7 @@ export class AnimeService {
       thumbnail,
       description,
       crew: crewWithRelations || originCrew,
-      tags: tagWithRelations ? [tagWithRelations] : null,
+      tags: tagsData.length === 0 ? null : tagsData,
       user,
     });
 
