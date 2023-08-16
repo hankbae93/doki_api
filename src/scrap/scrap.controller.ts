@@ -1,34 +1,45 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
+} from '@nestjs/common';
 import { ScrapService } from './scrap.service';
 import { CreateScrapDto } from './dto/create-scrap.dto';
 import { UpdateScrapDto } from './dto/update-scrap.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { GetUser } from '../user/get-user.decorator';
+import { User } from '../user/entities/user.entity';
 
 @Controller('scrap')
 export class ScrapController {
   constructor(private readonly scrapService: ScrapService) {}
-
-  @Post()
-  create(@Body() createScrapDto: CreateScrapDto) {
-    return this.scrapService.create(createScrapDto);
-  }
 
   @Get()
   findAll() {
     return this.scrapService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.scrapService.findOne(+id);
+  @Post(':animeId')
+  @UseGuards(AuthGuard())
+  scrapAnime(
+    @Param('animeId', ParseIntPipe) animeId: number,
+    @GetUser() user: User,
+  ) {
+    return this.scrapService.scrapAnime(animeId, user);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateScrapDto: UpdateScrapDto) {
-    return this.scrapService.update(+id, updateScrapDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.scrapService.remove(+id);
+  @Post('/remove/:scrapId')
+  @UseGuards(AuthGuard())
+  removeScrapedAnime(
+    @Param('scrapId', ParseIntPipe) scrapId: number,
+    @GetUser() user: User,
+  ) {
+    return this.scrapService.removeScrapedAnime(scrapId, user);
   }
 }

@@ -42,7 +42,6 @@ export class AnimeService {
     } = createAnimeDto;
 
     let crewWithRelations: Crew;
-    let tagWithRelations: Tag;
 
     const originCrew = await this.crewRepository.findOne({
       where: {
