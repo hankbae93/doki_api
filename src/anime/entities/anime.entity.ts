@@ -2,6 +2,8 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -12,6 +14,7 @@ import { Crew } from '../../crew/entities/crew.entity';
 import { Review } from '../../review/entities/review.entity';
 import { Song } from '../../song/entities/song.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
+import { Tag } from '../../tag/entities/tag.entity';
 
 @Entity()
 export class Anime extends BaseEntity {
@@ -20,9 +23,6 @@ export class Anime extends BaseEntity {
 
   @Column()
   title: string;
-
-  @Column({ nullable: true })
-  tag: string;
 
   @Column({ nullable: true })
   author: string;
@@ -56,4 +56,8 @@ export class Anime extends BaseEntity {
 
   @ManyToOne(() => Song, (song) => song.anime)
   songs: Song[];
+
+  @ManyToMany(() => Tag, (tag) => tag.animes)
+  @JoinTable()
+  tags: Tag[];
 }

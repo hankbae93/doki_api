@@ -16,7 +16,7 @@ export class Tag extends BaseEntity {
   @Column()
   name: string;
 
-  @ManyToMany(() => Anime)
+  @ManyToMany(() => Anime, (anime) => anime.tags)
   @JoinTable()
   animes: Anime[];
 }

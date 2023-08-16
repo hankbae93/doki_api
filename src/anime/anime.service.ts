@@ -18,6 +18,7 @@ import {
 } from '../common/enum/message.enum';
 import { AnimeOrder } from './anime.enum';
 import { Crew } from '../crew/entities/crew.entity';
+import { Tag } from '../tag/entities/tag.entity';
 
 @Injectable()
 export class AnimeService {
@@ -26,6 +27,8 @@ export class AnimeService {
     private animeRepository: Repository<Anime>,
     @InjectRepository(Crew)
     private crewRepository: Repository<Crew>,
+    @InjectRepository(Tag)
+    private tagRepository: Repository<Tag>,
   ) {}
   async createAnime(createAnimeDto: CreateAnimeDto, user: User) {
     const {
@@ -39,6 +42,7 @@ export class AnimeService {
     } = createAnimeDto;
 
     let crewWithRelations: Crew;
+    let tagWithRelations: Tag;
 
     const originCrew = await this.crewRepository.findOne({
       where: {
@@ -54,9 +58,24 @@ export class AnimeService {
       await this.crewRepository.save(crewWithRelations);
     }
 
+    if (tag) {
+      const originTag = await this.tagRepository.findOne({
+        where: {
+          name: tag,
+        },
+      });
+      tagWithRelations = originTag;
+
+      if (!originTag) {
+        tagWithRelations = await this.tagRepository.create({
+          name: tag,
+        });
+        await this.tagRepository.save(tagWithRelations);
+      }
+    }
+
     const newAnime = this.animeRepository.create({
       title,
-      tag,
       author,
       source,
       averageScore: 0,
@@ -64,6 +83,7 @@ export class AnimeService {
       thumbnail,
       description,
       crew: crewWithRelations || originCrew,
+      tags: tagWithRelations ? [tagWithRelations] : null,
       user,
     });
 
