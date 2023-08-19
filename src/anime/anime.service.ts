@@ -155,12 +155,14 @@ export class AnimeService {
   }
 
   async getAnime(id: number) {
-    const anime = await this.animeRepository.findOne({
-      where: {
-        id,
-      },
-      relations: ['tags', 'crew', 'reviews'],
-    });
+    const anime = await this.animeRepository
+      .createQueryBuilder('anime')
+      .leftJoinAndSelect('anime.crew', 'crew')
+      .leftJoinAndSelect('anime.tags', 'tag')
+      .leftJoinAndSelect('anime.reviews', 'review')
+      .leftJoinAndSelect('review.user', 'user')
+      .where('anime.id = :id', { id })
+      .getOne();
 
     if (!anime) {
       throw new NotFoundException(ErrorMessageEnum.NOT_FOUND);
