@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,7 +24,7 @@ export class ReviewService {
     private dataSource: DataSource,
   ) {}
 
-  async createReview(
+  async createReviewByAnime(
     createReviewDto: CreateReviewDto,
     animeId: number,
     user: User,
@@ -84,12 +88,58 @@ export class ReviewService {
     }
   }
 
-  findAll() {
-    return `This action returns all review`;
+  async getMyReviewByAnime(animeId: number, user: User) {
+    const review = await this.reviewRepository.findOne({
+      where: {
+        anime: { id: animeId },
+        user: { id: user.id },
+      },
+    });
+
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      review,
+      ResponseMessageEnum.SUCCESS,
+    );
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} review`;
+  async updateMyReview(
+    updateReviewDto: UpdateReviewDto,
+    id: number,
+    user: User,
+  ) {
+    const review = await this.reviewRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['user'],
+    });
+
+    if (!review) return new NotFoundException('존재하지 않는 리뷰입니다.');
+    if (review.user.id !== user.id)
+      return new ForbiddenException('리뷰를 등록한 사용자가 아닙니다.');
+
+    await this.reviewRepository.update(
+      { id },
+      {
+        ...updateReviewDto,
+      },
+    );
+
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      {
+        ...review,
+        ...updateReviewDto,
+      },
+      ResponseMessageEnum.UPDATE_SUCCESS,
+    );
+  }
+
+  async getReviewsByAnime() {}
+
+  findAll() {
+    return `This action returns all review`;
   }
 
   update(id: number, updateReviewDto: UpdateReviewDto) {

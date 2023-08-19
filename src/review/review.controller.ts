@@ -20,33 +20,41 @@ import { User } from '../user/entities/user.entity';
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
-  @Get()
+  @Get('/anime/my/:animeId')
+  @UseGuards(AuthGuard())
+  getMyReviewByAnime(
+    @Param('animeId', ParseIntPipe) animeId: number,
+    @GetUser() user: User,
+  ) {
+    return this.reviewService.getMyReviewByAnime(animeId, user);
+  }
+
+  @Get('/anime/:animeId')
   findAll() {
     return this.reviewService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reviewService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto) {
-    return this.reviewService.update(+id, updateReviewDto);
-  }
-
-  @Post(':animeId')
+  @Post('/anime/:animeId')
   @UseGuards(AuthGuard())
-  createReview(
+  createReviewByAnime(
     @Body() createReviewDto: CreateReviewDto,
     @Param('animeId', ParseIntPipe) animeId: number,
     @GetUser() user: User,
   ) {
-    return this.reviewService.createReview(createReviewDto, animeId, user);
+    return this.reviewService.createReviewByAnime(
+      createReviewDto,
+      animeId,
+      user,
+    );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.reviewService.remove(+id);
+  @Post(':id')
+  @UseGuards(AuthGuard())
+  updateMyReview(
+    @Body() updateReviewDto: UpdateReviewDto,
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: User,
+  ) {
+    return this.reviewService.updateMyReview(updateReviewDto, id, user);
   }
 }
