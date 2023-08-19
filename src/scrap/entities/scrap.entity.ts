@@ -10,6 +10,6 @@ export class Scrap {
   @ManyToOne(() => Anime, (anime) => anime.scraps)
   anime: Anime;
 
-  @ManyToOne(() => User, (user) => user.scrap)
+  @ManyToOne(() => User, (user) => user.scraps)
   user: User;
 }

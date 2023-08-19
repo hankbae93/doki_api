@@ -155,7 +155,12 @@ export class AnimeService {
   }
 
   async getAnime(id: number) {
-    const anime = await this.animeRepository.findOneBy({ id });
+    const anime = await this.animeRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['tags', 'crew', 'reviews'],
+    });
 
     if (!anime) {
       throw new NotFoundException(ErrorMessageEnum.NOT_FOUND);

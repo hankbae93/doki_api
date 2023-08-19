@@ -18,6 +18,22 @@ export class ScrapService {
     private animeRepository: Repository<Anime>,
   ) {}
 
+  async getMyScraps(user: User) {
+    const scraps = await this.scrapRepository.find({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+      relations: ['anime'],
+    });
+
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      scraps,
+      ResponseMessageEnum.SUCCESS,
+    );
+  }
   async scrapAnime(animeId: number, user: User) {
     const anime = await this.animeRepository.findOne({
       where: {

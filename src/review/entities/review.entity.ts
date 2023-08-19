@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Anime } from '../../anime/entities/anime.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity()
 export class Review extends BaseEntity {
@@ -23,4 +24,7 @@ export class Review extends BaseEntity {
 
   @ManyToOne(() => Anime, (anime) => anime.reviews)
   anime: Anime;
+
+  @ManyToOne(() => User, (user) => user.reviews)
+  user: User;
 }

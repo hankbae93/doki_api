@@ -21,8 +21,9 @@ export class ScrapController {
   constructor(private readonly scrapService: ScrapService) {}
 
   @Get()
-  findAll() {
-    return this.scrapService.findAll();
+  @UseGuards(AuthGuard())
+  findAll(@GetUser() user: User) {
+    return this.scrapService.getMyScraps(user);
   }
 
   @Post(':animeId')

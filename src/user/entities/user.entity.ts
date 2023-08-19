@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { Anime } from '../../anime/entities/anime.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
+import { Review } from '../../review/entities/review.entity';
 
 @Entity()
 @Unique(['email', 'nickname'])
@@ -30,5 +31,8 @@ export class User {
   animes: Anime[];
 
   @OneToMany(() => Scrap, (scrap) => scrap.user)
-  scrap: Scrap[];
+  scraps: Scrap[];
+
+  @OneToMany(() => Review, (review) => review.user)
+  reviews: Review[];
 }
