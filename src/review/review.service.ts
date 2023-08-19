@@ -62,8 +62,9 @@ export class ReviewService {
 
       const scoreSum =
         anime.reviews.reduce((acc, cur) => acc + cur.score, 0) + score;
-      const reviewCount = anime.reviews.length === 0 ? 1 : anime.reviews.length;
-      const averageScore = Math.floor(scoreSum ? scoreSum / reviewCount : 0);
+      const reviewCount =
+        anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
+      const averageScore = Math.floor(scoreSum / reviewCount);
 
       await reviewRepository.insert(newReview);
 
@@ -134,19 +135,5 @@ export class ReviewService {
       },
       ResponseMessageEnum.UPDATE_SUCCESS,
     );
-  }
-
-  async getReviewsByAnime() {}
-
-  findAll() {
-    return `This action returns all review`;
-  }
-
-  update(id: number, updateReviewDto: UpdateReviewDto) {
-    return `This action updates a #${id} review`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} review`;
   }
 }

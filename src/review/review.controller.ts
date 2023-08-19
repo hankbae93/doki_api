@@ -29,11 +29,6 @@ export class ReviewController {
     return this.reviewService.getMyReviewByAnime(animeId, user);
   }
 
-  @Get('/anime/:animeId')
-  findAll() {
-    return this.reviewService.findAll();
-  }
-
   @Post('/anime/:animeId')
   @UseGuards(AuthGuard())
   createReviewByAnime(
