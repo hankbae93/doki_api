@@ -35,12 +35,12 @@ export class ScrapController {
     return this.scrapService.scrapAnime(animeId, user);
   }
 
-  @Post('/remove/:scrapId')
+  @Post('/remove/:animeId')
   @UseGuards(AuthGuard())
   removeScrapedAnime(
-    @Param('scrapId', ParseIntPipe) scrapId: number,
+    @Param('animeId', ParseIntPipe) animeId: number,
     @GetUser() user: User,
   ) {
-    return this.scrapService.removeScrapedAnime(scrapId, user);
+    return this.scrapService.removeScrapedAnime(animeId, user);
   }
 }

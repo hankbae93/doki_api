@@ -55,10 +55,15 @@ export class ScrapService {
     );
   }
 
-  async removeScrapedAnime(scrapId: number, user: User) {
+  async removeScrapedAnime(animeId: number, user: User) {
     const scrap = await this.scrapRepository.findOne({
       where: {
-        id: scrapId,
+        anime: {
+          id: animeId,
+        },
+        user: {
+          id: user.id,
+        },
       },
       relations: ['user'],
     });

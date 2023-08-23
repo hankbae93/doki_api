@@ -157,6 +157,7 @@ export class AnimeService {
   async getAnime(id: number) {
     const anime = await this.animeRepository
       .createQueryBuilder('anime')
+      .leftJoinAndSelect('anime.user', 'user_id')
       .leftJoinAndSelect('anime.crew', 'crew')
       .leftJoinAndSelect('anime.tags', 'tag')
       .leftJoinAndSelect('anime.reviews', 'review')
