@@ -22,13 +22,17 @@ export class AnimeController {
   constructor(private readonly animeService: AnimeService) {}
 
   @Get()
-  getAllAnime(@Query() getAllAnimeQueryDto: GetAllAnimeQueryDto) {
-    return this.animeService.getAllAnime(getAllAnimeQueryDto);
+  getAnimeList(@Query() getAllAnimeQueryDto: GetAllAnimeQueryDto) {
+    return this.animeService.getAnimeList(getAllAnimeQueryDto);
   }
 
   @Get(':id')
-  getAnime(@Param('id', ParseIntPipe) id: number) {
-    return this.animeService.getAnime(id);
+  @UseGuards()
+  getAnimeDetail(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user?: User,
+  ) {
+    return this.animeService.getAnimeDetail(id, user);
   }
 
   @Post()

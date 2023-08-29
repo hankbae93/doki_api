@@ -7,9 +7,13 @@ import { UserModule } from '../user/user.module';
 import { Crew } from '../crew/entities/crew.entity';
 import { Review } from '../review/entities/review.entity';
 import { Tag } from '../tag/entities/tag.entity';
+import { Scrap } from '../scrap/entities/scrap.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Anime, Crew, Review, Tag]), UserModule],
+  imports: [
+    TypeOrmModule.forFeature([Anime, Crew, Review, Tag, Scrap]),
+    UserModule,
+  ],
   controllers: [AnimeController],
   providers: [AnimeService],
 })
