@@ -7,4 +7,5 @@ export enum AnimeSource {
 export enum AnimeOrder {
   RECENT = 'recent',
   OLD = 'old',
+  TREND = 'trend',
 }

@@ -20,7 +20,6 @@ import { AnimeOrder } from './anime.enum';
 import { Crew } from '../crew/entities/crew.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
-import { Review } from '../review/entities/review.entity';
 
 @Injectable()
 export class AnimeService {
@@ -124,6 +123,39 @@ export class AnimeService {
     }
   };
 
+  async test(getAnimeByPageDto: GetAllAnimeQueryDto) {
+    const {
+      page,
+      limit,
+      tag,
+      source = null,
+      title = null,
+      order = null,
+    } = getAnimeByPageDto;
+    const animeRepository = this.dataSource.getRepository(Anime);
+
+    const animeList = await animeRepository
+      .createQueryBuilder('anime')
+      .leftJoinAndSelect('anime.reviews', 'review')
+      .select([
+        'anime.id',
+        'anime.title',
+        'anime.author',
+        'anime.description',
+        'anime.thumbnail',
+        'anime.source',
+        'anime.average_score',
+        'COUNT(review.id) AS reviewCount',
+      ])
+      .groupBy('anime.id')
+      // .orderBy('COUNT(review.id)', 'DESC')
+      // .offset(page)
+      // .limit(limit)
+      .getRawMany();
+
+    return new ResponseDto(200, animeList, 'good');
+  }
+
   async getAnimeList(getAnimeByPageDto: GetAllAnimeQueryDto) {
     const {
       page,
@@ -134,27 +166,46 @@ export class AnimeService {
       order = null,
     } = getAnimeByPageDto;
 
-    const [animes, total] = await this.animeRepository.findAndCount({
-      where: {
-        ...(source && { source }),
-        ...(tag && { tag }),
-        ...(title && { title: Like(`%${title}%`) }),
-      },
-      order: {
-        id: this.getOrderBy(order),
-      },
-      take: limit,
-      skip: (page - 1) * limit,
-    });
+    const animeListQuery = this.dataSource
+      .getRepository(Anime)
+      .createQueryBuilder('anime')
+      .leftJoinAndSelect('anime.reviews', 'review')
+      .select([
+        'anime.id AS id',
+        'anime.title AS title',
+        'anime.author AS author',
+        'anime.description AS description',
+        'anime.thumbnail AS thumbnail',
+        'anime.source AS source',
+        'anime.average_score AS averageScore',
+        'COUNT(review.id) AS reviewCount',
+      ])
+      .groupBy('anime.id')
+      .offset(page - 1)
+      .limit(limit);
 
-    const data = {
-      animes,
-      total,
-    };
+    if (source) {
+      animeListQuery.andWhere('anime.source = :source', { source });
+    }
+
+    if (title) {
+      animeListQuery.andWhere('anime.title LIKE :title', {
+        title: `%${title}%`,
+      });
+    }
+
+    animeListQuery.orderBy(
+      order === AnimeOrder.TREND ? 'COUNT(review.id)' : 'anime.id',
+      order === AnimeOrder.TREND ? 'DESC' : this.getOrderBy(order),
+    );
+
+    const data = await animeListQuery.getRawMany();
+
+    const total = await animeListQuery.getCount();
 
     return new ResponseDto(
       StatusCodeEnum.OK,
-      data,
+      { animes: data, total },
       ResponseMessageEnum.SUCCESS,
     );
   }
@@ -298,5 +349,55 @@ export class AnimeService {
       null,
       ResponseMessageEnum.DELETE_ITEM,
     );
+  }
+
+  async 시발() {
+    //   const animeListQuery = await this.dataSource
+    //     .getRepository(Anime)
+    //     .createQueryBuilder('anime')
+    //     .leftJoinAndSelect('anime.reviews', 'review')
+    //     .select([
+    //       'anime.id',
+    //       'anime.title',
+    //       'anime.author',
+    //       'anime.description',
+    //       'anime.thumbnail',
+    //       'anime.source',
+    //       'anime.average_score',
+    //       'COUNT(review.id) AS reviewCount',
+    //     ])
+    //     .offset(page)
+    //     .limit(limit);
+    //
+    //   //
+    //   if (source) {
+    //     await animeListQuery.andWhere('anime.source = :source', { source });
+    //   }
+    //
+    //   if (title) {
+    //     animeListQuery.andWhere('anime.title = :title', {
+    //       title: Like(`%${title}%`),
+    //     });
+    //   }
+    //
+    //   await animeListQuery.orderBy(
+    //     order === AnimeOrder.TREND ? 'COUNT(review.id)' : 'anime.id',
+    //     order === AnimeOrder.TREND ? 'DESC' : this.getOrderBy(order),
+    //   );
+    //
+    //   const result = await animeListQuery.getRawMany();
+    //
+    //   const total = await animeListQuery.getCount();
+    //
+    //   const data = {
+    //     animeList: animeListQuery,
+    //     total,
+    //   };
+    //
+    //   return new ResponseDto(
+    //     StatusCodeEnum.OK,
+    //     data,
+    //     ResponseMessageEnum.SUCCESS,
+    //   );
   }
 }
