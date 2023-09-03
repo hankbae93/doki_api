@@ -20,6 +20,8 @@ import { AnimeOrder } from './anime.enum';
 import { Crew } from '../crew/entities/crew.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
+import { Request } from 'express';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AnimeService {
@@ -154,6 +156,63 @@ export class AnimeService {
       .getRawMany();
 
     return new ResponseDto(200, animeList, 'good');
+  }
+
+  async getAnimeListByUser(getAnimeByPageDto: GetAllAnimeQueryDto, user: User) {
+    const {
+      page,
+      limit,
+      tag,
+      source = null,
+      title = null,
+      order = null,
+    } = getAnimeByPageDto;
+
+    const animeListQuery = this.dataSource
+      .getRepository(Anime)
+      .createQueryBuilder('anime')
+      .leftJoinAndSelect('anime.reviews', 'review')
+      .leftJoin('anime.scraps', 'scrap')
+      .select([
+        'anime.id AS id',
+        'anime.title AS title',
+        'anime.author AS author',
+        'anime.description AS description',
+        'anime.thumbnail AS thumbnail',
+        'anime.source AS source',
+        'anime.average_score AS averageScore',
+        `(EXISTS (SELECT 1 FROM scrap WHERE scrap.user_id = :userId AND scrap.anime_id = anime.id)) AS isScrapped`,
+        'COUNT(review.id) AS reviewCount',
+      ])
+      .groupBy('anime.id')
+      .setParameter('userId', user.id)
+      .offset(page - 1)
+      .limit(limit);
+
+    if (source) {
+      animeListQuery.andWhere('anime.source = :source', { source });
+    }
+
+    if (title) {
+      animeListQuery.andWhere('anime.title LIKE :title', {
+        title: `%${title}%`,
+      });
+    }
+
+    animeListQuery.orderBy(
+      order === AnimeOrder.TREND ? 'COUNT(review.id)' : 'anime.id',
+      order === AnimeOrder.TREND ? 'DESC' : this.getOrderBy(order),
+    );
+
+    const data = await animeListQuery.getRawMany();
+
+    const total = await animeListQuery.getCount();
+
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      { animes: data, total },
+      ResponseMessageEnum.SUCCESS,
+    );
   }
 
   async getAnimeList(getAnimeByPageDto: GetAllAnimeQueryDto) {
@@ -349,55 +408,5 @@ export class AnimeService {
       null,
       ResponseMessageEnum.DELETE_ITEM,
     );
-  }
-
-  async 시발() {
-    //   const animeListQuery = await this.dataSource
-    //     .getRepository(Anime)
-    //     .createQueryBuilder('anime')
-    //     .leftJoinAndSelect('anime.reviews', 'review')
-    //     .select([
-    //       'anime.id',
-    //       'anime.title',
-    //       'anime.author',
-    //       'anime.description',
-    //       'anime.thumbnail',
-    //       'anime.source',
-    //       'anime.average_score',
-    //       'COUNT(review.id) AS reviewCount',
-    //     ])
-    //     .offset(page)
-    //     .limit(limit);
-    //
-    //   //
-    //   if (source) {
-    //     await animeListQuery.andWhere('anime.source = :source', { source });
-    //   }
-    //
-    //   if (title) {
-    //     animeListQuery.andWhere('anime.title = :title', {
-    //       title: Like(`%${title}%`),
-    //     });
-    //   }
-    //
-    //   await animeListQuery.orderBy(
-    //     order === AnimeOrder.TREND ? 'COUNT(review.id)' : 'anime.id',
-    //     order === AnimeOrder.TREND ? 'DESC' : this.getOrderBy(order),
-    //   );
-    //
-    //   const result = await animeListQuery.getRawMany();
-    //
-    //   const total = await animeListQuery.getCount();
-    //
-    //   const data = {
-    //     animeList: animeListQuery,
-    //     total,
-    //   };
-    //
-    //   return new ResponseDto(
-    //     StatusCodeEnum.OK,
-    //     data,
-    //     ResponseMessageEnum.SUCCESS,
-    //   );
   }
 }

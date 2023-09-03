@@ -16,6 +16,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseDto } from '../common/dto/responseDto';
 import { StatusCodeEnum } from '../common/enum/status.enum';
+import { Request } from 'express';
 import {
   ErrorMessageEnum,
   ResponseMessageEnum,
@@ -29,6 +30,15 @@ export class UserService {
     private jwtService: JwtService,
     private dataSource: DataSource,
   ) {}
+
+  getUserFromRequest(request: Request): User {
+    const authHeader = request.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+      return this.jwtService.decode(token) as User;
+    }
+    return null;
+  }
 
   async signUp(signUpDto: SignUpDto) {
     const { email, password, nickname } = signUpDto;

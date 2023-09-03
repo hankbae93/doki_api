@@ -6,7 +6,7 @@ import {
   IsString,
 } from 'class-validator';
 import { AnimeOrder, AnimeSource } from '../anime.enum';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { toNumber } from '../../common/utils/format-data';
 
 export class GetAllAnimeQueryDto {

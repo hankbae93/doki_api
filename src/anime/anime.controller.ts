@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { AnimeService } from './anime.service';
@@ -16,6 +17,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../user/get-user.decorator';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
+import { UserService } from '../user/user.service';
+import { Request } from 'express';
 
 @Controller('anime')
 export class AnimeController {
@@ -24,6 +27,15 @@ export class AnimeController {
   @Get()
   getAnimeList(@Query() getAllAnimeQueryDto: GetAllAnimeQueryDto) {
     return this.animeService.getAnimeList(getAllAnimeQueryDto);
+  }
+
+  @Get('/auth')
+  @UseGuards(AuthGuard())
+  getAnimeListByUser(
+    @Query() getAllAnimeQueryDto: GetAllAnimeQueryDto,
+    @GetUser() user: User,
+  ) {
+    return this.animeService.getAnimeListByUser(getAllAnimeQueryDto, user);
   }
 
   @Get('/emile')
@@ -42,7 +54,10 @@ export class AnimeController {
 
   @Post()
   @UseGuards(AuthGuard())
-  createAnime(@Body() createAnimeDto: CreateAnimeDto, @GetUser() user: User) {
+  async createAnime(
+    @Body() createAnimeDto: CreateAnimeDto,
+    @GetUser() user?: User,
+  ) {
     return this.animeService.createAnime(createAnimeDto, user);
   }
 
