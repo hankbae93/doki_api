@@ -13,7 +13,7 @@ export class Review extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column('longtext')
   content: string;
 
   @Column()

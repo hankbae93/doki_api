@@ -27,7 +27,7 @@ export class Anime extends BaseEntity {
   @Column({ nullable: true })
   author: string;
 
-  @Column({ nullable: true })
+  @Column('longtext', { nullable: true })
   description: string;
 
   @Column({ nullable: true })

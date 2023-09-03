@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UpdateScrapDto } from './dto/update-scrap.dto';
 import { User } from '../user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -41,12 +45,27 @@ export class ScrapService {
       },
     });
 
+    const isScrapped = await this.scrapRepository.findOne({
+      where: {
+        user: {
+          id: user.id,
+        },
+        anime: {
+          id: animeId,
+        },
+      },
+    });
+
+    if (isScrapped) {
+      return new ForbiddenException('이미 스크랩으로 등록되었습니다.');
+    }
+
     const newScrap = await this.scrapRepository.create({
       user,
       anime,
     });
 
-    await this.scrapRepository.save(newScrap);
+    await this.scrapRepository.insert(newScrap);
 
     return new ResponseDto(
       StatusCodeEnum.CREATED,

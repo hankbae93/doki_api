@@ -8,6 +8,7 @@ import {
 import { Anime } from '../../anime/entities/anime.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
+import { UserRank } from '../user.enum';
 
 @Entity()
 @Unique(['email', 'nickname'])
@@ -24,8 +25,17 @@ export class User {
   @Column()
   nickname: string;
 
-  @Column()
+  @Column('longtext')
   description: string;
+
+  @Column()
+  profile: string;
+
+  @Column()
+  rank: UserRank;
+
+  @Column()
+  createdAt: string;
 
   @OneToMany(() => Anime, (anime) => anime.user)
   animes: Anime[];

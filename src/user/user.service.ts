@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -21,6 +20,7 @@ import {
   ErrorMessageEnum,
   ResponseMessageEnum,
 } from '../common/enum/message.enum';
+import { UserRank } from './user.enum';
 
 @Injectable()
 export class UserService {
@@ -30,15 +30,6 @@ export class UserService {
     private jwtService: JwtService,
     private dataSource: DataSource,
   ) {}
-
-  getUserFromRequest(request: Request): User {
-    const authHeader = request.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (token) {
-      return this.jwtService.decode(token) as User;
-    }
-    return null;
-  }
 
   async signUp(signUpDto: SignUpDto) {
     const { email, password, nickname } = signUpDto;
@@ -50,10 +41,12 @@ export class UserService {
       password: hashedPassword,
       nickname,
       description: '',
+      rank: UserRank.d,
+      createdAt: new Date().toISOString(),
     });
 
     try {
-      await this.userRepository.save(user);
+      await this.userRepository.insert(user);
       return new ResponseDto(
         StatusCodeEnum.CREATED,
         null,
@@ -126,7 +119,7 @@ export class UserService {
       ...updateProfileDto,
     };
 
-    await this.userRepository.save(newUser);
+    await this.userRepository.update({ id: user.id }, newUser);
 
     return new ResponseDto(
       StatusCodeEnum.OK,
@@ -149,7 +142,7 @@ export class UserService {
 
   async getUserProfile(nickname: string) {
     const user = await this.userRepository.findOne({
-      select: ['id', 'nickname', 'description'],
+      select: ['id', 'nickname', 'description', 'rank', 'createdAt'],
       where: { nickname },
       relations: ['animes'],
     });
@@ -158,6 +151,14 @@ export class UserService {
       throw new NotFoundException(ErrorMessageEnum.NOT_FOUND_USER);
     }
 
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      user,
+      ResponseMessageEnum.SUCCESS,
+    );
+  }
+
+  async getUserInfo(user: User) {
     return new ResponseDto(
       StatusCodeEnum.OK,
       user,

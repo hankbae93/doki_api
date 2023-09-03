@@ -22,6 +22,12 @@ import { ApiTags } from '@nestjs/swagger';
 export class UserController {
   constructor(private authService: UserService) {}
 
+  @Get('/info')
+  @UseGuards(AuthGuard())
+  getUserInfo(@GetUser() user: User) {
+    return this.authService.getUserInfo(user);
+  }
+
   @Get(':nickname')
   getUserProfile(@Param('nickname') nickname) {
     return this.authService.getUserProfile(nickname);
