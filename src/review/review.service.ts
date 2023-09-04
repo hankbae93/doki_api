@@ -13,6 +13,8 @@ import { User } from '../user/entities/user.entity';
 import { ResponseDto } from '../common/dto/responseDto';
 import { StatusCodeEnum } from '../common/enum/status.enum';
 import { ResponseMessageEnum } from '../common/enum/message.enum';
+import { ReviewCountByUserRank, UserRank } from '../user/user.enum';
+import { getIsNextRank } from './review.util';
 
 @Injectable()
 export class ReviewService {
@@ -36,6 +38,7 @@ export class ReviewService {
     await queryRunner.startTransaction();
     const animeRepository = this.dataSource.manager.getRepository(Anime);
     const reviewRepository = this.dataSource.manager.getRepository(Review);
+    const userRepository = this.dataSource.manager.getRepository(User);
 
     try {
       const anime = await animeRepository.findOne({
@@ -74,6 +77,27 @@ export class ReviewService {
           averageScore,
         },
       );
+
+      const userReviews = await reviewRepository.find({
+        where: {
+          user: {
+            id: user.id,
+          },
+        },
+      });
+
+      //
+      const { nextRank, rank } = getIsNextRank(
+        userReviews.length,
+        UserRank[user.rank],
+      );
+
+      if (nextRank !== rank) {
+        await userRepository.save({
+          ...user,
+          rank: UserRank[nextRank],
+        });
+      }
 
       await queryRunner.commitTransaction();
       return new ResponseDto(

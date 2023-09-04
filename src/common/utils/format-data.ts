@@ -41,3 +41,6 @@ export function toNumber(value: string, opts: ToNumberOptions = {}): number {
 
   return newValue;
 }
+
+export const findKeyByValue = (value: string | number, obj: object) =>
+  obj[value];

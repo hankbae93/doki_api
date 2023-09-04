@@ -20,7 +20,7 @@ import {
   ErrorMessageEnum,
   ResponseMessageEnum,
 } from '../common/enum/message.enum';
-import { UserRank } from './user.enum';
+import { UserRank, UserRankName } from './user.enum';
 
 @Injectable()
 export class UserService {
@@ -81,6 +81,7 @@ export class UserService {
       const accessToken = await this.jwtService.signAsync(payload);
       const newUser = {
         ...user,
+        rank: UserRankName[user.rank],
       };
 
       delete newUser.password;
@@ -153,7 +154,7 @@ export class UserService {
 
     return new ResponseDto(
       StatusCodeEnum.OK,
-      user,
+      { ...user, rank: UserRankName[user.rank] },
       ResponseMessageEnum.SUCCESS,
     );
   }
