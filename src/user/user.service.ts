@@ -42,6 +42,7 @@ export class UserService {
       nickname,
       description: '',
       rank: UserRank.d,
+      profile: '',
       createdAt: new Date().toISOString(),
     });
 

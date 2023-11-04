@@ -13,7 +13,7 @@ import { JwtStrategy } from './jwt.strategy';
     JwtModule.register({
       global: true,
       secret: 'COOKIE_SECRET',
-      signOptions: { expiresIn: 60 * 60 },
+      signOptions: { expiresIn: '1 day' },
     }),
     TypeOrmModule.forFeature([User]),
   ],

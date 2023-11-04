@@ -23,7 +23,7 @@ import { Scrap } from './scrap/entities/scrap.entity';
     TypeOrmModule.forRoot({
       type: 'mariadb',
       host: 'localhost',
-      port: 3306,
+      port: 13306,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'doki_db',
