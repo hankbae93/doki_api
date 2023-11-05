@@ -24,6 +24,10 @@ export class CreateAnimeDto {
   @IsNotEmpty()
   crew: string;
 
+  @IsString()
+  @IsOptional()
+  series: string;
+
   @IsArray()
   tags: string[];
 

@@ -7,7 +7,7 @@ import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
-import { DataSource, IsNull, Repository } from 'typeorm';
+import { DataSource, IsNull, Like, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { ResponseDto } from '../common/dto/responseDto';
@@ -43,9 +43,21 @@ export class AnimeService {
       tags = [],
       source,
       description,
+      series = '',
     } = createAnimeDto;
 
     let crewWithRelations: Crew;
+    let animeParentId: number | null = null;
+
+    if (series) {
+      const originAnime = await this.animeRepository.findOne({
+        where: {
+          title: Like(`%${series}%`),
+        },
+      });
+
+      animeParentId = originAnime.id;
+    }
 
     const originCrew = await this.crewRepository.findOne({
       where: {
@@ -93,7 +105,7 @@ export class AnimeService {
       author,
       source,
       averageScore: 0,
-      animeParentId: null,
+      animeParentId,
       thumbnail,
       description,
       crew: crewWithRelations || originCrew,
