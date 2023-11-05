@@ -7,7 +7,7 @@ import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
-import { DataSource, Like, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { ResponseDto } from '../common/dto/responseDto';
@@ -20,8 +20,6 @@ import { AnimeOrder } from './anime.enum';
 import { Crew } from '../crew/entities/crew.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
-import { Request } from 'express';
-import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AnimeService {
@@ -407,6 +405,47 @@ export class AnimeService {
       StatusCodeEnum.OK,
       null,
       ResponseMessageEnum.DELETE_ITEM,
+    );
+  }
+
+  async getAnimeSeries() {
+    const animes = await this.animeRepository.find({
+      where: {
+        animeParentId: IsNull(),
+      },
+    });
+
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      {
+        animes,
+      },
+      ResponseMessageEnum.SUCCESS,
+    );
+  }
+
+  async getAnimesBySeriesId(seriesId: number) {
+    const animes = await this.animeRepository.find({
+      where: [
+        {
+          animeParentId: seriesId,
+        },
+        {
+          id: seriesId,
+        },
+      ],
+      relations: ['crew', 'tags'],
+    });
+
+    const series = animes.find((anime) => anime.id === seriesId);
+
+    return new ResponseDto(
+      StatusCodeEnum.OK,
+      {
+        animes: animes.filter((anime) => anime.id !== seriesId),
+        series,
+      },
+      ResponseMessageEnum.SUCCESS,
     );
   }
 }

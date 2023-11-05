@@ -37,7 +37,7 @@ export class Anime extends BaseEntity {
   source: AnimeSource;
 
   @Column({ nullable: true })
-  animeParentId: string;
+  animeParentId: number;
 
   @Column()
   averageScore: number;
