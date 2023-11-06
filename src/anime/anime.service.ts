@@ -176,6 +176,7 @@ export class AnimeService {
       source = null,
       title = null,
       order = null,
+      condition = false,
     } = getAnimeByPageDto;
 
     const animeListQuery = this.dataSource
@@ -200,13 +201,19 @@ export class AnimeService {
       .limit(limit);
 
     if (source) {
-      animeListQuery.andWhere('anime.source = :source', { source });
+      condition
+        ? animeListQuery.andWhere('anime.source = :source', { source })
+        : animeListQuery.orWhere('anime.source = :source', { source });
     }
 
     if (title) {
-      animeListQuery.andWhere('anime.title LIKE :title', {
-        title: `%${title}%`,
-      });
+      condition
+        ? animeListQuery.andWhere('anime.title LIKE :title', {
+            title: `%${title}%`,
+          })
+        : animeListQuery.orWhere('anime.title LIKE :title', {
+            title: `%${title}%`,
+          });
     }
 
     animeListQuery.orderBy(
@@ -233,6 +240,7 @@ export class AnimeService {
       source = null,
       title = null,
       order = null,
+      condition = false,
     } = getAnimeByPageDto;
 
     const animeListQuery = this.dataSource
@@ -254,13 +262,19 @@ export class AnimeService {
       .limit(limit);
 
     if (source) {
-      animeListQuery.andWhere('anime.source = :source', { source });
+      condition
+        ? animeListQuery.andWhere('anime.source = :source', { source })
+        : animeListQuery.orWhere('anime.source = :source', { source });
     }
 
     if (title) {
-      animeListQuery.andWhere('anime.title LIKE :title', {
-        title: `%${title}%`,
-      });
+      condition
+        ? animeListQuery.andWhere('anime.title LIKE :title', {
+            title: `%${title}%`,
+          })
+        : animeListQuery.orWhere('anime.title LIKE :title', {
+            title: `%${title}%`,
+          });
     }
 
     animeListQuery.orderBy(

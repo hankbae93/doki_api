@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -6,8 +7,8 @@ import {
   IsString,
 } from 'class-validator';
 import { AnimeOrder, AnimeSource } from '../anime.enum';
-import { Transform, Type } from 'class-transformer';
-import { toNumber } from '../../common/utils/format-data';
+import { Transform } from 'class-transformer';
+import { toBoolean, toNumber } from '../../common/utils/format-data';
 
 export class GetAllAnimeQueryDto {
   @Transform(({ value }) => toNumber(value, { default: 1, min: 1 }))
@@ -37,4 +38,9 @@ export class GetAllAnimeQueryDto {
   @IsEnum(AnimeOrder)
   @IsString()
   order: AnimeOrder;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean()
+  @IsOptional()
+  condition: boolean;
 }
