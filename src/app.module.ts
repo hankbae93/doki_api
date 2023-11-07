@@ -16,6 +16,9 @@ import { Song } from './song/entities/song.entity';
 import { Crew } from './crew/entities/crew.entity';
 import { ScrapModule } from './scrap/scrap.module';
 import { Scrap } from './scrap/entities/scrap.entity';
+import { ImageModule } from './image/image.module';
+import { Image } from './image/entities/image.entity';
+import { FileModule } from './file/file.module';
 
 @Module({
   imports: [
@@ -27,7 +30,7 @@ import { Scrap } from './scrap/entities/scrap.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'doki_db',
-      entities: [User, Anime, Review, Tag, Song, Crew, Scrap],
+      entities: [User, Anime, Review, Tag, Song, Crew, Scrap, Image],
       synchronize: true,
       logging: true,
       namingStrategy: new SnakeNamingStrategy(),
@@ -39,6 +42,8 @@ import { Scrap } from './scrap/entities/scrap.entity';
     ReviewModule,
     SongModule,
     ScrapModule,
+    ImageModule,
+    FileModule,
   ],
 })
 export class AppModule {}

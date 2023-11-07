@@ -18,10 +18,6 @@ export class CreateAnimeDto {
 
   @IsString()
   @IsNotEmpty()
-  thumbnail: string;
-
-  @IsString()
-  @IsNotEmpty()
   crew: string;
 
   @IsString()

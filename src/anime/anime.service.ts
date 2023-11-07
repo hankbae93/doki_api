@@ -20,6 +20,8 @@ import { AnimeOrder } from './anime.enum';
 import { Crew } from '../crew/entities/crew.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
+import { MulterFileType } from './anime.type';
+import { Image } from '../image/entities/image.entity';
 
 @Injectable()
 export class AnimeService {
@@ -32,13 +34,18 @@ export class AnimeService {
     private tagRepository: Repository<Tag>,
     @InjectRepository(Scrap)
     private scrapRepository: Repository<Scrap>,
+    @InjectRepository(Image)
+    private imageRepository: Repository<Image>,
     private dataSource: DataSource,
   ) {}
-  async createAnime(createAnimeDto: CreateAnimeDto, user: User) {
+  async createAnime(
+    createAnimeDto: CreateAnimeDto,
+    files: MulterFileType[],
+    user: User,
+  ) {
     const {
       title,
       author = null,
-      thumbnail,
       crew,
       tags = [],
       source,
@@ -46,80 +53,104 @@ export class AnimeService {
       series = '',
     } = createAnimeDto;
 
-    let crewWithRelations: Crew;
-    let animeParentId: number | null = null;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const animeRepository = this.dataSource.manager.getRepository(Anime);
+    const crewRepository = this.dataSource.manager.getRepository(Crew);
+    const tagRepository = this.dataSource.manager.getRepository(Tag);
+    const imageRepository = this.dataSource.manager.getRepository(Image);
 
-    if (series) {
-      const originAnime = await this.animeRepository.findOne({
+    try {
+      let crewWithRelations: Crew;
+      let animeParentId: number | null = null;
+      if (series) {
+        const originAnime = await animeRepository.findOne({
+          where: {
+            title: Like(`%${series}%`),
+          },
+        });
+        if (originAnime) {
+          animeParentId = originAnime.id;
+        }
+      }
+
+      const originCrew = await crewRepository.findOne({
         where: {
-          title: Like(`%${series}%`),
+          name: crew,
         },
       });
 
-      animeParentId = originAnime.id;
-    }
+      if (!originCrew) {
+        crewWithRelations = await crewRepository.create({
+          name: crew,
+        });
 
-    const originCrew = await this.crewRepository.findOne({
-      where: {
-        name: crew,
-      },
-    });
+        await crewRepository.save(crewWithRelations);
+      }
 
-    if (!originCrew) {
-      crewWithRelations = await this.crewRepository.create({
-        name: crew,
-      });
-
-      await this.crewRepository.save(crewWithRelations);
-    }
-
-    const tagsData: Tag[] = [];
-    if (tags.length !== 0) {
-      const tagsWithRelation = await Promise.all(
-        tags.map((value) => {
-          return this.tagRepository.findOne({
-            where: {
-              name: value,
-            },
-          });
-        }),
-      );
-
-      await Promise.all(
-        tagsWithRelation.map(async (data, index) => {
-          if (data) {
-            return tagsData.push(data);
-          } else {
-            const createdTag = await this.tagRepository.create({
-              name: tags[index],
+      const tagsData: Tag[] = [];
+      if (tags.length !== 0) {
+        const tagsWithRelation = await Promise.all(
+          tags.map((value) => {
+            return tagRepository.findOne({
+              where: {
+                name: value,
+              },
             });
-            await this.tagRepository.save(createdTag);
-            tagsData.push(createdTag);
-          }
-        }),
+          }),
+        );
+
+        await Promise.all(
+          tagsWithRelation.map(async (data, index) => {
+            if (data) {
+              return tagsData.push(data);
+            } else {
+              const createdTag = await tagRepository.create({
+                name: tags[index],
+              });
+              await tagRepository.save(createdTag);
+              tagsData.push(createdTag);
+            }
+          }),
+        );
+      }
+
+      const newAnime = animeRepository.create({
+        title,
+        author,
+        source,
+        averageScore: 0,
+        animeParentId,
+        thumbnail: files[0].path,
+        description,
+        crew: crewWithRelations || originCrew,
+        tags: tagsData.length === 0 ? null : tagsData,
+        user,
+      });
+      const anime = await this.animeRepository.save(newAnime);
+
+      // 이미지 엔티티 업데이트
+      const newImages = await imageRepository.create(
+        files.map((file) => ({
+          anime,
+          fileName: file.path,
+        })),
       );
+
+      await imageRepository.insert(newImages);
+
+      await queryRunner.commitTransaction();
+
+      return new ResponseDto(
+        StatusCodeEnum.CREATED,
+        anime,
+        ResponseMessageEnum.SUCCESS,
+      );
+    } catch (err) {
+      console.error(err);
+      throw new Error(err);
     }
-
-    const newAnime = this.animeRepository.create({
-      title,
-      author,
-      source,
-      averageScore: 0,
-      animeParentId,
-      thumbnail,
-      description,
-      crew: crewWithRelations || originCrew,
-      tags: tagsData.length === 0 ? null : tagsData,
-      user,
-    });
-
-    const anime = await this.animeRepository.save(newAnime);
-
-    return new ResponseDto(
-      StatusCodeEnum.CREATED,
-      anime,
-      ResponseMessageEnum.SUCCESS,
-    );
   }
 
   getOrderBy = (order: AnimeOrder) => {

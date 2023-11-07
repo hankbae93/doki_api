@@ -142,7 +142,7 @@ web_modules/
 # Output of 'npm pack'
 *.tgz
 
-# Yarn Integrity file
+# Yarn Integrity files
 .yarn-integrity
 
 # dotenv environment variable files
@@ -188,7 +188,7 @@ dist
 # DynamoDB Local files
 .dynamodb/
 
-# TernJS port file
+# TernJS port files
 .tern-port
 
 # Stores VSCode versions used for testing VSCode extensions
@@ -286,7 +286,7 @@ fabric.properties
 # Editor-based Rest Client
 .idea/httpRequests
 
-# Android studio 3.1+ serialized cache file
+# Android studio 3.1+ serialized cache files
 .idea/caches/build_file_checksums.ser
 
 ### WebStorm Patch ###
@@ -311,7 +311,7 @@ fabric.properties
 .idea/**/markdown-navigator-enh.xml
 .idea/**/markdown-navigator/
 
-# Cache file creation bug
+# Cache files creation bug
 # See https://youtrack.jetbrains.com/issue/JBR-2257
 .idea/$CACHE_FILE$
 
