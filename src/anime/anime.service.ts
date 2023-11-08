@@ -331,12 +331,12 @@ export class AnimeService {
       .leftJoinAndSelect('anime.crew', 'crew')
       .leftJoinAndSelect('anime.tags', 'tag')
       .leftJoinAndSelect('anime.reviews', 'review')
+      .leftJoinAndSelect('anime.images', 'image')
       .leftJoinAndSelect('review.user', 'user')
       .where('anime.id = :id', { id })
       .getOne();
 
     let scrap = null;
-
     if (user) {
       scrap = await this.scrapRepository.findOne({
         where: {
@@ -349,8 +349,6 @@ export class AnimeService {
         },
       });
     }
-
-    console.log(scrap);
 
     if (!anime) {
       throw new NotFoundException(ErrorMessageEnum.NOT_FOUND);
