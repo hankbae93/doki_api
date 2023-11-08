@@ -18,10 +18,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../user/get-user.decorator';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { editFileName } from '../utils/file-uploading.util';
-import { MulterFileType } from './anime.type';
 
 @Controller('anime')
 export class AnimeController {
@@ -68,19 +67,29 @@ export class AnimeController {
   @Post()
   @UseGuards(AuthGuard())
   @UseInterceptors(
-    FilesInterceptor('file', 5, {
-      storage: diskStorage({
-        destination: './files',
-        filename: editFileName,
-      }),
-    }),
+    FileFieldsInterceptor(
+      [
+        { name: 'file', maxCount: 5 },
+        { name: 'video', maxCount: 1 },
+      ],
+      {
+        storage: diskStorage({
+          destination: './files',
+          filename: editFileName,
+        }),
+      },
+    ),
   )
   async createAnime(
-    @UploadedFiles() file: MulterFileType[],
+    @UploadedFiles()
+    files: {
+      video?: Express.Multer.File[];
+      file?: Express.Multer.File[];
+    },
     @Body() createAnimeDto: CreateAnimeDto,
     @GetUser() user?: User,
   ) {
-    return this.animeService.createAnime(createAnimeDto, file, user);
+    return this.animeService.createAnime(createAnimeDto, files, user);
   }
 
   @Post(':id')

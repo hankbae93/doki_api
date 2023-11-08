@@ -10,10 +10,11 @@ import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
 import { Image } from '../image/entities/image.entity';
 import { MulterModule } from '@nestjs/platform-express';
+import { Video } from '../video/entities/video.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Anime, Crew, Review, Tag, Scrap, Image]),
+    TypeOrmModule.forFeature([Anime, Crew, Review, Tag, Scrap, Image, Video]),
     UserModule,
     MulterModule.register({
       dest: './files',

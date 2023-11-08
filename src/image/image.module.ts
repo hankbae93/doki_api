@@ -4,16 +4,9 @@ import { ImageController } from './image.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Anime } from '../anime/entities/anime.entity';
 import { UserModule } from '../user/user.module';
-import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Anime]),
-    UserModule,
-    MulterModule.register({
-      dest: './files',
-    }),
-  ],
+  imports: [TypeOrmModule.forFeature([Anime]), UserModule],
   controllers: [ImageController],
   providers: [ImageService],
 })

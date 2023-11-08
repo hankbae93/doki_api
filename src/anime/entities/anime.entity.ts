@@ -16,6 +16,7 @@ import { Song } from '../../song/entities/song.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Tag } from '../../tag/entities/tag.entity';
 import { Image } from '../../image/entities/image.entity';
+import { Video } from '../../video/entities/video.entity';
 
 @Entity()
 export class Anime extends BaseEntity {
@@ -51,6 +52,9 @@ export class Anime extends BaseEntity {
 
   @OneToMany(() => Image, (image) => image.anime)
   images: Image[];
+
+  @OneToMany(() => Video, (video) => video.anime)
+  videos: Video[];
 
   @ManyToOne(() => User, (user) => user.animes, { eager: false })
   user: User;

@@ -20,8 +20,8 @@ import { AnimeOrder } from './anime.enum';
 import { Crew } from '../crew/entities/crew.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
-import { MulterFileType } from './anime.type';
 import { Image } from '../image/entities/image.entity';
+import { Video } from '../video/entities/video.entity';
 
 @Injectable()
 export class AnimeService {
@@ -40,7 +40,10 @@ export class AnimeService {
   ) {}
   async createAnime(
     createAnimeDto: CreateAnimeDto,
-    files: MulterFileType[],
+    files: {
+      video?: Express.Multer.File[];
+      file?: Express.Multer.File[];
+    },
     user: User,
   ) {
     const {
@@ -60,6 +63,7 @@ export class AnimeService {
     const crewRepository = this.dataSource.manager.getRepository(Crew);
     const tagRepository = this.dataSource.manager.getRepository(Tag);
     const imageRepository = this.dataSource.manager.getRepository(Image);
+    const videoRepository = this.dataSource.manager.getRepository(Video);
 
     try {
       let crewWithRelations: Crew;
@@ -122,7 +126,7 @@ export class AnimeService {
         source,
         averageScore: 0,
         animeParentId,
-        thumbnail: files[0].path,
+        thumbnail: files.file[0].path,
         description,
         crew: crewWithRelations || originCrew,
         tags: tagsData.length === 0 ? null : tagsData,
@@ -132,11 +136,19 @@ export class AnimeService {
 
       // 이미지 엔티티 업데이트
       const newImages = await imageRepository.create(
-        files.map((file) => ({
+        files.file.map((file) => ({
           anime,
           fileName: file.path,
         })),
       );
+
+      if (files.video[0]) {
+        const newVideo = await videoRepository.create({
+          anime,
+          fileName: files.video[0].path,
+        });
+        await videoRepository.insert(newVideo);
+      }
 
       await imageRepository.insert(newImages);
 
@@ -278,6 +290,7 @@ export class AnimeService {
       .getRepository(Anime)
       .createQueryBuilder('anime')
       .leftJoinAndSelect('anime.reviews', 'review')
+      .leftJoinAndSelect('anime.videos', 'video')
       .select([
         'anime.id AS id',
         'anime.title AS title',
@@ -287,6 +300,7 @@ export class AnimeService {
         'anime.source AS source',
         'anime.average_score AS averageScore',
         'COUNT(review.id) AS reviewCount',
+        'video.file_name AS video',
       ])
       .groupBy('anime.id')
       .offset(page - 1)
