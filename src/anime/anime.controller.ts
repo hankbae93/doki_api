@@ -40,11 +40,6 @@ export class AnimeController {
     return this.animeService.getAnimeListByUser(getAllAnimeQueryDto, user);
   }
 
-  @Get('/emile')
-  getEmile(@Query() getAllAnimeQueryDto: GetAllAnimeQueryDto) {
-    return this.animeService.test(getAllAnimeQueryDto);
-  }
-
   @Get('/series')
   getAnimeSeries() {
     return this.animeService.getAnimeSeries();

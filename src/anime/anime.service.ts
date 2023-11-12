@@ -178,39 +178,6 @@ export class AnimeService {
     }
   };
 
-  async test(getAnimeByPageDto: GetAllAnimeQueryDto) {
-    const {
-      page,
-      limit,
-      tag,
-      source = null,
-      title = null,
-      order = null,
-    } = getAnimeByPageDto;
-    const animeRepository = this.dataSource.getRepository(Anime);
-
-    const animeList = await animeRepository
-      .createQueryBuilder('anime')
-      .leftJoinAndSelect('anime.reviews', 'review')
-      .select([
-        'anime.id',
-        'anime.title',
-        'anime.author',
-        'anime.description',
-        'anime.thumbnail',
-        'anime.source',
-        'anime.average_score',
-        'COUNT(review.id) AS reviewCount',
-      ])
-      .groupBy('anime.id')
-      // .orderBy('COUNT(review.id)', 'DESC')
-      // .offset(page)
-      // .limit(limit)
-      .getRawMany();
-
-    return new ResponseDto(200, animeList, 'good');
-  }
-
   async getAnimeListByUser(getAnimeByPageDto: GetAllAnimeQueryDto, user: User) {
     const {
       page,
@@ -222,11 +189,11 @@ export class AnimeService {
       condition = false,
     } = getAnimeByPageDto;
 
-    const animeListQuery = this.dataSource
-      .getRepository(Anime)
+    const animeListQuery = this.animeRepository
       .createQueryBuilder('anime')
-      .leftJoinAndSelect('anime.reviews', 'review')
+      .leftJoin('anime.reviews', 'review')
       .leftJoin('anime.scraps', 'scrap')
+      .leftJoin('anime.videos', 'video')
       .select([
         'anime.id AS id',
         'anime.title AS title',
@@ -237,6 +204,7 @@ export class AnimeService {
         'anime.average_score AS averageScore',
         `(EXISTS (SELECT 1 FROM scrap WHERE scrap.user_id = :userId AND scrap.anime_id = anime.id)) AS isScrapped`,
         'COUNT(review.id) AS reviewCount',
+        'anime.tags',
       ])
       .groupBy('anime.id')
       .setParameter('userId', user.id)
@@ -266,11 +234,31 @@ export class AnimeService {
 
     const data = await animeListQuery.getRawMany();
 
+    const tags = await this.tagRepository.find({
+      relations: ['animes'],
+    });
+
+    const result = data.map((item) => {
+      const data = [];
+
+      tags.forEach((tag) => {
+        const animeTag = tag.animes.find((anime) => anime.id === item.id);
+        if (animeTag) {
+          data.push({ id: tag.id, name: tag.name });
+        }
+      });
+
+      return {
+        ...item,
+        tags: data,
+      };
+    });
+
     const total = await animeListQuery.getCount();
 
     return new ResponseDto(
       StatusCodeEnum.OK,
-      { animes: data, total },
+      { animes: result, total },
       ResponseMessageEnum.SUCCESS,
     );
   }
@@ -286,8 +274,7 @@ export class AnimeService {
       condition = false,
     } = getAnimeByPageDto;
 
-    const animeListQuery = this.dataSource
-      .getRepository(Anime)
+    const animeListQuery = this.animeRepository
       .createQueryBuilder('anime')
       .leftJoinAndSelect('anime.reviews', 'review')
       .leftJoinAndSelect('anime.videos', 'video')
@@ -329,11 +316,31 @@ export class AnimeService {
 
     const data = await animeListQuery.getRawMany();
 
+    const tags = await this.tagRepository.find({
+      relations: ['animes'],
+    });
+
+    const result = data.map((item) => {
+      const data = [];
+
+      tags.forEach((tag) => {
+        const animeTag = tag.animes.find((anime) => anime.id === item.id);
+        if (animeTag) {
+          data.push({ id: tag.id, name: tag.name });
+        }
+      });
+
+      return {
+        ...item,
+        tags: data,
+      };
+    });
+
     const total = await animeListQuery.getCount();
 
     return new ResponseDto(
       StatusCodeEnum.OK,
-      { animes: data, total },
+      { animes: result, total },
       ResponseMessageEnum.SUCCESS,
     );
   }
