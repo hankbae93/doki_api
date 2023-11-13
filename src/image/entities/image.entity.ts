@@ -20,6 +20,9 @@ export class Image extends BaseEntity {
   })
   fileName: string;
 
-  @ManyToOne(() => Anime, (anime) => anime.images)
+  @ManyToOne(() => Anime, (anime) => anime.images, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   anime: Anime;
 }

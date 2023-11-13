@@ -22,6 +22,7 @@ import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
 import { Image } from '../image/entities/image.entity';
 import { Video } from '../video/entities/video.entity';
+import { Review } from '../review/entities/review.entity';
 
 @Injectable()
 export class AnimeService {
@@ -36,6 +37,8 @@ export class AnimeService {
     private scrapRepository: Repository<Scrap>,
     @InjectRepository(Image)
     private imageRepository: Repository<Image>,
+    @InjectRepository(Review)
+    private reviewRepository: Repository<Review>,
     private dataSource: DataSource,
   ) {}
   async createAnime(
@@ -528,12 +531,14 @@ export class AnimeService {
   async removeAnime(id: number, user: User) {
     const anime = await this.animeRepository.findOne({
       where: { id },
+      relations: ['user', 'reviews'],
     });
 
     if (user.id !== anime.user.id) {
       throw new ForbiddenException();
     }
 
+    await this.reviewRepository.remove(anime.reviews);
     await this.animeRepository.remove(anime);
 
     return new ResponseDto(
