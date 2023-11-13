@@ -1,4 +1,6 @@
 import {
+  IsArray,
+  isArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -25,9 +27,10 @@ export class GetAllAnimeQueryDto {
   @IsString()
   title: string;
 
+  @Transform(({ value }) => (isArray(value) ? value : [value]))
   @IsOptional()
-  @IsString()
-  tag: string;
+  @IsArray()
+  tag: string[];
 
   @IsOptional()
   @IsEnum(AnimeSource)

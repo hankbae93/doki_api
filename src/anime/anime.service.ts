@@ -193,7 +193,27 @@ export class AnimeService {
       .createQueryBuilder('anime')
       .leftJoin('anime.reviews', 'review')
       .leftJoin('anime.scraps', 'scrap')
-      .leftJoin('anime.videos', 'video')
+      .leftJoin('anime.videos', 'video');
+
+    if (tag) {
+      animeListQuery
+        .innerJoin('anime_tags_tag', 'att', 'anime.id = att.anime_id')
+        .innerJoin('tag', 'tag', 'tag.id = att.tag_id');
+
+      condition
+        ? tag.forEach((tag, index) => {
+            animeListQuery.andWhere(`tag.name = :tagName${index}`, {
+              [`tagName${index}`]: tag,
+            });
+          })
+        : tag.forEach((tag, index) => {
+            animeListQuery.orWhere(`tag.name = :tagName${index}`, {
+              [`tagName${index}`]: tag,
+            });
+          });
+    }
+
+    animeListQuery
       .select([
         'anime.id AS id',
         'anime.title AS title',
@@ -204,7 +224,6 @@ export class AnimeService {
         'anime.average_score AS averageScore',
         `(EXISTS (SELECT 1 FROM scrap WHERE scrap.user_id = :userId AND scrap.anime_id = anime.id)) AS isScrapped`,
         'COUNT(review.id) AS reviewCount',
-        'anime.tags',
       ])
       .groupBy('anime.id')
       .setParameter('userId', user.id)
@@ -263,6 +282,26 @@ export class AnimeService {
     );
   }
 
+  /**
+   SELECT
+     `anime`.`id` AS id,
+     `anime`.`title` AS title,
+     `anime`.`author` AS author,
+     `anime`.`description` AS description,
+     `anime`.`thumbnail` AS thumbnail,
+     `anime`.`source` AS source,
+     `anime`.`average_score` AS averageScore,
+     (EXISTS (SELECT 1 FROM scrap WHERE `scrap`.`user_id` = ? AND `scrap`.`anime_id` = `anime`.`id`)) AS isScrapped,
+     COUNT(`review`.`id`) AS reviewCount,
+     `anime`.`anime_id`
+   FROM `anime` `anime`
+    LEFT JOIN `review` `review` ON `review`.`anime_id`=`anime`.`id`
+    LEFT JOIN `scrap` `scrap` ON `scrap`.`anime_id`=`anime`.`id`
+    LEFT JOIN `video` `video` ON `video`.`anime_id`=`anime`.`id`
+   GROUP BY `anime`.`id`
+   ORDER BY `anime`.`id`
+   DESC LIMIT 10
+   */
   async getAnimeList(getAnimeByPageDto: GetAllAnimeQueryDto) {
     const {
       page,
@@ -276,8 +315,28 @@ export class AnimeService {
 
     const animeListQuery = this.animeRepository
       .createQueryBuilder('anime')
-      .leftJoinAndSelect('anime.reviews', 'review')
-      .leftJoinAndSelect('anime.videos', 'video')
+      .leftJoin('anime.reviews', 'review')
+      .leftJoin('anime.videos', 'video');
+
+    if (tag) {
+      animeListQuery
+        .innerJoin('anime_tags_tag', 'att', 'anime.id = att.anime_id')
+        .innerJoin('tag', 'tag', 'tag.id = att.tag_id');
+
+      condition
+        ? tag.forEach((tag, index) => {
+            animeListQuery.andWhere(`tag.name = :tagName${index}`, {
+              [`tagName${index}`]: tag,
+            });
+          })
+        : tag.forEach((tag, index) => {
+            animeListQuery.orWhere(`tag.name = :tagName${index}`, {
+              [`tagName${index}`]: tag,
+            });
+          });
+    }
+
+    animeListQuery
       .select([
         'anime.id AS id',
         'anime.title AS title',
