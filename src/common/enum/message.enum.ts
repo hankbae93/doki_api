@@ -1,4 +1,4 @@
-export enum ResponseMessageEnum {
+export enum EResponseMessage {
   SUCCESS = 'success',
   LOGIN_SUCCESS = 'login success',
   UPDATE_SUCCESS = 'update success',
@@ -8,7 +8,8 @@ export enum ResponseMessageEnum {
   DELETE_ACCOUNT = "You've completed your account withdrawal.",
 }
 
-export enum ErrorMessageEnum {
+export enum EErrorMessage {
   NOT_FOUND = "Can't not find item",
   NOT_FOUND_USER = "Can't not find user",
+  NOT_TIME_YET = "Can't not create period, it's not time yet",
 }

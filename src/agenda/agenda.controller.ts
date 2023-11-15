@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AgendaService } from './agenda.service';
 import { CreateAgendaDto } from './dto/create-agenda.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -9,6 +9,11 @@ import { User } from '../user/entities/user.entity';
 export class AgendaController {
   constructor(private readonly agendaService: AgendaService) {}
 
+  @Get()
+  getAgendaList() {
+    return this.agendaService.getAgendaList();
+  }
+
   @Post('/create')
   @UseGuards(AuthGuard())
   createAgenda(
@@ -16,5 +21,17 @@ export class AgendaController {
     @GetUser() user: User,
   ) {
     return this.agendaService.createAgenda(createAgendaDto, user);
+  }
+
+  @Post('/period/create')
+  @UseGuards(AuthGuard())
+  createPeriod() {
+    return this.agendaService.createPeriod();
+  }
+
+  @Post('/period/candidate/:agendaId')
+  @UseGuards(AuthGuard())
+  candidateAgenda(@Param() agendaId: number, @GetUser() user: User) {
+    return this.agendaService.candidateAgenda(agendaId, user);
   }
 }

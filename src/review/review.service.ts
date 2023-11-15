@@ -12,8 +12,8 @@ import { Review } from './entities/review.entity';
 import { User } from '../user/entities/user.entity';
 import { ResponseDto } from '../common/dto/responseDto';
 import { StatusCodeEnum } from '../common/enum/status.enum';
-import { ResponseMessageEnum } from '../common/enum/message.enum';
-import { ReviewCountByUserRank, UserRank } from '../user/user.enum';
+import { EResponseMessage } from '../common/enum/message.enum';
+import { UserRank } from '../user/user.enum';
 import { getIsNextRank } from './review.util';
 
 @Injectable()
@@ -103,7 +103,7 @@ export class ReviewService {
       return new ResponseDto(
         StatusCodeEnum.CREATED,
         { review: newReview, averageScore },
-        ResponseMessageEnum.SUCCESS,
+        EResponseMessage.SUCCESS,
       );
     } catch (error) {
       console.error(error);
@@ -121,11 +121,7 @@ export class ReviewService {
       },
     });
 
-    return new ResponseDto(
-      StatusCodeEnum.OK,
-      review,
-      ResponseMessageEnum.SUCCESS,
-    );
+    return new ResponseDto(StatusCodeEnum.OK, review, EResponseMessage.SUCCESS);
   }
 
   async updateMyReview(
@@ -157,7 +153,7 @@ export class ReviewService {
         ...review,
         ...updateReviewDto,
       },
-      ResponseMessageEnum.UPDATE_SUCCESS,
+      EResponseMessage.UPDATE_SUCCESS,
     );
   }
 }

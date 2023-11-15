@@ -12,10 +12,7 @@ import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { ResponseDto } from '../common/dto/responseDto';
 import { StatusCodeEnum } from '../common/enum/status.enum';
-import {
-  ErrorMessageEnum,
-  ResponseMessageEnum,
-} from '../common/enum/message.enum';
+import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
 import { AnimeOrder } from './anime.enum';
 import { Crew } from '../crew/entities/crew.entity';
 import { Tag } from '../tag/entities/tag.entity';
@@ -160,7 +157,7 @@ export class AnimeService {
       return new ResponseDto(
         StatusCodeEnum.CREATED,
         anime,
-        ResponseMessageEnum.SUCCESS,
+        EResponseMessage.SUCCESS,
       );
     } catch (err) {
       console.error(err);
@@ -281,7 +278,7 @@ export class AnimeService {
     return new ResponseDto(
       StatusCodeEnum.OK,
       { animes: result, total },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -403,7 +400,7 @@ export class AnimeService {
     return new ResponseDto(
       StatusCodeEnum.OK,
       { animes: result, total },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -434,13 +431,13 @@ export class AnimeService {
     }
 
     if (!anime) {
-      throw new NotFoundException(ErrorMessageEnum.NOT_FOUND);
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
     }
 
     return new ResponseDto(
       StatusCodeEnum.OK,
       { anime, scrap },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -524,7 +521,7 @@ export class AnimeService {
     return new ResponseDto(
       StatusCodeEnum.CREATED,
       updatedAnime,
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -544,7 +541,7 @@ export class AnimeService {
     return new ResponseDto(
       StatusCodeEnum.OK,
       null,
-      ResponseMessageEnum.DELETE_ITEM,
+      EResponseMessage.DELETE_ITEM,
     );
   }
 
@@ -560,7 +557,7 @@ export class AnimeService {
       {
         animes,
       },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -585,7 +582,7 @@ export class AnimeService {
         animes: animes.filter((anime) => anime.id !== seriesId),
         series,
       },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 }

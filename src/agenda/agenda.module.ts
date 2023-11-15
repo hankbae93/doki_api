@@ -6,10 +6,16 @@ import { UserModule } from '../user/user.module';
 import { Agenda } from './entities/agenda.entity';
 import { AgendaOption } from './entities/agenda-option.entity';
 import { AgendaPeriod } from './entities/agenda-period.entity';
+import { AgendaCandidate } from './entities/agenda-candidate.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Agenda, AgendaOption, AgendaPeriod]),
+    TypeOrmModule.forFeature([
+      Agenda,
+      AgendaOption,
+      AgendaPeriod,
+      AgendaCandidate,
+    ]),
     UserModule,
   ],
   controllers: [AgendaController],

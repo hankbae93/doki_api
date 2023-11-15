@@ -3,3 +3,9 @@ export enum AgendaPeriodType {
   CANDIDATE = 'CANDIDATE',
   VOTE = 'VOTE',
 }
+
+export enum AgendaPeriodTypeNum {
+  READY,
+  CANDIDATE,
+  VOTE,
+}
