@@ -21,6 +21,10 @@ import { Image } from './image/entities/image.entity';
 import { FileModule } from './file/file.module';
 import { VideoModule } from './video/video.module';
 import { Video } from './video/entities/video.entity';
+import { AgendaModule } from './agenda/agenda.module';
+import { Agenda } from './agenda/entities/agenda.entity';
+import { AgendaOption } from './agenda/entities/agenda-option.entity';
+import { AgendaPeriod } from './agenda/entities/agenda-period.entity';
 
 @Module({
   imports: [
@@ -32,7 +36,20 @@ import { Video } from './video/entities/video.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'doki_db',
-      entities: [User, Anime, Review, Tag, Song, Crew, Scrap, Image, Video],
+      entities: [
+        User,
+        Anime,
+        Review,
+        Tag,
+        Song,
+        Crew,
+        Scrap,
+        Image,
+        Video,
+        Agenda,
+        AgendaOption,
+        AgendaPeriod,
+      ],
       synchronize: true,
       logging: true,
       namingStrategy: new SnakeNamingStrategy(),
@@ -47,6 +64,7 @@ import { Video } from './video/entities/video.entity';
     ImageModule,
     FileModule,
     VideoModule,
+    AgendaModule,
   ],
 })
 export class AppModule {}

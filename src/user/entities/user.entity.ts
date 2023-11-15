@@ -9,6 +9,7 @@ import { Anime } from '../../anime/entities/anime.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
 import { UserRank } from '../user.enum';
+import { Agenda } from '../../agenda/entities/agenda.entity';
 
 @Entity()
 @Unique(['email', 'nickname'])
@@ -45,4 +46,7 @@ export class User {
 
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
+
+  @OneToMany(() => Agenda, (agenda) => agenda.user)
+  agendas: Agenda[];
 }
