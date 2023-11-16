@@ -26,6 +26,7 @@ import { Agenda } from './agenda/entities/agenda.entity';
 import { AgendaOption } from './agenda/entities/agenda-option.entity';
 import { AgendaPeriod } from './agenda/entities/agenda-period.entity';
 import { AgendaCandidate } from './agenda/entities/agenda-candidate.entity';
+import { AgendaCandidateVote } from './agenda/entities/agenda-canidate-vote.entity';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { AgendaCandidate } from './agenda/entities/agenda-candidate.entity';
         AgendaOption,
         AgendaPeriod,
         AgendaCandidate,
+        AgendaCandidateVote,
       ],
       synchronize: true,
       logging: true,

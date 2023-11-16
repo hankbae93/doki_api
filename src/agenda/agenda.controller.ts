@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AgendaService } from './agenda.service';
 import { CreateAgendaDto } from './dto/create-agenda.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -29,9 +37,12 @@ export class AgendaController {
     return this.agendaService.createPeriod();
   }
 
-  @Post('/period/candidate/:agendaId')
+  @Post('/candidate/:agendaId')
   @UseGuards(AuthGuard())
-  candidateAgenda(@Param() agendaId: number, @GetUser() user: User) {
+  candidateAgenda(
+    @Param('agendaId', ParseIntPipe) agendaId: number,
+    @GetUser() user: User,
+  ) {
     return this.agendaService.candidateAgenda(agendaId, user);
   }
 }

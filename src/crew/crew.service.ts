@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { Anime } from '../anime/entities/anime.entity';
 import { ResponseDto } from '../common/dto/responseDto';
 import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
-import { StatusCodeEnum } from '../common/enum/status.enum';
+import { EStatusCode } from '../common/enum/status.enum';
 
 @Injectable()
 export class CrewService {
@@ -29,7 +29,7 @@ export class CrewService {
       .getRawMany();
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       {
         crews: crewList,
       },
@@ -49,10 +49,6 @@ export class CrewService {
       throw new NotFoundException(EErrorMessage.NOT_FOUND);
     }
 
-    return new ResponseDto(
-      StatusCodeEnum.OK,
-      { crew },
-      EResponseMessage.SUCCESS,
-    );
+    return new ResponseDto(EStatusCode.OK, { crew }, EResponseMessage.SUCCESS);
   }
 }

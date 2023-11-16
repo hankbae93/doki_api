@@ -6,12 +6,13 @@ import { Agenda } from './entities/agenda.entity';
 import { AgendaOption } from './entities/agenda-option.entity';
 import { User } from '../user/entities/user.entity';
 import { ResponseDto } from '../common/dto/responseDto';
-import { StatusCodeEnum } from '../common/enum/status.enum';
+import { EStatusCode } from '../common/enum/status.enum';
 import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
 import { AgendaPeriod } from './entities/agenda-period.entity';
 import { AgendaCandidate } from './entities/agenda-candidate.entity';
 import { MILLISECONDS_A_DAY } from '../common/constants/time';
 import { AgendaPeriodType, AgendaPeriodTypeNum } from './agenda.enum';
+import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
 
 @Injectable()
 export class AgendaService {
@@ -27,6 +28,9 @@ export class AgendaService {
 
     @InjectRepository(AgendaCandidate)
     private agendaCandidateRepository: Repository<AgendaCandidate>,
+
+    @InjectRepository(AgendaCandidateVote)
+    private agendaCandidateVoteRepository: Repository<AgendaCandidateVote>,
   ) {}
 
   async getAgendaList() {
@@ -42,7 +46,7 @@ export class AgendaService {
       })),
     }));
 
-    return new ResponseDto(StatusCodeEnum.OK, result, EResponseMessage.SUCCESS);
+    return new ResponseDto(EStatusCode.OK, result, EResponseMessage.SUCCESS);
   }
 
   async createAgenda(createAgendaDto: CreateAgendaDto, user: User) {
@@ -61,7 +65,7 @@ export class AgendaService {
     );
 
     return new ResponseDto(
-      StatusCodeEnum.CREATED,
+      EStatusCode.CREATED,
       {
         title: newAgenda.title,
         options: newAgendaOptions.map((option) => ({
@@ -74,13 +78,65 @@ export class AgendaService {
   }
 
   async candidateAgenda(agendaId: number, user: User) {
-    // find agenda
-    // candidate 준비
-    // -> 1. period를 먼저 체크한다. 현재 period가 CANDIDATE가 아니면 EXCEPTION
-    // -> 2. candidate의 기준은 투표다. 이 안건을 선정 투표하면 생성해야할 게 agenda_candidate
-    // -> 3.
+    const currentPeriod = await this.agendaPeriodRepository.findOne({
+      where: {},
+      order: { id: 'DESC' },
+    });
 
-    const agenda = await this.agendaRepository.findBy({ id: agendaId });
+    if (currentPeriod.type !== AgendaPeriodType.CANDIDATE) {
+      throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
+    }
+
+    const candidatedAgenda = await this.agendaCandidateRepository.findOneBy({
+      agenda: {
+        id: agendaId,
+      },
+    });
+
+    const isCandidateAndVote = await this.agendaCandidateVoteRepository.findOne(
+      {
+        where: {
+          agendaCandidate: {
+            id: candidatedAgenda.id,
+          },
+          user: {
+            id: user.id,
+          },
+        },
+      },
+    );
+
+    if (isCandidateAndVote) {
+      await this.agendaCandidateVoteRepository.remove(isCandidateAndVote);
+
+      return new ResponseDto(EStatusCode.OK, null, EResponseMessage.CANCEL);
+    }
+
+    if (!candidatedAgenda) {
+      const candiAgenda = await this.agendaRepository.findOne({
+        where: {
+          id: agendaId,
+        },
+      });
+
+      const newCandidateAgenda = await this.agendaCandidateRepository.save({
+        agenda: candiAgenda,
+        title: candiAgenda.title,
+        agendaPeriod: currentPeriod,
+      });
+
+      await this.agendaCandidateVoteRepository.save({
+        user,
+        agendaCandidate: newCandidateAgenda,
+      });
+    } else {
+      await this.agendaCandidateVoteRepository.save({
+        user,
+        agendaCandidate: candidatedAgenda,
+      });
+    }
+
+    return new ResponseDto(EStatusCode.OK, null, EResponseMessage.SUCCESS);
   }
 
   async createPeriod() {
@@ -96,19 +152,19 @@ export class AgendaService {
       });
 
       invalidTime = startTime.getTime() < currentPeriod.endTime.getTime();
-
+      const currentPeriodNum = AgendaPeriodTypeNum[currentPeriod.type];
       const typeNum =
-        AgendaPeriodTypeNum[currentPeriod.type] + 1 > 2
-          ? 0
-          : currentPeriod.type + 1;
-      type = AgendaPeriodType[typeNum];
+        currentPeriodNum + 1 <= 2
+          ? AgendaPeriodTypeNum[currentPeriod.type] + 1
+          : 0;
+      type = AgendaPeriodTypeNum[typeNum] as AgendaPeriodType;
     } catch (error) {
       console.error('NOT FOUND PERIOD');
       type = AgendaPeriodType.READY;
     }
 
     if (invalidTime) {
-      throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
+      throw new ForbiddenException(EErrorMessage.NOT_CREATE_PERIOD);
     }
 
     const newPeriod = await this.agendaPeriodRepository.save({
@@ -118,7 +174,7 @@ export class AgendaService {
     });
 
     return new ResponseDto(
-      StatusCodeEnum.CREATED,
+      EStatusCode.CREATED,
       newPeriod,
       EResponseMessage.SUCCESS,
     );
