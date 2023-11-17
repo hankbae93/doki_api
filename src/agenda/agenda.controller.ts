@@ -37,6 +37,12 @@ export class AgendaController {
     return this.agendaService.createPeriod();
   }
 
+  @Post('/candidate/result')
+  @UseGuards(AuthGuard())
+  getWinnerAgendaThisWeek(){
+    return this.agendaService.getWinnerAgendaThisWeek()
+  }
+
   @Post('/candidate/:agendaId')
   @UseGuards(AuthGuard())
   candidateAgenda(
@@ -45,4 +51,6 @@ export class AgendaController {
   ) {
     return this.agendaService.candidateAgenda(agendaId, user);
   }
+
+
 }

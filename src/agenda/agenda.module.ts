@@ -8,6 +8,7 @@ import { AgendaOption } from './entities/agenda-option.entity';
 import { AgendaPeriod } from './entities/agenda-period.entity';
 import { AgendaCandidate } from './entities/agenda-candidate.entity';
 import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
+import {AgendaPeriodService} from "./agenda-period.service";
 
 @Module({
   imports: [
@@ -21,6 +22,6 @@ import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
     UserModule,
   ],
   controllers: [AgendaController],
-  providers: [AgendaService],
+  providers: [AgendaService, AgendaPeriodService],
 })
 export class AgendaModule {}

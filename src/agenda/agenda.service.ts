@@ -1,18 +1,18 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
-import { CreateAgendaDto } from './dto/create-agenda.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Agenda } from './entities/agenda.entity';
-import { AgendaOption } from './entities/agenda-option.entity';
-import { User } from '../user/entities/user.entity';
-import { ResponseDto } from '../common/dto/responseDto';
-import { EStatusCode } from '../common/enum/status.enum';
-import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
-import { AgendaPeriod } from './entities/agenda-period.entity';
-import { AgendaCandidate } from './entities/agenda-candidate.entity';
-import { MILLISECONDS_A_DAY } from '../common/constants/time';
-import { AgendaPeriodType, AgendaPeriodTypeNum } from './agenda.enum';
-import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
+import {ForbiddenException, Injectable} from '@nestjs/common';
+import {CreateAgendaDto} from './dto/create-agenda.dto';
+import {InjectRepository} from '@nestjs/typeorm';
+import {Repository} from 'typeorm';
+import {Agenda} from './entities/agenda.entity';
+import {AgendaOption} from './entities/agenda-option.entity';
+import {User} from '../user/entities/user.entity';
+import {ResponseDto} from '../common/dto/responseDto';
+import {EStatusCode} from '../common/enum/status.enum';
+import {EErrorMessage, EResponseMessage} from '../common/enum/message.enum';
+import {AgendaPeriod} from './entities/agenda-period.entity';
+import {AgendaCandidate} from './entities/agenda-candidate.entity';
+import {MILLISECONDS_A_DAY} from '../common/constants/time';
+import {AgendaPeriodType, AgendaPeriodTypeNum} from './agenda.enum';
+import {AgendaCandidateVote} from './entities/agenda-canidate-vote.entity';
 
 @Injectable()
 export class AgendaService {
@@ -93,23 +93,31 @@ export class AgendaService {
       },
     });
 
-    const isCandidateAndVote = await this.agendaCandidateVoteRepository.findOne(
-      {
-        where: {
-          agendaCandidate: {
-            id: candidatedAgenda.id,
+    if (candidatedAgenda) {
+      const candidateVote = await this.agendaCandidateVoteRepository.findOne(
+          {
+            where: {
+              agendaCandidate: {
+                id: candidatedAgenda.id,
+              },
+              user: {
+                id: user.id,
+              },
+            },
           },
-          user: {
-            id: user.id,
-          },
-        },
-      },
-    );
+      );
 
-    if (isCandidateAndVote) {
-      await this.agendaCandidateVoteRepository.remove(isCandidateAndVote);
+      if (candidateVote) {
+        await this.agendaCandidateVoteRepository.remove(candidateVote);
+        return new ResponseDto(EStatusCode.OK, null, EResponseMessage.CANCEL);
+      }
 
-      return new ResponseDto(EStatusCode.OK, null, EResponseMessage.CANCEL);
+      const vote = await this.agendaCandidateVoteRepository.save({
+        agendaCandidate: candidatedAgenda,
+        user
+      })
+
+      return new ResponseDto(EStatusCode.OK, vote, EResponseMessage.SUCCESS);
     }
 
     if (!candidatedAgenda) {
@@ -137,6 +145,32 @@ export class AgendaService {
     }
 
     return new ResponseDto(EStatusCode.OK, null, EResponseMessage.SUCCESS);
+  }
+
+  async getWinnerAgendaThisWeek() {
+    const currentPeriod = await this.agendaPeriodRepository.findOne({
+      where: {
+        type: AgendaPeriodType.CANDIDATE
+      },
+      order: { id: 'DESC' },
+    });
+
+    if (!currentPeriod) {
+      throw new ForbiddenException(EErrorMessage.NOT_TIME_YET)
+    }
+
+    // 역으로 정렬해서 1,2,3등 뽑기
+    const candiAgendaThisWeek = await this.agendaCandidateRepository.createQueryBuilder('agenda_candidate')
+        .leftJoin('agenda_candidate.agendaCandidateVotes', 'vote')
+        .select('agenda_candidate.*, COUNT(vote.id) as voteCount')
+        .groupBy('agenda_candidate.id')
+        .orderBy('voteCount', 'DESC')
+        .limit(3)
+        .getRawMany();
+
+
+
+    return new ResponseDto(EStatusCode.OK, candiAgendaThisWeek, EResponseMessage.SUCCESS)
   }
 
   async createPeriod() {
