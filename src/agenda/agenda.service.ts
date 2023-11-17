@@ -1,18 +1,19 @@
-import {ForbiddenException, Injectable} from '@nestjs/common';
-import {CreateAgendaDto} from './dto/create-agenda.dto';
-import {InjectRepository} from '@nestjs/typeorm';
-import {Repository} from 'typeorm';
-import {Agenda} from './entities/agenda.entity';
-import {AgendaOption} from './entities/agenda-option.entity';
-import {User} from '../user/entities/user.entity';
-import {ResponseDto} from '../common/dto/responseDto';
-import {EStatusCode} from '../common/enum/status.enum';
-import {EErrorMessage, EResponseMessage} from '../common/enum/message.enum';
-import {AgendaPeriod} from './entities/agenda-period.entity';
-import {AgendaCandidate} from './entities/agenda-candidate.entity';
-import {MILLISECONDS_A_DAY} from '../common/constants/time';
-import {AgendaPeriodType, AgendaPeriodTypeNum} from './agenda.enum';
-import {AgendaCandidateVote} from './entities/agenda-canidate-vote.entity';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { CreateAgendaDto } from './dto/create-agenda.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Agenda } from './entities/agenda.entity';
+import { AgendaOption } from './entities/agenda-option.entity';
+import { User } from '../user/entities/user.entity';
+import { ResponseDto } from '../common/dto/responseDto';
+import { EStatusCode } from '../common/enum/status.enum';
+import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
+import { AgendaPeriod } from './entities/agenda-period.entity';
+import { AgendaCandidate } from './entities/agenda-candidate.entity';
+import { MILLISECONDS_A_DAY } from '../common/constants/time';
+import { AgendaPeriodType, AgendaPeriodTypeNum } from './agenda.enum';
+import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
+import { AgendaPeriodService } from './agenda-period.service';
 
 @Injectable()
 export class AgendaService {
@@ -31,6 +32,8 @@ export class AgendaService {
 
     @InjectRepository(AgendaCandidateVote)
     private agendaCandidateVoteRepository: Repository<AgendaCandidateVote>,
+
+    private agendaPeriodService: AgendaPeriodService,
   ) {}
 
   async getAgendaList() {
@@ -94,18 +97,16 @@ export class AgendaService {
     });
 
     if (candidatedAgenda) {
-      const candidateVote = await this.agendaCandidateVoteRepository.findOne(
-          {
-            where: {
-              agendaCandidate: {
-                id: candidatedAgenda.id,
-              },
-              user: {
-                id: user.id,
-              },
-            },
+      const candidateVote = await this.agendaCandidateVoteRepository.findOne({
+        where: {
+          agendaCandidate: {
+            id: candidatedAgenda.id,
           },
-      );
+          user: {
+            id: user.id,
+          },
+        },
+      });
 
       if (candidateVote) {
         await this.agendaCandidateVoteRepository.remove(candidateVote);
@@ -114,8 +115,8 @@ export class AgendaService {
 
       const vote = await this.agendaCandidateVoteRepository.save({
         agendaCandidate: candidatedAgenda,
-        user
-      })
+        user,
+      });
 
       return new ResponseDto(EStatusCode.OK, vote, EResponseMessage.SUCCESS);
     }
@@ -147,30 +148,48 @@ export class AgendaService {
     return new ResponseDto(EStatusCode.OK, null, EResponseMessage.SUCCESS);
   }
 
-  async getWinnerAgendaThisWeek() {
+  async winAgendaThisWeek() {
     const currentPeriod = await this.agendaPeriodRepository.findOne({
       where: {
-        type: AgendaPeriodType.CANDIDATE
+        type: AgendaPeriodType.CANDIDATE,
       },
       order: { id: 'DESC' },
     });
 
     if (!currentPeriod) {
-      throw new ForbiddenException(EErrorMessage.NOT_TIME_YET)
+      throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
     }
 
-    // 역으로 정렬해서 1,2,3등 뽑기
-    const candiAgendaThisWeek = await this.agendaCandidateRepository.createQueryBuilder('agenda_candidate')
-        .leftJoin('agenda_candidate.agendaCandidateVotes', 'vote')
-        .select('agenda_candidate.*, COUNT(vote.id) as voteCount')
-        .groupBy('agenda_candidate.id')
-        .orderBy('voteCount', 'DESC')
-        .limit(3)
-        .getRawMany();
+    const candiAgendaThisWeek = await this.agendaCandidateRepository
+      .createQueryBuilder('agenda_candidate')
+      .leftJoin('agenda_candidate.agendaCandidateVotes', 'vote')
+      .select('agenda_candidate.*, COUNT(vote.id) as voteCount')
+      .groupBy('agenda_candidate.id')
+      .having('voteCount > 0')
+      .orderBy('voteCount', 'DESC')
+      .limit(3)
+      .getRawMany();
 
+    const winner = candiAgendaThisWeek[0];
 
+    if (winner) {
+      const nextPeriod = await this.agendaPeriodService.createPeriod();
+      await this.agendaCandidateRepository.update(+winner.id, {
+        agendaPeriod: nextPeriod,
+      });
 
-    return new ResponseDto(EStatusCode.OK, candiAgendaThisWeek, EResponseMessage.SUCCESS)
+      return new ResponseDto(
+        EStatusCode.OK,
+        candiAgendaThisWeek,
+        EResponseMessage.SUCCESS,
+      );
+    }
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      candiAgendaThisWeek,
+      EResponseMessage.SUCCESS,
+    );
   }
 
   async createPeriod() {

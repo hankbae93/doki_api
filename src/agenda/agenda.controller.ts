@@ -39,8 +39,8 @@ export class AgendaController {
 
   @Post('/candidate/result')
   @UseGuards(AuthGuard())
-  getWinnerAgendaThisWeek(){
-    return this.agendaService.getWinnerAgendaThisWeek()
+  winAgendaThisWeek() {
+    return this.agendaService.winAgendaThisWeek();
   }
 
   @Post('/candidate/:agendaId')
@@ -51,6 +51,4 @@ export class AgendaController {
   ) {
     return this.agendaService.candidateAgenda(agendaId, user);
   }
-
-
 }
