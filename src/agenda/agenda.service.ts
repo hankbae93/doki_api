@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAgendaDto } from './dto/create-agenda.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,8 +14,7 @@ import { EStatusCode } from '../common/enum/status.enum';
 import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
 import { AgendaPeriod } from './entities/agenda-period.entity';
 import { AgendaCandidate } from './entities/agenda-candidate.entity';
-import { MILLISECONDS_A_DAY } from '../common/constants/time';
-import { AgendaPeriodType, AgendaPeriodTypeNum } from './agenda.enum';
+import { AgendaPeriodType } from './agenda.enum';
 import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
 import { AgendaPeriodService } from './agenda-period.service';
 
@@ -81,10 +84,7 @@ export class AgendaService {
   }
 
   async candidateAgenda(agendaId: number, user: User) {
-    const currentPeriod = await this.agendaPeriodRepository.findOne({
-      where: {},
-      order: { id: 'DESC' },
-    });
+    const currentPeriod = await this.agendaPeriodService.getCurrentPeriod();
 
     if (currentPeriod.type !== AgendaPeriodType.CANDIDATE) {
       throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
@@ -113,12 +113,16 @@ export class AgendaService {
         return new ResponseDto(EStatusCode.OK, null, EResponseMessage.CANCEL);
       }
 
-      const vote = await this.agendaCandidateVoteRepository.save({
+      await this.agendaCandidateVoteRepository.save({
         agendaCandidate: candidatedAgenda,
         user,
       });
 
-      return new ResponseDto(EStatusCode.OK, vote, EResponseMessage.SUCCESS);
+      return new ResponseDto(
+        EStatusCode.OK,
+        null,
+        EResponseMessage.CANDIDATE_SUCCESS,
+      );
     }
 
     if (!candidatedAgenda) {
@@ -130,8 +134,9 @@ export class AgendaService {
 
       const newCandidateAgenda = await this.agendaCandidateRepository.save({
         agenda: candiAgenda,
-        title: candiAgenda.title,
         agendaPeriod: currentPeriod,
+        priority: false,
+        complete: false,
       });
 
       await this.agendaCandidateVoteRepository.save({
@@ -145,22 +150,45 @@ export class AgendaService {
       });
     }
 
-    return new ResponseDto(EStatusCode.OK, null, EResponseMessage.SUCCESS);
+    return new ResponseDto(
+      EStatusCode.OK,
+      null,
+      EResponseMessage.CANDIDATE_SUCCESS,
+    );
+  }
+
+  async getWinnerAgendaListByPeriod(periodId: number) {
+    const period = await this.agendaPeriodRepository.findOne({
+      where: {
+        id: periodId,
+      },
+    });
+
+    if (!period) {
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
+    }
+
+    const winners = await this.agendaCandidateRepository.find({
+      where: {
+        priority: true,
+        agendaPeriod: {
+          id: period.id,
+        },
+      },
+      relations: ['agenda'],
+    });
+
+    return new ResponseDto(EStatusCode.OK, winners, EResponseMessage.SUCCESS);
   }
 
   async winAgendaThisWeek() {
-    const currentPeriod = await this.agendaPeriodRepository.findOne({
-      where: {
-        type: AgendaPeriodType.CANDIDATE,
-      },
-      order: { id: 'DESC' },
-    });
+    const currentPeriod = await this.agendaPeriodService.getCurrentPeriod();
 
     if (!currentPeriod) {
       throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
     }
 
-    const candiAgendaThisWeek = await this.agendaCandidateRepository
+    const data = await this.agendaCandidateRepository
       .createQueryBuilder('agenda_candidate')
       .leftJoin('agenda_candidate.agendaCandidateVotes', 'vote')
       .select('agenda_candidate.*, COUNT(vote.id) as voteCount')
@@ -170,7 +198,14 @@ export class AgendaService {
       .limit(3)
       .getRawMany();
 
-    const winner = candiAgendaThisWeek[0];
+    const candidates = data.map((record) => {
+      return {
+        ...record,
+        voteCount: +record.voteCount,
+      } as AgendaCandidate;
+    });
+
+    const winner = candidates[0];
 
     if (winner) {
       const nextPeriod = await this.agendaPeriodService.createPeriod();
@@ -178,58 +213,59 @@ export class AgendaService {
         agendaPeriod: nextPeriod,
       });
 
-      return new ResponseDto(
-        EStatusCode.OK,
-        candiAgendaThisWeek,
-        EResponseMessage.SUCCESS,
-      );
+      candidates.map(async (agenda, index) => {
+        if (index !== 0) {
+          await this.agendaCandidateRepository.update(+agenda.id, {
+            priority: true,
+          });
+        }
+      });
     }
 
     return new ResponseDto(
       EStatusCode.OK,
-      candiAgendaThisWeek,
+      candidates,
       EResponseMessage.SUCCESS,
     );
   }
 
-  async createPeriod() {
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + MILLISECONDS_A_DAY);
+  async getAgendaForVote() {
+    const currentPeriod = await this.agendaPeriodService.getCurrentPeriod();
 
-    let type: AgendaPeriodType;
-    let invalidTime = false;
-    try {
-      const currentPeriod = await this.agendaPeriodRepository.findOne({
-        where: {},
-        order: { id: 'DESC' },
-      });
+    const data = await this.agendaCandidateRepository
+      .createQueryBuilder('agenda_candidate')
+      .leftJoinAndSelect(
+        Agenda,
+        'agenda',
+        'agenda.id = agenda_candidate.agenda_id',
+      )
+      .leftJoinAndSelect(
+        AgendaOption,
+        'agenda_option',
+        'agenda_option.agenda_id = agenda.id',
+      )
+      .select(
+        'agenda_option.id as optionId, agenda_option.content as optionContent, agenda.title as title, agenda.id as agendaId',
+      )
+      .where('agenda_candidate.agenda_period_id = :periodId', {
+        periodId: currentPeriod.id,
+      })
+      .getRawMany();
 
-      invalidTime = startTime.getTime() < currentPeriod.endTime.getTime();
-      const currentPeriodNum = AgendaPeriodTypeNum[currentPeriod.type];
-      const typeNum =
-        currentPeriodNum + 1 <= 2
-          ? AgendaPeriodTypeNum[currentPeriod.type] + 1
-          : 0;
-      type = AgendaPeriodTypeNum[typeNum] as AgendaPeriodType;
-    } catch (error) {
-      console.error('NOT FOUND PERIOD');
-      type = AgendaPeriodType.READY;
+    if (!data) {
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
     }
 
-    if (invalidTime) {
-      throw new ForbiddenException(EErrorMessage.NOT_CREATE_PERIOD);
-    }
-
-    const newPeriod = await this.agendaPeriodRepository.save({
-      startTime,
-      endTime,
-      type,
-    });
-
-    return new ResponseDto(
-      EStatusCode.CREATED,
-      newPeriod,
-      EResponseMessage.SUCCESS,
-    );
+    return {
+      period: currentPeriod,
+      agenda: {
+        id: data[0].agendaId,
+        title: data[0].title,
+        options: data.map((item) => ({
+          optionId: item.optionId,
+          content: item.optionContent,
+        })),
+      },
+    };
   }
 }

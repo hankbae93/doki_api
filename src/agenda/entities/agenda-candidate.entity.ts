@@ -18,10 +18,13 @@ export class AgendaCandidate extends BaseEntity {
   id: number;
 
   @Column()
-  title: string;
+  priority: boolean;
+
+  @Column()
+  complete: boolean;
 
   @OneToOne(() => Agenda)
-  @JoinColumn({ name: 'agenda_id' })
+  @JoinColumn({ name: 'agenda_id', referencedColumnName: 'id' })
   agenda: Agenda;
 
   @OneToMany(

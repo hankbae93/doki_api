@@ -2,6 +2,7 @@ export enum EResponseMessage {
   SUCCESS = 'success',
   LOGIN_SUCCESS = 'login success',
   UPDATE_SUCCESS = 'update success',
+  CANDIDATE_SUCCESS = 'candidate this Agenda Successfully',
   PASSWORD_UPDATE_SUCCESS = 'password updated.',
   USER_UPDATE_SUCCESS = 'user profile updated.',
   DELETE_ITEM = 'delete item completed.',
