@@ -3,9 +3,11 @@ import {
   Column,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Agenda } from './agenda.entity';
+import { AgendaVote } from './agenda-vote.entity';
 
 @Entity()
 export class AgendaOption extends BaseEntity {
@@ -15,6 +17,9 @@ export class AgendaOption extends BaseEntity {
   @Column('longtext')
   content: string;
 
-  @ManyToOne(() => Agenda, (agenda) => agenda.options)
+  @ManyToOne(() => Agenda, (agenda) => agenda.agendaOptions)
   agenda: Agenda;
+
+  @OneToMany(() => AgendaVote, (agendaVote) => agendaVote.agendaOption)
+  agendaVotes: AgendaVote[];
 }

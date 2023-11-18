@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { AgendaOption } from './agenda-option.entity';
+import { AgendaVote } from './agenda-vote.entity';
 
 @Entity()
 export class Agenda extends BaseEntity {
@@ -21,5 +22,8 @@ export class Agenda extends BaseEntity {
   title: string;
 
   @OneToMany(() => AgendaOption, (agendaOption) => agendaOption.agenda)
-  options: AgendaOption[];
+  agendaOptions: AgendaOption[];
+
+  @OneToMany(() => AgendaVote, (agendaVote) => agendaVote.agenda)
+  agendaVotes: AgendaVote[];
 }

@@ -17,6 +17,8 @@ import { AgendaCandidate } from './entities/agenda-candidate.entity';
 import { AgendaPeriodType } from './agenda.enum';
 import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
 import { AgendaPeriodService } from './agenda-period.service';
+import { AgendaVote } from './entities/agenda-vote.entity';
+import { VoteAgendaDto } from './dto/vote-agenda.dto';
 
 @Injectable()
 export class AgendaService {
@@ -36,6 +38,9 @@ export class AgendaService {
     @InjectRepository(AgendaCandidateVote)
     private agendaCandidateVoteRepository: Repository<AgendaCandidateVote>,
 
+    @InjectRepository(AgendaVote)
+    private agendaVoteRepository: Repository<AgendaVote>,
+
     private agendaPeriodService: AgendaPeriodService,
   ) {}
 
@@ -46,7 +51,7 @@ export class AgendaService {
 
     const result = agendaList.map((agenda) => ({
       ...agenda,
-      options: agenda.options.map((option) => ({
+      options: agenda.agendaOptions.map((option) => ({
         option_id: option.id,
         content: option.content,
       })),
@@ -267,5 +272,67 @@ export class AgendaService {
         })),
       },
     };
+  }
+
+  async voteAgenda(
+    agendaCandidateId: number,
+    voteAgendaDto: VoteAgendaDto,
+    user: User,
+  ) {
+    const { optionId } = voteAgendaDto;
+
+    const agendaCandidate = await this.agendaCandidateRepository.findOne({
+      where: {
+        id: agendaCandidateId,
+      },
+      relations: ['agenda'],
+    });
+    console.log(agendaCandidate);
+    const agenda = await this.agendaRepository.findOne({
+      where: {
+        id: agendaCandidate.agenda.id,
+      },
+      relations: ['agendaOptions'],
+    });
+
+    const agendaOption = agenda.agendaOptions.find(
+      (item) => item.id === optionId,
+    );
+
+    if (!agendaOption) {
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
+    }
+
+    const vote = await this.agendaVoteRepository.findOne({
+      where: {
+        agendaCandidate: {
+          id: agendaCandidateId,
+        },
+        user: {
+          id: user.id,
+        },
+      },
+    });
+    if (vote) {
+      await this.agendaVoteRepository.remove(vote);
+      return new ResponseDto(EStatusCode.OK, null, EResponseMessage.CANCEL);
+    }
+
+    const newVote = await this.agendaVoteRepository.save({
+      agenda: agendaCandidate.agenda,
+      agendaCandidate,
+      agendaOption,
+      user,
+    });
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      {
+        agenda,
+        agendaCandidate,
+        vote: newVote,
+      },
+      EResponseMessage.CANCEL,
+    );
   }
 }

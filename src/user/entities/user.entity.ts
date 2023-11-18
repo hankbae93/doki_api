@@ -11,6 +11,7 @@ import { Review } from '../../review/entities/review.entity';
 import { UserRank } from '../user.enum';
 import { Agenda } from '../../agenda/entities/agenda.entity';
 import { AgendaCandidateVote } from '../../agenda/entities/agenda-canidate-vote.entity';
+import { AgendaVote } from '../../agenda/entities/agenda-vote.entity';
 
 @Entity()
 @Unique(['email', 'nickname'])
@@ -56,4 +57,7 @@ export class User {
     (agendaCandidateVote) => agendaCandidateVote.user,
   )
   agendaCandidateVotes: AgendaCandidateVote[];
+
+  @OneToMany(() => AgendaVote, (agendaVote) => agendaVote.user)
+  agendaVotes: AgendaVote[];
 }

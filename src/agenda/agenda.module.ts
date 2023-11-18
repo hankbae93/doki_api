@@ -9,6 +9,7 @@ import { AgendaPeriod } from './entities/agenda-period.entity';
 import { AgendaCandidate } from './entities/agenda-candidate.entity';
 import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
 import { AgendaPeriodService } from './agenda-period.service';
+import { AgendaVote } from './entities/agenda-vote.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AgendaPeriodService } from './agenda-period.service';
       AgendaPeriod,
       AgendaCandidate,
       AgendaCandidateVote,
+      AgendaVote,
     ]),
     UserModule,
   ],

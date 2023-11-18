@@ -11,6 +11,7 @@ import {
 import { Agenda } from './agenda.entity';
 import { AgendaPeriod } from './agenda-period.entity';
 import { AgendaCandidateVote } from './agenda-canidate-vote.entity';
+import { AgendaVote } from './agenda-vote.entity';
 
 @Entity()
 export class AgendaCandidate extends BaseEntity {
@@ -32,6 +33,9 @@ export class AgendaCandidate extends BaseEntity {
     (agendaCandidateVote) => agendaCandidateVote.agendaCandidate,
   )
   agendaCandidateVotes: AgendaCandidateVote[];
+
+  @OneToMany(() => AgendaVote, (agendaVote) => agendaVote.agendaCandidate)
+  agendaVotes: AgendaVote[];
 
   @ManyToOne(
     () => AgendaPeriod,
