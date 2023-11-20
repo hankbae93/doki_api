@@ -54,6 +54,12 @@ export class AgendaController {
     return this.agendaPeriodService.createPeriod();
   }
 
+  @Post('/vote/result')
+  @UseGuards(AuthGuard())
+  winAgendaVoteThisWeek() {
+    return this.agendaService.winAgendaVoteThisWeek();
+  }
+
   @Post('/vote/:agendaCandidateId')
   @UseGuards(AuthGuard())
   voteAgenda(
@@ -70,8 +76,8 @@ export class AgendaController {
 
   @Post('/candidate/result')
   @UseGuards(AuthGuard())
-  winAgendaThisWeek() {
-    return this.agendaService.winAgendaThisWeek();
+  nominateAgenda() {
+    return this.agendaService.nominateAgenda();
   }
 
   @Post('/candidate/:agendaId')

@@ -20,6 +20,19 @@ export class AgendaPeriodService {
     });
   }
 
+  async getLastCandidatePeriod() {
+    return await this.agendaPeriodRepository.find({
+      where: {},
+      order: { id: 'DESC' },
+      take: 2,
+    });
+  }
+
+  async validTime(time: Date) {
+    const now = new Date();
+    return now.getTime() >= time.getTime();
+  }
+
   async createPeriod() {
     const startTime = new Date();
     const endTime = new Date(startTime.getTime() + MILLISECONDS_A_DAY);

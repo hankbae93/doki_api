@@ -1,4 +1,10 @@
-import { BaseEntity, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { AgendaCandidate } from './agenda-candidate.entity';
 import { Agenda } from './agenda.entity';
 import { User } from '../../user/entities/user.entity';
@@ -8,6 +14,9 @@ import { AgendaOption } from './agenda-option.entity';
 export class AgendaVote extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  win: boolean;
 
   @ManyToOne(
     () => AgendaCandidate,

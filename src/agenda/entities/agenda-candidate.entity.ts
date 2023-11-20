@@ -22,7 +22,7 @@ export class AgendaCandidate extends BaseEntity {
   priority: boolean;
 
   @Column()
-  complete: boolean;
+  nominated: boolean;
 
   @OneToOne(() => Agenda)
   @JoinColumn({ name: 'agenda_id', referencedColumnName: 'id' })

@@ -21,6 +21,9 @@ export class Agenda extends BaseEntity {
   @Column()
   title: string;
 
+  @Column({ nullable: true })
+  complete: boolean;
+
   @OneToMany(() => AgendaOption, (agendaOption) => agendaOption.agenda)
   agendaOptions: AgendaOption[];
 
