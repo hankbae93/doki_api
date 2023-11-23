@@ -50,7 +50,7 @@ export class AgendaService {
   async getAgendaList() {
     const agendaList = await this.agendaRepository.find({
       where: {
-        complete: false || null,
+        complete: false,
       },
       relations: ['agendaOptions'],
     });
@@ -66,6 +66,7 @@ export class AgendaService {
     return new ResponseDto(EStatusCode.OK, result, EResponseMessage.SUCCESS);
   }
 
+  // FIXME: Rollback transaction 처리 필요
   async createAgenda(createAgendaDto: CreateAgendaDto, user: User) {
     const { title, options } = createAgendaDto;
     const currentPeriod = await this.agendaPeriodService.getCurrentPeriod();
@@ -77,23 +78,28 @@ export class AgendaService {
     const newAgenda = await this.agendaRepository.save({
       title,
       user,
+      complete: false,
     });
 
-    const newAgendaOptions = await this.agendaOptionRepository.save(
+    const agendaOptions = await this.agendaOptionRepository.save(
       options.map((content) => ({
         content,
+        win: false,
         agenda: newAgenda,
       })),
     );
 
+    const newOptions = agendaOptions.map((option) => ({
+      id: option.id,
+      content: option.content,
+    }));
+
     return new ResponseDto(
       EStatusCode.CREATED,
       {
+        agendaId: newAgenda.id,
         title: newAgenda.title,
-        options: newAgendaOptions.map((option) => ({
-          id: option.id,
-          content: option.content,
-        })),
+        options: newOptions,
       },
       EResponseMessage.SUCCESS,
     );
@@ -106,17 +112,20 @@ export class AgendaService {
       throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
     }
 
-    const candidatedAgenda = await this.agendaCandidateRepository.findOneBy({
+    const agendaCandidate = await this.agendaCandidateRepository.findOneBy({
       agenda: {
         id: agendaId,
       },
+      agendaPeriod: {
+        id: currentPeriod.id,
+      },
     });
 
-    if (candidatedAgenda) {
+    if (agendaCandidate) {
       const candidateVote = await this.agendaCandidateVoteRepository.findOne({
         where: {
           agendaCandidate: {
-            id: candidatedAgenda.id,
+            id: agendaCandidate.id,
           },
           user: {
             id: user.id,
@@ -130,7 +139,7 @@ export class AgendaService {
       }
 
       await this.agendaCandidateVoteRepository.save({
-        agendaCandidate: candidatedAgenda,
+        agendaCandidate: agendaCandidate,
         user,
       });
 
@@ -141,7 +150,7 @@ export class AgendaService {
       );
     }
 
-    if (!candidatedAgenda) {
+    if (!agendaCandidate) {
       const candiAgenda = await this.agendaRepository.findOne({
         where: {
           id: agendaId,
@@ -162,7 +171,7 @@ export class AgendaService {
     } else {
       await this.agendaCandidateVoteRepository.save({
         user,
-        agendaCandidate: candidatedAgenda,
+        agendaCandidate: agendaCandidate,
       });
     }
 
@@ -185,12 +194,20 @@ export class AgendaService {
     }
 
     const winners = await this.agendaCandidateRepository.find({
-      where: {
-        priority: true,
-        agendaPeriod: {
-          id: period.id,
+      where: [
+        {
+          priority: true,
+          agendaPeriod: {
+            id: period.id,
+          },
         },
-      },
+        {
+          nominated: true,
+          agendaPeriod: {
+            id: period.id,
+          },
+        },
+      ],
       relations: ['agenda'],
     });
 
@@ -211,14 +228,20 @@ export class AgendaService {
       where: {},
       order: { id: 'DESC' },
     });
+
     if (!currentPeriod) {
       throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
     }
 
     const data = await agendaCandidateRepository
       .createQueryBuilder('agenda_candidate')
-      .leftJoin('agenda_candidate.agendaCandidateVotes', 'vote')
-      .select('agenda_candidate.*, COUNT(vote.id) as voteCount')
+      .leftJoin('agenda_candidate.agendaCandidateVotes', 'agendaCandidateVote')
+      .leftJoin('agenda', 'agenda', 'agenda.id = agenda_candidate.agenda_id ')
+      .select([
+        'agenda_candidate.id as agendaCandidateId',
+        'agenda.title as title',
+        'COUNT(`agendaCandidateVote`.`id`) as voteCount',
+      ])
       .where('agenda_candidate.agenda_period_id = :periodId', {
         periodId: currentPeriod.id,
       })
@@ -232,10 +255,11 @@ export class AgendaService {
       return {
         ...record,
         voteCount: +record.voteCount,
-      } as AgendaCandidate;
+      };
     });
 
     const winner = candidates[0];
+    const result = [];
 
     try {
       if (winner) {
@@ -261,19 +285,20 @@ export class AgendaService {
               return AgendaPeriodType.READY;
           }
         }
+
         await agendaPeriodRepository.insert({
           startTime,
           endTime,
           type: getType(currentPeriod?.type),
         });
 
-        await agendaCandidateRepository.update(+winner.id, {
+        await agendaCandidateRepository.update(+winner.agendaCandidateId, {
           nominated: true,
         });
 
         candidates.map(async (agenda, index) => {
           if (index === 0) return;
-          await agendaCandidateRepository.update(+agenda.id, {
+          await agendaCandidateRepository.update(+agenda.agendaCandidateId, {
             priority: true,
           });
         });
@@ -283,7 +308,10 @@ export class AgendaService {
 
       return new ResponseDto(
         EStatusCode.OK,
-        candidates,
+        {
+          winner: candidates[0],
+          list: candidates.slice(1),
+        },
         EResponseMessage.SUCCESS,
       );
     } catch (error) {
@@ -299,15 +327,18 @@ export class AgendaService {
     // FIXME : class-transformer 통해서 객체화 하기
     const data = await this.agendaCandidateRepository
       .createQueryBuilder('agenda_candidate')
-      .leftJoin(Agenda, 'agenda', 'agenda.id = agenda_candidate.agenda_id')
+      .leftJoin('agenda', 'agenda', 'agenda.id = agenda_candidate.agenda_id')
       .leftJoin(
-        AgendaOption,
+        'agenda_option',
         'agenda_option',
         'agenda_option.agenda_id = agenda.id',
       )
-      .select(
-        'agenda_option.id as optionId, agenda_option.content as optionContent, agenda.title as title, agenda_candidate.id as agendaCandidateId',
-      )
+      .select([
+        'agenda_option.id as optionId',
+        'agenda.title as title',
+        'agenda_candidate.id as agendaCandidateId',
+        'agenda_option.content as optionContent',
+      ])
       .where('agenda_candidate.agenda_period_id = :periodId ', {
         periodId: currentPeriod.id,
       })
@@ -321,12 +352,20 @@ export class AgendaService {
     return {
       period,
       agenda: {
-        id: data[0].agendaCandidateId,
+        agendaCandidateId: data[0].agendaCandidateId,
         title: data[0].title,
-        options: data.map((item) => ({
-          optionId: item.optionId,
-          content: item.optionContent,
-        })),
+        options: data.reduce((acc, cur) => {
+          if (acc.some((item) => item.optionId === cur.optionId)) {
+            return acc;
+          }
+
+          acc.push({
+            optionId: cur.optionId,
+            content: cur.optionContent,
+          });
+
+          return acc;
+        }, []),
       },
     };
   }
@@ -375,7 +414,7 @@ export class AgendaService {
       return new ResponseDto(EStatusCode.OK, null, EResponseMessage.CANCEL);
     }
 
-    const newVote = await this.agendaVoteRepository.save({
+    await this.agendaVoteRepository.save({
       agenda: agendaCandidate.agenda,
       agendaCandidate,
       agendaOption,
@@ -383,39 +422,50 @@ export class AgendaService {
       win: false,
     });
 
-    return new ResponseDto(
-      EStatusCode.OK,
-      {
-        agenda,
-        agendaCandidate,
-        vote: newVote,
-      },
-      EResponseMessage.SUCCESS,
-    );
+    return new ResponseDto(EStatusCode.OK, null, EResponseMessage.SUCCESS);
   }
 
   async winAgendaVoteThisWeek() {
-    const currentPeriod = await this.agendaPeriodService.getCurrentPeriod();
+    const [currentPeriod, period] =
+      await this.agendaPeriodService.getLastCandidatePeriod();
     if (!this.agendaPeriodService.validTime(currentPeriod.endTime)) {
       throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
     }
 
     const currentAgenda = await this.agendaCandidateRepository.findOne({
       where: {
+        nominated: true,
         agendaPeriod: {
-          id: currentPeriod.id,
+          id: period.id,
         },
       },
+      relations: ['agenda'],
     });
 
     const agendaVotes = await this.agendaVoteRepository
       .createQueryBuilder('agendaVote')
-      .select(
-        `COUNT(DISTINCT "agenda_option_id") as count, agendaVote.id AS id`,
-      )
+      .select([
+        'COUNT(*) as count',
+        'agendaVote.agenda_option_id  AS optionId',
+        'agendaVote.id as id',
+      ])
       .where('agendaVote.agenda_candidate_id = :id', { id: currentAgenda.id })
+      .groupBy('agendaVote.agenda_option_id')
       .getRawMany();
-    return agendaVotes;
-    // if (currentPeriod.i)
+
+    await this.agendaOptionRepository.update(+agendaVotes[0].optionId, {
+      win: true,
+    });
+
+    await this.agendaRepository.update(+currentAgenda.agenda.id, {
+      complete: true,
+    });
+
+    const newPeriod = await this.agendaPeriodService.createPeriod();
+
+    return {
+      newPeriod,
+      win: agendaVotes[0],
+    };
   }
 }

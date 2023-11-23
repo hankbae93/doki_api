@@ -17,6 +17,9 @@ export class AgendaOption extends BaseEntity {
   @Column('longtext')
   content: string;
 
+  @Column()
+  win: boolean;
+
   @ManyToOne(() => Agenda, (agenda) => agenda.agendaOptions)
   agenda: Agenda;
 

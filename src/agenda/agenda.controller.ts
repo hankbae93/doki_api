@@ -74,7 +74,7 @@ export class AgendaController {
     );
   }
 
-  @Post('/candidate/result')
+  @Post('/candidate/nominate')
   @UseGuards(AuthGuard())
   nominateAgenda() {
     return this.agendaService.nominateAgenda();
