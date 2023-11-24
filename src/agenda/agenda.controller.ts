@@ -27,17 +27,29 @@ export class AgendaController {
     return this.agendaService.getAgendaList();
   }
 
+  @Get('/period')
+  getCurrentAgendaPeriod() {
+    return this.agendaPeriodService.getCurrentPeriod()
+  }
+
+  @Get('/candidate')
+  getCurrentCandidateAgendaList() {
+    return this.agendaService.getCurrentCandidateAgendaList()
+  }
+
+  @Get('/candidate/result/:periodId')
+  getWinnerAgendaListByPeriod(
+      @Param('periodId', ParseIntPipe) periodId: number,
+  ) {
+    return this.agendaService.getWinnerAgendaListByPeriod(periodId);
+  }
+
   @Get('/vote')
   getAgendaForVote() {
     return this.agendaService.getAgendaForVote();
   }
 
-  @Get('/candidate/result/:periodId')
-  getWinnerAgendaListByPeriod(
-    @Param('periodId', ParseIntPipe) periodId: number,
-  ) {
-    return this.agendaService.getWinnerAgendaListByPeriod(periodId);
-  }
+
 
   @Post('/create')
   @UseGuards(AuthGuard())
@@ -54,26 +66,6 @@ export class AgendaController {
     return this.agendaPeriodService.createPeriod();
   }
 
-  @Post('/vote/result')
-  @UseGuards(AuthGuard())
-  winAgendaVoteThisWeek() {
-    return this.agendaService.winAgendaVoteThisWeek();
-  }
-
-  @Post('/vote/:agendaCandidateId')
-  @UseGuards(AuthGuard())
-  voteAgenda(
-    @Param('agendaCandidateId', ParseIntPipe) agendaCandidateId: number,
-    @Body() voteAgendaDto: VoteAgendaDto,
-    @GetUser() user: User,
-  ) {
-    return this.agendaService.voteAgenda(
-      agendaCandidateId,
-      voteAgendaDto,
-      user,
-    );
-  }
-
   @Post('/candidate/nominate')
   @UseGuards(AuthGuard())
   nominateAgenda() {
@@ -87,5 +79,25 @@ export class AgendaController {
     @GetUser() user: User,
   ) {
     return this.agendaService.candidateAgenda(agendaId, user);
+  }
+
+  @Post('/vote/result')
+  @UseGuards(AuthGuard())
+  winAgendaVoteThisWeek() {
+    return this.agendaService.winAgendaVoteThisWeek();
+  }
+
+  @Post('/vote/:agendaCandidateId')
+  @UseGuards(AuthGuard())
+  voteAgenda(
+      @Param('agendaCandidateId', ParseIntPipe) agendaCandidateId: number,
+      @Body() voteAgendaDto: VoteAgendaDto,
+      @GetUser() user: User,
+  ) {
+    return this.agendaService.voteAgenda(
+        agendaCandidateId,
+        voteAgendaDto,
+        user,
+    );
   }
 }

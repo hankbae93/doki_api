@@ -35,7 +35,7 @@ import { AgendaVote } from './agenda/entities/agenda-vote.entity';
     TypeOrmModule.forRoot({
       type: 'mariadb',
       host: 'localhost',
-      port: 13306,
+      port: 3306,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'doki_db',
