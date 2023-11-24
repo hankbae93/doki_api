@@ -50,7 +50,6 @@ export class AgendaController {
   }
 
 
-
   @Post('/create')
   @UseGuards(AuthGuard())
   createAgenda(

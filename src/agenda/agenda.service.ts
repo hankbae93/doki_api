@@ -257,7 +257,6 @@ export class AgendaService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
     const agendaPeriodRepository =
       this.dataSource.manager.getRepository(AgendaPeriod);
     const agendaCandidateRepository =
@@ -272,11 +271,10 @@ export class AgendaService {
       throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
     }
 
-
     const data = await agendaCandidateRepository
       .createQueryBuilder('agenda_candidate')
       .leftJoin('agenda_candidate.agendaCandidateVotes', 'agendaCandidateVote')
-      .leftJoin('agenda', 'agenda', 'agenda.id = agenda_candidate.agenda_id ')
+      .leftJoin('agenda_candidate.agenda', 'agenda')
       .select([
         'agenda_candidate.id as agendaCandidateId',
         'agenda.title as title',
@@ -298,8 +296,7 @@ export class AgendaService {
       };
     });
 
-    const winner = candidates[0];
-    const result = [];
+    const winner = candidates.shift();
 
     try {
       if (winner) {
@@ -336,11 +333,8 @@ export class AgendaService {
           nominated: true,
         });
 
-        candidates.map(async (agenda, index) => {
-          if (index === 0) return;
-          await agendaCandidateRepository.update(+agenda.agendaCandidateId, {
-            priority: true,
-          });
+        await agendaCandidateRepository.update(candidates.map((candidate) => +candidate.agendaCandidateId), {
+          priority: true,
         });
       }
 
@@ -349,14 +343,17 @@ export class AgendaService {
       return new ResponseDto(
         EStatusCode.OK,
         {
-          winner: candidates[0],
-          list: candidates.slice(1),
+          winner,
+          list: candidates,
         },
         EResponseMessage.SUCCESS,
       );
     } catch (error) {
       console.error(error);
+      await queryRunner.rollbackTransaction();
       return new ResponseDto(EStatusCode.SERVER_ERROR, null, 'retry');
+    } finally {
+      await queryRunner.release();
     }
   }
 
