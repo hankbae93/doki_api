@@ -28,14 +28,16 @@ import { AgendaPeriod } from './agenda/entities/agenda-period.entity';
 import { AgendaCandidate } from './agenda/entities/agenda-candidate.entity';
 import { AgendaCandidateVote } from './agenda/entities/agenda-canidate-vote.entity';
 import { AgendaVote } from './agenda/entities/agenda-vote.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mariadb',
       host: 'localhost',
-      port: 3306,
+      port: 13306,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'doki_db',

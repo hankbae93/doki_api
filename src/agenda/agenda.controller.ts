@@ -29,17 +29,17 @@ export class AgendaController {
 
   @Get('/period')
   getCurrentAgendaPeriod() {
-    return this.agendaPeriodService.getCurrentPeriod()
+    return this.agendaPeriodService.getCurrentPeriod();
   }
 
   @Get('/candidate')
   getCurrentCandidateAgendaList() {
-    return this.agendaService.getCurrentCandidateAgendaList()
+    return this.agendaService.getCurrentCandidateAgendaList();
   }
 
   @Get('/candidate/result/:periodId')
   getWinnerAgendaListByPeriod(
-      @Param('periodId', ParseIntPipe) periodId: number,
+    @Param('periodId', ParseIntPipe) periodId: number,
   ) {
     return this.agendaService.getWinnerAgendaListByPeriod(periodId);
   }
@@ -48,7 +48,6 @@ export class AgendaController {
   getAgendaForVote() {
     return this.agendaService.getAgendaForVote();
   }
-
 
   @Post('/create')
   @UseGuards(AuthGuard())
@@ -89,14 +88,14 @@ export class AgendaController {
   @Post('/vote/:agendaCandidateId')
   @UseGuards(AuthGuard())
   voteAgenda(
-      @Param('agendaCandidateId', ParseIntPipe) agendaCandidateId: number,
-      @Body() voteAgendaDto: VoteAgendaDto,
-      @GetUser() user: User,
+    @Param('agendaCandidateId', ParseIntPipe) agendaCandidateId: number,
+    @Body() voteAgendaDto: VoteAgendaDto,
+    @GetUser() user: User,
   ) {
     return this.agendaService.voteAgenda(
-        agendaCandidateId,
-        voteAgendaDto,
-        user,
+      agendaCandidateId,
+      voteAgendaDto,
+      user,
     );
   }
 }

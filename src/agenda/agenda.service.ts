@@ -1,24 +1,26 @@
-import {ForbiddenException, Injectable, NotFoundException,} from '@nestjs/common';
-import {CreateAgendaDto} from './dto/create-agenda.dto';
-import {InjectRepository} from '@nestjs/typeorm';
-import {DataSource, Repository} from 'typeorm';
-import {Agenda} from './entities/agenda.entity';
-import {AgendaOption} from './entities/agenda-option.entity';
-import {User} from '../user/entities/user.entity';
-import {ResponseDto} from '../common/dto/responseDto';
-import {EStatusCode} from '../common/enum/status.enum';
-import {EErrorMessage, EResponseMessage} from '../common/enum/message.enum';
-import {AgendaPeriod} from './entities/agenda-period.entity';
-import {AgendaCandidate} from './entities/agenda-candidate.entity';
-import {AgendaPeriodType} from './agenda.enum';
-import {AgendaCandidateVote} from './entities/agenda-canidate-vote.entity';
-import {AgendaPeriodService} from './agenda-period.service';
-import {AgendaVote} from './entities/agenda-vote.entity';
-import {VoteAgendaDto} from './dto/vote-agenda.dto';
-import {MILLISECONDS_A_DAY} from '../common/constants/time';
-import {plainToInstance} from "class-transformer";
-import {GetCurrentCandidateAgendaList} from "./agenda.response";
-
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { CreateAgendaDto } from './dto/create-agenda.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { Agenda } from './entities/agenda.entity';
+import { AgendaOption } from './entities/agenda-option.entity';
+import { User } from '../user/entities/user.entity';
+import { ResponseDto } from '../common/dto/responseDto';
+import { EStatusCode } from '../common/enum/status.enum';
+import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
+import { AgendaPeriod } from './entities/agenda-period.entity';
+import { AgendaCandidate } from './entities/agenda-candidate.entity';
+import { AgendaPeriodType } from './agenda.enum';
+import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
+import { AgendaPeriodService } from './agenda-period.service';
+import { AgendaVote } from './entities/agenda-vote.entity';
+import { VoteAgendaDto } from './dto/vote-agenda.dto';
+import { plainToInstance } from 'class-transformer';
+import { GetCurrentCandidateAgendaList } from './agenda.response';
 
 @Injectable()
 export class AgendaService {
@@ -46,7 +48,6 @@ export class AgendaService {
     private agendaPeriodService: AgendaPeriodService,
   ) {}
 
-
   async getAgendaList() {
     const agendaList = await this.agendaRepository.find({
       select: {
@@ -56,8 +57,8 @@ export class AgendaService {
         agendaOptions: {
           id: true,
           content: true,
-          win: false
-        }
+          win: false,
+        },
       },
       where: {
         complete: false,
@@ -65,45 +66,51 @@ export class AgendaService {
       relations: ['agendaOptions'],
     });
 
-   const result =  agendaList.map((agenda) => {
+    const result = agendaList.map((agenda) => {
       return {
         ...agenda,
         agendaOptions: agenda.agendaOptions.map((option) => ({
           ...option,
-          optionId: option.id
-        }))
-      }
-    })
-
+          optionId: option.id,
+        })),
+      };
+    });
 
     return new ResponseDto(EStatusCode.OK, result, EResponseMessage.SUCCESS);
   }
 
   async getCurrentCandidateAgendaList() {
     const currentPeriod = await this.agendaPeriodService.getCurrentPeriod();
-    const agendaCandidateList =  await this.agendaCandidateRepository
-        .createQueryBuilder('agendaCandidate')
-        .leftJoinAndSelect('agendaCandidate.agenda', 'agenda')
-        .leftJoinAndSelect('agendaCandidate.agendaCandidateVotes', 'agendaCandidateVote')
-        .select(
-            [
-                'agenda.id as agendaId',
-                'agendaCandidate.id as agendaCandidateId',
-                'agenda.title as title',
-                'COUNT(agendaCandidateVote.id) as voteCount'
-            ]
-        )
-        .where('agendaCandidate.agenda_period_id = :periodId', {
-            periodId: currentPeriod.id
-          })
-        .groupBy('agendaCandidate.id')
-        .getRawMany()
+    const agendaCandidateList = await this.agendaCandidateRepository
+      .createQueryBuilder('agendaCandidate')
+      .leftJoinAndSelect('agendaCandidate.agenda', 'agenda')
+      .leftJoinAndSelect(
+        'agendaCandidate.agendaCandidateVotes',
+        'agendaCandidateVote',
+      )
+      .select([
+        'agenda.id as agendaId',
+        'agendaCandidate.id as agendaCandidateId',
+        'agenda.title as title',
+        'COUNT(agendaCandidateVote.id) as voteCount',
+      ])
+      .where('agendaCandidate.agenda_period_id = :periodId', {
+        periodId: currentPeriod.id,
+      })
+      .groupBy('agendaCandidate.id')
+      .getRawMany();
 
-
-    return new ResponseDto(EStatusCode.OK, {
-      period: currentPeriod,
-      list: plainToInstance(GetCurrentCandidateAgendaList, agendaCandidateList)
-    }, EResponseMessage.SUCCESS)
+    return new ResponseDto(
+      EStatusCode.OK,
+      {
+        period: currentPeriod,
+        list: plainToInstance(
+          GetCurrentCandidateAgendaList,
+          agendaCandidateList,
+        ),
+      },
+      EResponseMessage.SUCCESS,
+    );
   }
 
   // FIXME: Rollback transaction 처리 필요
@@ -300,44 +307,16 @@ export class AgendaService {
     const winner = candidates.shift();
 
     try {
-      if (winner) {
-        const startTime = new Date();
-        const endTime = new Date(startTime.getTime() + MILLISECONDS_A_DAY);
+      await agendaCandidateRepository.update(+winner.agendaCandidateId, {
+        nominated: true,
+      });
 
-        if (
-          currentPeriod &&
-          startTime.getTime() < currentPeriod.endTime.getTime()
-        ) {
-          throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
-        }
-
-        function getType(type: AgendaPeriodType) {
-          switch (type) {
-            case AgendaPeriodType.READY:
-              return AgendaPeriodType.CANDIDATE;
-            case AgendaPeriodType.CANDIDATE:
-              return AgendaPeriodType.VOTE;
-            case AgendaPeriodType.VOTE:
-              return AgendaPeriodType.READY;
-            default:
-              return AgendaPeriodType.READY;
-          }
-        }
-
-        await agendaPeriodRepository.insert({
-          startTime,
-          endTime,
-          type: getType(currentPeriod?.type),
-        });
-
-        await agendaCandidateRepository.update(+winner.agendaCandidateId, {
-          nominated: true,
-        });
-
-        await agendaCandidateRepository.update(candidates.map((candidate) => +candidate.agendaCandidateId), {
+      await agendaCandidateRepository.update(
+        candidates.map((candidate) => +candidate.agendaCandidateId),
+        {
           priority: true,
-        });
-      }
+        },
+      );
 
       await queryRunner.commitTransaction();
 
@@ -365,17 +344,17 @@ export class AgendaService {
     const data = await this.agendaCandidateRepository
       .createQueryBuilder('agenda_candidate')
       .leftJoin('agenda_candidate.agenda', 'agenda')
+      .leftJoin('agenda.agendaOptions', 'agenda_option')
       .leftJoin(
-        'agenda.agendaOptions',
-        'agenda_option',
+        'agenda_candidate.agendaCandidateVotes',
+        'agenda_candidate_vote',
       )
-      .leftJoin('agenda_candidate.agendaCandidateVotes', 'agenda_candidate_vote')
       .select([
         'agenda_option.id as optionId',
         'agenda.title as title',
         'agenda_candidate.id as agendaCandidateId',
         'agenda_option.content as optionContent',
-        'COUNT(agenda_candidate_vote.id) as voteCount'
+        'COUNT(agenda_candidate_vote.id) as voteCount',
       ])
       .where('agenda_candidate.agenda_period_id = :periodId ', {
         periodId: currentPeriod.id,
@@ -388,24 +367,28 @@ export class AgendaService {
       throw new NotFoundException(EErrorMessage.NOT_FOUND);
     }
 
-    return new ResponseDto(EStatusCode.OK, {
-      period,
-      agendaCandidateId: data[0].agendaCandidateId,
-      title: data[0].title,
-      voteCount:+data[0].voteCount,
-      options: data.reduce((acc, cur) => {
-        if (acc.some((item) => item.optionId === cur.optionId)) {
+    return new ResponseDto(
+      EStatusCode.OK,
+      {
+        period,
+        agendaCandidateId: data[0].agendaCandidateId,
+        title: data[0].title,
+        voteCount: +data[0].voteCount,
+        options: data.reduce((acc, cur) => {
+          if (acc.some((item) => item.optionId === cur.optionId)) {
+            return acc;
+          }
+
+          acc.push({
+            optionId: cur.optionId,
+            content: cur.optionContent,
+          });
+
           return acc;
-        }
-
-        acc.push({
-          optionId: cur.optionId,
-          content: cur.optionContent,
-        });
-
-        return acc;
-      }, []),
-    }, EResponseMessage.SUCCESS);
+        }, []),
+      },
+      EResponseMessage.SUCCESS,
+    );
   }
 
   async voteAgenda(
@@ -468,19 +451,18 @@ export class AgendaService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     const agendaPeriodRepository =
-        this.dataSource.manager.getRepository(AgendaPeriod);
-    const agendaRepository =
-        this.dataSource.manager.getRepository(Agenda);
+      this.dataSource.manager.getRepository(AgendaPeriod);
+    const agendaRepository = this.dataSource.manager.getRepository(Agenda);
     const agendaOptionRepository = this.dataSource.getRepository(AgendaOption);
-    const agendaVoteRepository = this.dataSource.manager.getRepository(AgendaVote);
+    const agendaVoteRepository =
+      this.dataSource.manager.getRepository(AgendaVote);
 
     try {
-      const [currentPeriod, prevPeriod] =
-          await agendaPeriodRepository.find({
-            where: {},
-            order: { id: 'DESC' },
-            take: 2,
-          });
+      const [currentPeriod, prevPeriod] = await agendaPeriodRepository.find({
+        where: {},
+        order: { id: 'DESC' },
+        take: 2,
+      });
       if (!this.agendaPeriodService.validTime(currentPeriod.endTime)) {
         throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
       }
@@ -496,15 +478,15 @@ export class AgendaService {
       });
 
       const agendaVotes = await agendaVoteRepository
-          .createQueryBuilder('agendaVote')
-          .select([
-            'COUNT(*) as count',
-            'agendaVote.agenda_option_id  AS optionId',
-            'agendaVote.id as id',
-          ])
-          .where('agendaVote.agenda_candidate_id = :id', { id: currentAgenda.id })
-          .groupBy('agendaVote.agenda_option_id')
-          .getRawMany();
+        .createQueryBuilder('agendaVote')
+        .select([
+          'COUNT(*) as count',
+          'agendaVote.agenda_option_id  AS optionId',
+          'agendaVote.id as id',
+        ])
+        .where('agendaVote.agenda_candidate_id = :id', { id: currentAgenda.id })
+        .groupBy('agendaVote.agenda_option_id')
+        .getRawMany();
 
       await agendaOptionRepository.update(+agendaVotes[0].optionId, {
         win: true,
@@ -515,7 +497,11 @@ export class AgendaService {
       });
       await queryRunner.commitTransaction();
 
-      return new ResponseDto(EStatusCode.OK, agendaVotes[0], EResponseMessage.SUCCESS)
+      return new ResponseDto(
+        EStatusCode.OK,
+        agendaVotes[0],
+        EResponseMessage.SUCCESS,
+      );
     } catch (error) {
       console.error(error);
       await queryRunner.rollbackTransaction();
@@ -523,9 +509,5 @@ export class AgendaService {
     } finally {
       await queryRunner.release();
     }
-
-
-
-
   }
 }
