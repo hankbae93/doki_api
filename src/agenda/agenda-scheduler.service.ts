@@ -37,7 +37,7 @@ export class AgendaSchedulerService {
     private dataSource: DataSource,
   ) {}
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_8_HOURS)
   async schedulePeriod() {
     this.logger.debug('SCHEDULE PERIOD');
     const currentPeriod = await this.agendaPeriodRepository.findOne({

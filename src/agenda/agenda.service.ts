@@ -19,23 +19,18 @@ import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
 import { AgendaPeriodService } from './agenda-period.service';
 import { AgendaVote } from './entities/agenda-vote.entity';
 import { VoteAgendaDto } from './dto/vote-agenda.dto';
-import { plainToInstance } from 'class-transformer';
-import { GetCurrentCandidateAgendaList } from './agenda.response';
+import { AgendaRepository } from './repository/agenda.repository';
+import { AgendaPeriodRepository } from './repository/agenda-period.repository';
+import { AgendaCandidateRepository } from './repository/agenda-candidate.repository';
+import { AgendaOptionRepository } from './repository/agenda-option.repository';
 
 @Injectable()
 export class AgendaService {
   constructor(
-    @InjectRepository(Agenda)
-    private agendaRepository: Repository<Agenda>,
-
-    @InjectRepository(AgendaOption)
-    private agendaOptionRepository: Repository<AgendaOption>,
-
-    @InjectRepository(AgendaPeriod)
-    private agendaPeriodRepository: Repository<AgendaPeriod>,
-
-    @InjectRepository(AgendaCandidate)
-    private agendaCandidateRepository: Repository<AgendaCandidate>,
+    private readonly agendaRepository: AgendaRepository,
+    private readonly agendaPeriodRepository: AgendaPeriodRepository,
+    private readonly agendaCandidateRepository: AgendaCandidateRepository,
+    private readonly agendaOptionRepository: AgendaOptionRepository,
 
     @InjectRepository(AgendaCandidateVote)
     private agendaCandidateVoteRepository: Repository<AgendaCandidateVote>,
@@ -49,22 +44,7 @@ export class AgendaService {
   ) {}
 
   async getAgendaList() {
-    const agendaList = await this.agendaRepository.find({
-      select: {
-        id: true,
-        title: true,
-        complete: false,
-        agendaOptions: {
-          id: true,
-          content: true,
-          win: false,
-        },
-      },
-      where: {
-        complete: false,
-      },
-      relations: ['agendaOptions'],
-    });
+    const agendaList = await this.agendaRepository.findAgendaList();
 
     const result = agendaList.map((agenda) => {
       return {
@@ -80,76 +60,66 @@ export class AgendaService {
   }
 
   async getCurrentCandidateAgendaList() {
-    const currentPeriod = await this.agendaPeriodService.getCurrentPeriod();
-    const agendaCandidateList = await this.agendaCandidateRepository
-      .createQueryBuilder('agendaCandidate')
-      .leftJoinAndSelect('agendaCandidate.agenda', 'agenda')
-      .leftJoinAndSelect(
-        'agendaCandidate.agendaCandidateVotes',
-        'agendaCandidateVote',
-      )
-      .select([
-        'agenda.id as agendaId',
-        'agendaCandidate.id as agendaCandidateId',
-        'agenda.title as title',
-        'COUNT(agendaCandidateVote.id) as voteCount',
-      ])
-      .where('agendaCandidate.agenda_period_id = :periodId', {
-        periodId: currentPeriod.id,
-      })
-      .groupBy('agendaCandidate.id')
-      .getRawMany();
+    const currentPeriod = await this.agendaPeriodRepository.findCurrentPeriod();
+    const agendaCandidateList =
+      await this.agendaCandidateRepository.findNominatingAgendaList(
+        currentPeriod.id,
+      );
 
     return new ResponseDto(
       EStatusCode.OK,
       {
         period: currentPeriod,
-        list: plainToInstance(
-          GetCurrentCandidateAgendaList,
-          agendaCandidateList,
-        ),
+        list: agendaCandidateList,
       },
       EResponseMessage.SUCCESS,
     );
   }
 
-  // FIXME: Rollback transaction 처리 필요
   async createAgenda(createAgendaDto: CreateAgendaDto, user: User) {
     const { title, options } = createAgendaDto;
-    const currentPeriod = await this.agendaPeriodService.getCurrentPeriod();
-
+    const currentPeriod = await this.agendaPeriodRepository.findCurrentPeriod();
     if (currentPeriod.type !== AgendaPeriodType.READY) {
       throw new ForbiddenException(EErrorMessage.NOT_TIME_YET);
     }
 
-    const newAgenda = await this.agendaRepository.save({
-      title,
-      user,
-      complete: false,
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const agendaOptions = await this.agendaOptionRepository.save(
-      options.map((content) => ({
-        content,
-        win: false,
-        agenda: newAgenda,
-      })),
-    );
+    try {
+      const newAgenda = await this.agendaRepository.saveRecord(
+        title,
+        user,
+        queryRunner.manager,
+      );
+      const agendaOptions = await this.agendaOptionRepository.saveRecords(
+        options,
+        newAgenda,
+        queryRunner.manager,
+      );
 
-    const newOptions = agendaOptions.map((option) => ({
-      id: option.id,
-      content: option.content,
-    }));
+      const newOptions = agendaOptions.map((option) => ({
+        id: option.id,
+        content: option.content,
+      }));
+      await queryRunner.commitTransaction();
 
-    return new ResponseDto(
-      EStatusCode.CREATED,
-      {
-        agendaId: newAgenda.id,
-        title: newAgenda.title,
-        options: newOptions,
-      },
-      EResponseMessage.SUCCESS,
-    );
+      return new ResponseDto(
+        EStatusCode.CREATED,
+        {
+          agendaId: newAgenda.id,
+          title: newAgenda.title,
+          options: newOptions,
+        },
+        EResponseMessage.SUCCESS,
+      );
+    } catch (error) {
+      console.error(error);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async candidateAgenda(agendaId: number, user: User) {
