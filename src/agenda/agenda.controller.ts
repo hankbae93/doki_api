@@ -12,15 +12,12 @@ import { CreateAgendaDto } from './dto/create-agenda.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../user/get-user.decorator';
 import { User } from '../user/entities/user.entity';
-import { AgendaPeriodService } from './agenda-period.service';
+
 import { VoteAgendaDto } from './dto/vote-agenda.dto';
 
 @Controller('agenda')
 export class AgendaController {
-  constructor(
-    private readonly agendaService: AgendaService,
-    private readonly agendaPeriodService: AgendaPeriodService,
-  ) {}
+  constructor(private readonly agendaService: AgendaService) {}
 
   @Get()
   getAgendaList() {
@@ -29,7 +26,7 @@ export class AgendaController {
 
   @Get('/period')
   getCurrentAgendaPeriod() {
-    return this.agendaPeriodService.getCurrentPeriod();
+    return this.agendaService.getCurrentAgendaPeriod();
   }
 
   @Get('/candidate')
@@ -61,7 +58,7 @@ export class AgendaController {
   @Post('/period/create')
   @UseGuards(AuthGuard())
   createPeriod() {
-    return this.agendaPeriodService.createPeriod();
+    return this.agendaService.createPeriod();
   }
 
   @Post('/candidate/nominate')

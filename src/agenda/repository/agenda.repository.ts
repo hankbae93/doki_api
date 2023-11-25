@@ -10,7 +10,15 @@ export class AgendaRepository extends Repository<Agenda> {
   }
 
   setManager(manager?: EntityManager): Repository<Agenda> {
-    return manager.getRepository(Agenda) || this;
+    return manager ? manager.getRepository(Agenda) : this;
+  }
+
+  findAgendaById(agendaId: number) {
+    return this.findOne({
+      where: {
+        id: agendaId,
+      },
+    });
   }
 
   findAgendaList(manager?: EntityManager) {
@@ -29,6 +37,12 @@ export class AgendaRepository extends Repository<Agenda> {
         complete: false,
       },
       relations: ['agendaOptions'],
+    });
+  }
+
+  updateComplete(id: number, manager?: EntityManager) {
+    return this.setManager(manager).update(id, {
+      complete: true,
     });
   }
 

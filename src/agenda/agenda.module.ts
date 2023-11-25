@@ -8,13 +8,14 @@ import { AgendaOption } from './entities/agenda-option.entity';
 import { AgendaPeriod } from './entities/agenda-period.entity';
 import { AgendaCandidate } from './entities/agenda-candidate.entity';
 import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
-import { AgendaPeriodService } from './agenda-period.service';
 import { AgendaVote } from './entities/agenda-vote.entity';
 import { AgendaSchedulerService } from './agenda-scheduler.service';
 import { AgendaRepository } from './repository/agenda.repository';
 import { AgendaCandidateRepository } from './repository/agenda-candidate.repository';
 import { AgendaPeriodRepository } from './repository/agenda-period.repository';
 import { AgendaOptionRepository } from './repository/agenda-option.repository';
+import { AgendaCandidateVoteRepository } from './repository/agenda-candidate-vote.repository';
+import { AgendaVoteRepository } from './repository/agenda-vote.repository';
 
 @Module({
   imports: [
@@ -31,12 +32,13 @@ import { AgendaOptionRepository } from './repository/agenda-option.repository';
   controllers: [AgendaController],
   providers: [
     AgendaService,
-    AgendaPeriodService,
     AgendaSchedulerService,
     AgendaRepository,
     AgendaOptionRepository,
     AgendaCandidateRepository,
     AgendaPeriodRepository,
+    AgendaCandidateVoteRepository,
+    AgendaVoteRepository,
   ],
 })
 export class AgendaModule {}

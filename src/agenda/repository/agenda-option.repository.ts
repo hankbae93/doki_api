@@ -13,6 +13,22 @@ export class AgendaOptionRepository extends Repository<AgendaOption> {
     return manager.getRepository(AgendaOption) || this;
   }
 
+  findAgendaOptionList(agendaId) {
+    return this.find({
+      where: {
+        agenda: {
+          id: agendaId,
+        },
+      },
+    });
+  }
+
+  updateWin(id: number, manager?: EntityManager) {
+    return this.setManager(manager).update(id, {
+      win: true,
+    });
+  }
+
   saveRecords(
     options: string[],
     agenda: Agenda,
