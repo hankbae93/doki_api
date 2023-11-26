@@ -11,9 +11,9 @@ import { DataSource, Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
 import { User } from '../user/entities/user.entity';
 import { ResponseDto } from '../common/dto/responseDto';
-import { StatusCodeEnum } from '../common/enum/status.enum';
-import { ResponseMessageEnum } from '../common/enum/message.enum';
-import { ReviewCountByUserRank, UserRank } from '../user/user.enum';
+import { EStatusCode } from '../common/enum/status.enum';
+import { EResponseMessage } from '../common/enum/message.enum';
+import { UserRank } from '../user/user.enum';
 import { getIsNextRank } from './review.util';
 
 @Injectable()
@@ -101,9 +101,9 @@ export class ReviewService {
 
       await queryRunner.commitTransaction();
       return new ResponseDto(
-        StatusCodeEnum.CREATED,
+        EStatusCode.CREATED,
         { review: newReview, averageScore },
-        ResponseMessageEnum.SUCCESS,
+        EResponseMessage.SUCCESS,
       );
     } catch (error) {
       console.error(error);
@@ -121,11 +121,7 @@ export class ReviewService {
       },
     });
 
-    return new ResponseDto(
-      StatusCodeEnum.OK,
-      review,
-      ResponseMessageEnum.SUCCESS,
-    );
+    return new ResponseDto(EStatusCode.OK, review, EResponseMessage.SUCCESS);
   }
 
   async updateMyReview(
@@ -152,12 +148,12 @@ export class ReviewService {
     );
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       {
         ...review,
         ...updateReviewDto,
       },
-      ResponseMessageEnum.UPDATE_SUCCESS,
+      EResponseMessage.UPDATE_SUCCESS,
     );
   }
 }

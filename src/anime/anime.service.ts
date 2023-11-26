@@ -11,11 +11,8 @@ import { DataSource, IsNull, Like, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { ResponseDto } from '../common/dto/responseDto';
-import { StatusCodeEnum } from '../common/enum/status.enum';
-import {
-  ErrorMessageEnum,
-  ResponseMessageEnum,
-} from '../common/enum/message.enum';
+import { EStatusCode } from '../common/enum/status.enum';
+import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
 import { AnimeOrder } from './anime.enum';
 import { Crew } from '../crew/entities/crew.entity';
 import { Tag } from '../tag/entities/tag.entity';
@@ -158,9 +155,9 @@ export class AnimeService {
       await queryRunner.commitTransaction();
 
       return new ResponseDto(
-        StatusCodeEnum.CREATED,
+        EStatusCode.CREATED,
         anime,
-        ResponseMessageEnum.SUCCESS,
+        EResponseMessage.SUCCESS,
       );
     } catch (err) {
       console.error(err);
@@ -279,9 +276,9 @@ export class AnimeService {
     const total = await animeListQuery.getCount();
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       { animes: result, total },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -401,9 +398,9 @@ export class AnimeService {
     const total = await animeListQuery.getCount();
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       { animes: result, total },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -434,13 +431,13 @@ export class AnimeService {
     }
 
     if (!anime) {
-      throw new NotFoundException(ErrorMessageEnum.NOT_FOUND);
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
     }
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       { anime, scrap },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -522,9 +519,9 @@ export class AnimeService {
     await queryRunner.commitTransaction();
 
     return new ResponseDto(
-      StatusCodeEnum.CREATED,
+      EStatusCode.CREATED,
       updatedAnime,
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -541,11 +538,7 @@ export class AnimeService {
     await this.reviewRepository.remove(anime.reviews);
     await this.animeRepository.remove(anime);
 
-    return new ResponseDto(
-      StatusCodeEnum.OK,
-      null,
-      ResponseMessageEnum.DELETE_ITEM,
-    );
+    return new ResponseDto(EStatusCode.OK, null, EResponseMessage.DELETE_ITEM);
   }
 
   async getAnimeSeries() {
@@ -556,11 +549,11 @@ export class AnimeService {
     });
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       {
         animes,
       },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -580,12 +573,12 @@ export class AnimeService {
     const series = animes.find((anime) => anime.id === seriesId);
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       {
         animes: animes.filter((anime) => anime.id !== seriesId),
         series,
       },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 }

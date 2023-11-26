@@ -14,12 +14,8 @@ import { SignInDto } from './dto/sign-in.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseDto } from '../common/dto/responseDto';
-import { StatusCodeEnum } from '../common/enum/status.enum';
-import { Request } from 'express';
-import {
-  ErrorMessageEnum,
-  ResponseMessageEnum,
-} from '../common/enum/message.enum';
+import { EStatusCode } from '../common/enum/status.enum';
+import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
 import { UserRank, UserRankName } from './user.enum';
 
 @Injectable()
@@ -49,9 +45,9 @@ export class UserService {
     try {
       await this.userRepository.insert(user);
       return new ResponseDto(
-        StatusCodeEnum.CREATED,
+        EStatusCode.CREATED,
         null,
-        ResponseMessageEnum.SUCCESS,
+        EResponseMessage.SUCCESS,
       );
     } catch (err) {
       if (err.errno === 1062) {
@@ -88,9 +84,9 @@ export class UserService {
       delete newUser.password;
 
       return new ResponseDto(
-        StatusCodeEnum.OK,
+        EStatusCode.OK,
         { accessToken, user: newUser },
-        ResponseMessageEnum.LOGIN_SUCCESS,
+        EResponseMessage.LOGIN_SUCCESS,
       );
     } else {
       throw new UnauthorizedException('login Failed');
@@ -109,9 +105,9 @@ export class UserService {
     await this.userRepository.save(newUser);
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       null,
-      ResponseMessageEnum.PASSWORD_UPDATE_SUCCESS,
+      EResponseMessage.PASSWORD_UPDATE_SUCCESS,
     );
   }
 
@@ -124,9 +120,9 @@ export class UserService {
     await this.userRepository.update({ id: user.id }, newUser);
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       null,
-      ResponseMessageEnum.USER_UPDATE_SUCCESS,
+      EResponseMessage.USER_UPDATE_SUCCESS,
     );
   }
 
@@ -136,9 +132,9 @@ export class UserService {
     await this.userRepository.remove(currentUser);
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       null,
-      ResponseMessageEnum.DELETE_ACCOUNT,
+      EResponseMessage.DELETE_ACCOUNT,
     );
   }
 
@@ -150,21 +146,17 @@ export class UserService {
     });
 
     if (!user) {
-      throw new NotFoundException(ErrorMessageEnum.NOT_FOUND_USER);
+      throw new NotFoundException(EErrorMessage.NOT_FOUND_USER);
     }
 
     return new ResponseDto(
-      StatusCodeEnum.OK,
+      EStatusCode.OK,
       { ...user, rank: UserRankName[user.rank] },
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
   async getUserInfo(user: User) {
-    return new ResponseDto(
-      StatusCodeEnum.OK,
-      user,
-      ResponseMessageEnum.SUCCESS,
-    );
+    return new ResponseDto(EStatusCode.OK, user, EResponseMessage.SUCCESS);
   }
 }

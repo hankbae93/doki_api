@@ -10,8 +10,8 @@ import { Scrap } from './entities/scrap.entity';
 import { Repository } from 'typeorm';
 import { Anime } from '../anime/entities/anime.entity';
 import { ResponseDto } from '../common/dto/responseDto';
-import { StatusCodeEnum } from '../common/enum/status.enum';
-import { ResponseMessageEnum } from '../common/enum/message.enum';
+import { EStatusCode } from '../common/enum/status.enum';
+import { EResponseMessage } from '../common/enum/message.enum';
 
 @Injectable()
 export class ScrapService {
@@ -32,11 +32,7 @@ export class ScrapService {
       relations: ['anime'],
     });
 
-    return new ResponseDto(
-      StatusCodeEnum.OK,
-      scraps,
-      ResponseMessageEnum.SUCCESS,
-    );
+    return new ResponseDto(EStatusCode.OK, scraps, EResponseMessage.SUCCESS);
   }
   async scrapAnime(animeId: number, user: User) {
     const anime = await this.animeRepository.findOne({
@@ -68,9 +64,9 @@ export class ScrapService {
     await this.scrapRepository.insert(newScrap);
 
     return new ResponseDto(
-      StatusCodeEnum.CREATED,
+      EStatusCode.CREATED,
       newScrap,
-      ResponseMessageEnum.SUCCESS,
+      EResponseMessage.SUCCESS,
     );
   }
 
@@ -93,11 +89,7 @@ export class ScrapService {
 
     await this.scrapRepository.remove(scrap);
 
-    return new ResponseDto(
-      StatusCodeEnum.OK,
-      null,
-      ResponseMessageEnum.DELETE_ITEM,
-    );
+    return new ResponseDto(EStatusCode.OK, null, EResponseMessage.DELETE_ITEM);
   }
 
   findAll() {

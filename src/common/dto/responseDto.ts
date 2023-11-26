@@ -1,7 +1,7 @@
-import { StatusCodeEnum } from '../enum/status.enum';
+import { EStatusCode } from '../enum/status.enum';
 
 export class ResponseDto {
-  constructor(statusCode: StatusCodeEnum, data?: any, message?: string) {
+  constructor(statusCode: EStatusCode, data?: any, message?: string) {
     this.statusCode = statusCode;
     this.data = data;
     this.message = message;
