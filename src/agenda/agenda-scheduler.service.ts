@@ -1,77 +1,73 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Agenda } from './entities/agenda.entity';
-import { DataSource, Repository } from 'typeorm';
-import { AgendaOption } from './entities/agenda-option.entity';
-import { AgendaPeriod } from './entities/agenda-period.entity';
-import { AgendaCandidate } from './entities/agenda-candidate.entity';
-import { AgendaCandidateVote } from './entities/agenda-canidate-vote.entity';
-import { AgendaVote } from './entities/agenda-vote.entity';
-import { MILLISECONDS_A_MINUTE } from '../common/constants/time';
-import { AgendaPeriodType } from './agenda.enum';
+import { Cron } from '@nestjs/schedule';
+import { AgendaPeriodRepository } from './repository/agenda-period.repository';
+import { AgendaService } from './agenda.service';
 
 @Injectable()
 export class AgendaSchedulerService {
   private readonly logger = new Logger(AgendaSchedulerService.name);
 
   constructor(
-    @InjectRepository(Agenda)
-    private agendaRepository: Repository<Agenda>,
-
-    @InjectRepository(AgendaOption)
-    private agendaOptionRepository: Repository<AgendaOption>,
-
-    @InjectRepository(AgendaPeriod)
-    private agendaPeriodRepository: Repository<AgendaPeriod>,
-
-    @InjectRepository(AgendaCandidate)
-    private agendaCandidateRepository: Repository<AgendaCandidate>,
-
-    @InjectRepository(AgendaCandidateVote)
-    private agendaCandidateVoteRepository: Repository<AgendaCandidateVote>,
-
-    @InjectRepository(AgendaVote)
-    private agendaVoteRepository: Repository<AgendaVote>,
-
-    private dataSource: DataSource,
+    private readonly agendaPeriodRepository: AgendaPeriodRepository,
+    private agendaService: AgendaService,
   ) {}
 
-  @Cron(CronExpression.EVERY_8_HOURS)
-  async schedulePeriod() {
-    this.logger.debug('SCHEDULE PERIOD');
-    const currentPeriod = await this.agendaPeriodRepository.findOne({
-      where: {},
-      order: { id: 'DESC' },
-    });
+  // @Cron('*/30 * * * * *')
+  // async schedulePeriod() {
+  //   this.logger.log('SCHEDULE START');
+  //   try {
+  //     const period = await this.agendaPeriodRepository.findCurrentPeriod();
+  //     const isValidTime = validTime(period.endTime);
+  //     if (!isValidTime) {
+  //       throw new Error(EErrorMessage.NOT_TIME_YET);
+  //     }
+  //
+  //     if (period.type === AgendaPeriodType.READY) {
+  //       await this.scheduleReady();
+  //     } else if (period.type === AgendaPeriodType.CANDIDATE) {
+  //       await this.scheduleNominate();
+  //     } else if (period.type === AgendaPeriodType.VOTE) {
+  //       await this.scheduleVote();
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   } finally {
+  //     this.logger.log('SCHEDULE END');
+  //   }
+  // }
 
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + MILLISECONDS_A_MINUTE * 5);
-    if (
-      currentPeriod &&
-      startTime.getTime() < currentPeriod.endTime.getTime()
-    ) {
-      return this.logger.log("can't create period, it's not time yet");
+  // 월요일 00:00:00 호출
+  @Cron('0 0 * * 1')
+  async scheduleReady() {
+    this.logger.log('READY START');
+    const { data: period } = await this.agendaService.createPeriod();
+    console.log(`${period.type} : ${period.startTime} ~ ${period.endTime}`);
+    this.logger.log('READY END');
+  }
+
+  // 화요일 00:00:00 호출
+  @Cron('0 0 * * 2')
+  async scheduleNominate() {
+    this.logger.log('NOMINATED START');
+    const data = await this.agendaService.nominateAgenda();
+    const { data: period } = await this.agendaService.createPeriod();
+    console.log(`${period.type} : ${period.startTime} ~ ${period.endTime}`);
+    this.logger.log('NOMINATED END', data);
+  }
+
+  // 수요일 00:00:00 호출
+  @Cron('0 0 * * 3')
+  async scheduleVote() {
+    this.logger.log('VOTE START');
+    // 정산이 됐는지 확인해야함
+    const period = await this.agendaPeriodRepository.findCurrentPeriod();
+    const winner = await this.agendaService.getWinnerAgendaListByPeriod(
+      period.id,
+    );
+    if (winner) {
+      throw new Error('Complete vote settlement');
     }
-
-    function getType(type: AgendaPeriodType) {
-      switch (type) {
-        case AgendaPeriodType.READY:
-          return AgendaPeriodType.CANDIDATE;
-        case AgendaPeriodType.CANDIDATE:
-          return AgendaPeriodType.VOTE;
-        case AgendaPeriodType.VOTE:
-          return AgendaPeriodType.READY;
-        default:
-          return AgendaPeriodType.READY;
-      }
-    }
-
-    await this.agendaPeriodRepository.insert({
-      startTime,
-      endTime,
-      type: getType(currentPeriod?.type),
-    });
-    this.logger.log(`CREATED PERIOD [${getType(currentPeriod?.type)}]`);
+    const data = await this.agendaService.winAgendaVoteThisWeek();
+    this.logger.log('VOTE END', data);
   }
 }

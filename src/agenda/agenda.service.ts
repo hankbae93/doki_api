@@ -190,15 +190,26 @@ export class AgendaService {
       }
     } else {
       const agenda = await this.agendaRepository.findAgendaById(agendaId);
-      const newNominateAgenda = await this.agendaCandidateRepository.saveRecord(
-        agenda,
-        currentPeriod,
-      );
+      const agendaCandidate =
+        await this.agendaCandidateRepository.findCandidateAgendaById(agendaId);
 
-      await this.agendaCandidateVoteRepository.insertRecord(
-        user,
-        newNominateAgenda,
-      );
+      if (agendaCandidate) {
+        await this.agendaCandidateRepository.updateAgendaPeriod(
+          agendaCandidate.id,
+          currentPeriod,
+        );
+      } else {
+        const newNominateAgenda =
+          await this.agendaCandidateRepository.saveRecord(
+            agenda,
+            currentPeriod,
+          );
+
+        await this.agendaCandidateVoteRepository.insertRecord(
+          user,
+          newNominateAgenda,
+        );
+      }
     }
 
     return new ResponseDto(
@@ -240,6 +251,7 @@ export class AgendaService {
       currentPeriod.id,
       queryRunner.manager,
     );
+
     const winner = candidates.shift();
 
     try {
@@ -304,9 +316,10 @@ export class AgendaService {
     user: User,
   ) {
     const { optionId } = voteAgendaDto;
-    const agendaCandidate = await this.agendaCandidateRepository.findAgendaById(
-      agendaCandidateId,
-    );
+    const agendaCandidate =
+      await this.agendaCandidateRepository.findCandidateAgendaById(
+        agendaCandidateId,
+      );
 
     const agendaOptions =
       await this.agendaOptionRepository.findAgendaOptionList(

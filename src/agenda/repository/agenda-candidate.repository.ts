@@ -20,10 +20,21 @@ export class AgendaCandidateRepository extends Repository<AgendaCandidate> {
     return manager ? manager.getRepository(AgendaCandidate) : this;
   }
 
-  findAgendaById(id: number) {
+  findCandidateAgendaById(id: number) {
     return this.findOne({
       where: {
         id,
+      },
+      relations: ['agenda'],
+    });
+  }
+
+  findCandidateAgendaByAgendaId(agendaId: number) {
+    return this.findOne({
+      where: {
+        agenda: {
+          id: agendaId,
+        },
       },
       relations: ['agenda'],
     });
@@ -177,6 +188,12 @@ export class AgendaCandidateRepository extends Repository<AgendaCandidate> {
   updatePriority(agendaCandidateIds: number[], manger?: EntityManager) {
     return this.setManager(manger).update(agendaCandidateIds, {
       priority: true,
+    });
+  }
+
+  updateAgendaPeriod(agendaCandidateId: number, agendaPeriod: AgendaPeriod) {
+    return this.update(agendaCandidateId, {
+      agendaPeriod,
     });
   }
 
