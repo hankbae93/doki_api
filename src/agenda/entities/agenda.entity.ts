@@ -2,6 +2,7 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -15,9 +16,6 @@ export class Agenda extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, (user) => user.agendas)
-  user: User;
-
   @Column()
   title: string;
 
@@ -29,4 +27,8 @@ export class Agenda extends BaseEntity {
 
   @OneToMany(() => AgendaVote, (agendaVote) => agendaVote.agenda)
   agendaVotes: AgendaVote[];
+
+  @ManyToOne(() => User, (user) => user.agendas)
+  @JoinColumn({ foreignKeyConstraintName: 'fk_user_agendas' })
+  user: User;
 }

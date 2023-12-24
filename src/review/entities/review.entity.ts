@@ -2,6 +2,7 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -29,5 +30,6 @@ export class Review extends BaseEntity {
   anime: Anime;
 
   @ManyToOne(() => User, (user) => user.reviews)
+  @JoinColumn({ foreignKeyConstraintName: 'fk_user_reviews' })
   user: User;
 }

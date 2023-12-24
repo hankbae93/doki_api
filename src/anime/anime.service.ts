@@ -142,7 +142,7 @@ export class AnimeService {
         })),
       );
 
-      if (files.video[0]) {
+      if (files.video && files.video[0]) {
         const newVideo = await videoRepository.create({
           anime,
           fileName: files.video[0].path,

@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -14,31 +15,31 @@ import { AgendaCandidateVote } from '../../agenda/entities/agenda-canidate-vote.
 import { AgendaVote } from '../../agenda/entities/agenda-vote.entity';
 
 @Entity()
-@Unique(['email', 'nickname'])
+@Unique('uq_user_email', ['email'])
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column('varchar', { name: 'email', nullable: false, length: 50 })
   email: string;
 
-  @Column({ select: false })
+  @Column('text', { select: false, nullable: false })
   password: string;
 
-  @Column()
+  @Column('varchar', { name: 'nickname', length: 20 })
   nickname: string;
 
-  @Column('longtext')
+  @Column('varchar', { length: 1000 })
   description: string;
 
-  @Column()
+  @Column('varchar', { length: 50 })
   profile: string;
 
-  @Column()
+  @Column({ type: 'enum', enum: UserRank, default: UserRank.d })
   rank: UserRank;
 
-  @Column()
-  createdAt: string;
+  @CreateDateColumn()
+  createdAt: Date;
 
   @OneToMany(() => Anime, (anime) => anime.user)
   animes: Anime[];

@@ -2,6 +2,7 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
   ManyToOne,
@@ -57,6 +58,7 @@ export class Anime extends BaseEntity {
   videos: Video[];
 
   @ManyToOne(() => User, (user) => user.animes, { eager: false })
+  @JoinColumn({ foreignKeyConstraintName: 'fk_user_animes' })
   user: User;
 
   @ManyToOne(() => Crew, (crew) => crew.animes, { eager: false })

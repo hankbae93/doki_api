@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Anime } from '../../anime/entities/anime.entity';
 import { User } from '../../user/entities/user.entity';
 
@@ -11,5 +11,6 @@ export class Scrap {
   anime: Anime;
 
   @ManyToOne(() => User, (user) => user.scraps)
+  @JoinColumn({ foreignKeyConstraintName: 'fk_user_scraps' })
   user: User;
 }
