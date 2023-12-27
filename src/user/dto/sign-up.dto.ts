@@ -1,7 +1,6 @@
 import {
   IsEmail,
   IsNotEmpty,
-  IsOptional,
   IsString,
   Matches,
   MaxLength,
@@ -22,7 +21,7 @@ export class SignUpDto {
   @IsNotEmpty()
   password: string;
 
-  @MaxLength(12)
+  @MaxLength(20)
   @IsString()
   @IsNotEmpty()
   nickname: string;

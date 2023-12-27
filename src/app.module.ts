@@ -5,22 +5,16 @@ import { User } from './user/entities/user.entity';
 import { Anime } from './anime/entities/anime.entity';
 import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
-import { CrewModule } from './crew/crew.module';
+
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { TagModule } from './tag/tag.module';
 import { ReviewModule } from './review/review.module';
-import { SongModule } from './song/song.module';
 import { Review } from './review/entities/review.entity';
 import { Tag } from './tag/entities/tag.entity';
-import { Song } from './song/entities/song.entity';
-import { Crew } from './crew/entities/crew.entity';
 import { ScrapModule } from './scrap/scrap.module';
 import { Scrap } from './scrap/entities/scrap.entity';
 import { ImageModule } from './image/image.module';
 import { Image } from './image/entities/image.entity';
-import { FileModule } from './file/file.module';
-import { VideoModule } from './video/video.module';
-import { Video } from './video/entities/video.entity';
 import { AgendaModule } from './agenda/agenda.module';
 import { Agenda } from './agenda/entities/agenda.entity';
 import { AgendaOption } from './agenda/entities/agenda-option.entity';
@@ -46,11 +40,8 @@ import { ScheduleModule } from '@nestjs/schedule';
         Anime,
         Review,
         Tag,
-        Song,
-        Crew,
         Scrap,
         Image,
-        Video,
         Agenda,
         AgendaOption,
         AgendaPeriod,
@@ -64,14 +55,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     AnimeModule,
     UserModule,
-    CrewModule,
     TagModule,
     ReviewModule,
-    SongModule,
     ScrapModule,
     ImageModule,
-    FileModule,
-    VideoModule,
     AgendaModule,
   ],
 })

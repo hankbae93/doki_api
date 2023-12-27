@@ -27,6 +27,7 @@ export class Review extends BaseEntity {
     onDelete: 'CASCADE',
     nullable: false,
   })
+  @JoinColumn({ foreignKeyConstraintName: 'fk_anime_reviews' })
   anime: Anime;
 
   @ManyToOne(() => User, (user) => user.reviews)

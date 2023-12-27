@@ -20,22 +20,25 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('varchar', { name: 'email', nullable: false, length: 50 })
+  @Column('varchar', { name: 'email', length: 50 })
   email: string;
 
-  @Column('text', { select: false, nullable: false })
+  @Column('text', { select: false })
   password: string;
 
   @Column('varchar', { name: 'nickname', length: 20 })
   nickname: string;
 
-  @Column('varchar', { length: 1000 })
+  @Column('varchar', { length: 1000, nullable: true })
   description: string;
 
-  @Column('varchar', { length: 50 })
+  @Column({ nullable: true })
   profile: string;
 
-  @Column({ type: 'enum', enum: UserRank, default: UserRank.d })
+  @Column({ default: false })
+  retired: boolean;
+
+  @Column('enum', { enum: UserRank, default: UserRank.d })
   rank: UserRank;
 
   @CreateDateColumn()

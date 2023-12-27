@@ -2,6 +2,7 @@ import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
@@ -14,15 +15,12 @@ export class Image extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({
-    length: 100,
-    nullable: false,
-  })
+  @Column()
   fileName: string;
 
   @ManyToOne(() => Anime, (anime) => anime.images, {
     onDelete: 'CASCADE',
-    nullable: false,
   })
+  @JoinColumn({ foreignKeyConstraintName: 'fk_anime_images' })
   anime: Anime;
 }

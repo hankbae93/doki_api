@@ -14,11 +14,9 @@ import { ResponseDto } from '../common/dto/responseDto';
 import { EStatusCode } from '../common/enum/status.enum';
 import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
 import { AnimeOrder } from './anime.enum';
-import { Crew } from '../crew/entities/crew.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
 import { Image } from '../image/entities/image.entity';
-import { Video } from '../video/entities/video.entity';
 import { Review } from '../review/entities/review.entity';
 
 @Injectable()
@@ -26,8 +24,6 @@ export class AnimeService {
   constructor(
     @InjectRepository(Anime)
     private animeRepository: Repository<Anime>,
-    @InjectRepository(Crew)
-    private crewRepository: Repository<Crew>,
     @InjectRepository(Tag)
     private tagRepository: Repository<Tag>,
     @InjectRepository(Scrap)
@@ -60,13 +56,11 @@ export class AnimeService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     const animeRepository = this.dataSource.manager.getRepository(Anime);
-    const crewRepository = this.dataSource.manager.getRepository(Crew);
     const tagRepository = this.dataSource.manager.getRepository(Tag);
     const imageRepository = this.dataSource.manager.getRepository(Image);
-    const videoRepository = this.dataSource.manager.getRepository(Video);
 
     try {
-      let crewWithRelations: Crew;
+      // let crewWithRelations: Crew;
       let animeParentId: number | null = null;
       if (series) {
         const originAnime = await animeRepository.findOne({
@@ -79,19 +73,19 @@ export class AnimeService {
         }
       }
 
-      const originCrew = await crewRepository.findOne({
-        where: {
-          name: crew,
-        },
-      });
-
-      if (!originCrew) {
-        crewWithRelations = await crewRepository.create({
-          name: crew,
-        });
-
-        await crewRepository.save(crewWithRelations);
-      }
+      // const originCrew = await crewRepository.findOne({
+      //   where: {
+      //     name: crew,
+      //   },
+      // });
+      //
+      // if (!originCrew) {
+      //   crewWithRelations = await crewRepository.create({
+      //     name: crew,
+      //   });
+      //
+      //   await crewRepository.save(crewWithRelations);
+      // }
 
       const tagsData: Tag[] = [];
       if (tags.length !== 0) {
@@ -128,7 +122,7 @@ export class AnimeService {
         animeParentId,
         thumbnail: files.file[0].path,
         description,
-        crew: crewWithRelations || originCrew,
+        // crew: crewWithRelations || originCrew,
         tags: tagsData.length === 0 ? null : tagsData,
         user,
       });
@@ -141,14 +135,14 @@ export class AnimeService {
           fileName: file.path,
         })),
       );
-
-      if (files.video && files.video[0]) {
-        const newVideo = await videoRepository.create({
-          anime,
-          fileName: files.video[0].path,
-        });
-        await videoRepository.insert(newVideo);
-      }
+      //
+      // if (files.video && files.video[0]) {
+      //   const newVideo = await videoRepository.create({
+      //     anime,
+      //     fileName: files.video[0].path,
+      //   });
+      //   await videoRepository.insert(newVideo);
+      // }
 
       await imageRepository.insert(newImages);
 
@@ -192,8 +186,7 @@ export class AnimeService {
     const animeListQuery = this.animeRepository
       .createQueryBuilder('anime')
       .leftJoin('anime.reviews', 'review')
-      .leftJoin('anime.scraps', 'scrap')
-      .leftJoin('anime.videos', 'video');
+      .leftJoin('anime.scraps', 'scrap');
 
     if (tag) {
       animeListQuery
@@ -315,8 +308,7 @@ export class AnimeService {
 
     const animeListQuery = this.animeRepository
       .createQueryBuilder('anime')
-      .leftJoin('anime.reviews', 'review')
-      .leftJoin('anime.videos', 'video');
+      .leftJoin('anime.reviews', 'review');
 
     if (tag) {
       animeListQuery
@@ -452,7 +444,7 @@ export class AnimeService {
       description,
     } = updateAnimeDto;
 
-    let crewWithRelations: Crew;
+    // let crewWithRelations: Crew;
 
     const anime = await this.animeRepository.findOneBy({ id });
 
@@ -461,21 +453,21 @@ export class AnimeService {
     await queryRunner.startTransaction();
     const animeRepository = this.dataSource.manager.getRepository(Anime);
     const tagRepository = this.dataSource.manager.getRepository(Tag);
-    const crewRepository = this.dataSource.manager.getRepository(Crew);
+    // const crewRepository = this.dataSource.manager.getRepository(Crew);
 
-    const originCrew = await crewRepository.findOne({
-      where: {
-        name: crew,
-      },
-    });
+    // const originCrew = await crewRepository.findOne({
+    //   where: {
+    //     name: crew,
+    //   },
+    // });
 
-    if (!originCrew) {
-      crewWithRelations = await crewRepository.create({
-        name: crew,
-      });
-
-      await crewRepository.insert(crewWithRelations);
-    }
+    // if (!originCrew) {
+    //   crewWithRelations = await crewRepository.create({
+    //     name: crew,
+    //   });
+    //
+    //   await crewRepository.insert(crewWithRelations);
+    // }
 
     const tagsData: Tag[] = [];
     if (tags.length !== 0) {
@@ -512,7 +504,7 @@ export class AnimeService {
       animeParentId: null,
       thumbnail,
       description,
-      crew: crewWithRelations || originCrew,
+      // crew: crewWithRelations || originCrew,
       tags: tagsData,
     });
 

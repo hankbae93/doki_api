@@ -3,7 +3,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UpdateScrapDto } from './dto/update-scrap.dto';
 import { User } from '../user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Scrap } from './entities/scrap.entity';
@@ -90,21 +89,5 @@ export class ScrapService {
     await this.scrapRepository.remove(scrap);
 
     return new ResponseDto(EStatusCode.OK, null, EResponseMessage.DELETE_ITEM);
-  }
-
-  findAll() {
-    return `This action returns all scrap`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} scrap`;
-  }
-
-  update(id: number, updateScrapDto: UpdateScrapDto) {
-    return `This action updates a #${id} scrap`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} scrap`;
   }
 }

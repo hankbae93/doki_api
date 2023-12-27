@@ -8,6 +8,7 @@ export class Scrap {
   id: number;
 
   @ManyToOne(() => Anime, (anime) => anime.scraps)
+  @JoinColumn({ foreignKeyConstraintName: 'fk_anime_scraps' })
   anime: Anime;
 
   @ManyToOne(() => User, (user) => user.scraps)

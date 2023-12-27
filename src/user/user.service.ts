@@ -6,9 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from './dto/sign-up.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { SignInDto } from './dto/sign-in.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -16,19 +14,23 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseDto } from '../common/dto/responseDto';
 import { EStatusCode } from '../common/enum/status.enum';
 import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
-import { UserRank, UserRankName } from './user.enum';
+import { UserRankName } from './user.enum';
+import { UserRepository } from './repository/user.repository';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly userRepository: UserRepository,
     private jwtService: JwtService,
-    private dataSource: DataSource,
   ) {}
 
   async signUp(signUpDto: SignUpDto) {
     const { email, password, nickname } = signUpDto;
+
+    const isUser = await this.userRepository.findRawOneByEmail(email);
+    if (isUser) {
+      throw new ConflictException('Existing User Email');
+    }
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -36,73 +38,55 @@ export class UserService {
       email,
       password: hashedPassword,
       nickname,
-      description: '',
-      rank: UserRank.d,
-      profile: '',
-      createdAt: new Date().toISOString(),
     });
 
-    try {
-      await this.userRepository.insert(user);
-      return new ResponseDto(
-        EStatusCode.CREATED,
-        null,
-        EResponseMessage.SUCCESS,
-      );
-    } catch (err) {
-      if (err.errno === 1062) {
-        throw new ConflictException('Existing User Email');
-      }
-      throw new ConflictException('Server Error');
-    }
+    await this.userRepository.insert(user);
+    return new ResponseDto(
+      EStatusCode.CREATED,
+      null,
+      EResponseMessage.SIGN_UP_SUCCESS,
+    );
   }
 
   async signIn(signInDto: SignInDto) {
     const { email, password } = signInDto;
-
-    const user = await this.dataSource
-      .getRepository(User)
-      .createQueryBuilder('user')
-      .select('*')
-      .where('email = :email', { email: email })
-      .getRawOne();
+    const user = await this.userRepository.findRawOneByEmail(email);
 
     if (!user) {
       throw new NotFoundException('login Failed');
     }
 
+    if (user.retired) {
+      throw new NotFoundException('Retired Account, please contact FAQ pages');
+    }
+
     const isCorrectPassword = await bcrypt.compare(password, user.password);
-
-    if (user && isCorrectPassword) {
-      const payload = { email };
-      const accessToken = await this.jwtService.signAsync(payload);
-      const newUser = {
-        ...user,
-        rank: UserRankName[user.rank],
-      };
-
-      delete newUser.password;
-
-      return new ResponseDto(
-        EStatusCode.OK,
-        { accessToken, user: newUser },
-        EResponseMessage.LOGIN_SUCCESS,
-      );
-    } else {
+    if (!isCorrectPassword) {
       throw new UnauthorizedException('login Failed');
     }
+
+    const payload = { email };
+    const accessToken = await this.jwtService.signAsync(payload);
+    const userInfo: User = Object.assign(user, {
+      rank: UserRankName[user.rank],
+    });
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      { accessToken, user: userInfo },
+      EResponseMessage.LOGIN_SUCCESS,
+    );
   }
 
   async changePassword(changePasswordDto: ChangePasswordDto, user: User) {
-    const password = changePasswordDto.password;
+    const { password } = changePasswordDto;
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
-    const newUser = {
-      ...user,
-      password: hashedPassword,
-    };
 
-    await this.userRepository.save(newUser);
+    await this.userRepository.update(
+      { id: user.id },
+      { password: hashedPassword },
+    );
 
     return new ResponseDto(
       EStatusCode.OK,
@@ -112,11 +96,7 @@ export class UserService {
   }
 
   async updateProfile(updateProfileDto: UpdateProfileDto, user: User) {
-    const newUser = {
-      ...user,
-      ...updateProfileDto,
-    };
-
+    const newUser: User = Object.assign(user, updateProfileDto);
     await this.userRepository.update({ id: user.id }, newUser);
 
     return new ResponseDto(
@@ -127,9 +107,12 @@ export class UserService {
   }
 
   async deleteAccount(user: User) {
-    const currentUser = await this.userRepository.findOneBy({ id: user.id });
-
-    await this.userRepository.remove(currentUser);
+    await this.userRepository.update(
+      { id: user.id },
+      {
+        retired: true,
+      },
+    );
 
     return new ResponseDto(
       EStatusCode.OK,
@@ -139,11 +122,7 @@ export class UserService {
   }
 
   async getUserProfile(nickname: string) {
-    const user = await this.userRepository.findOne({
-      select: ['id', 'nickname', 'description', 'rank', 'createdAt'],
-      where: { nickname },
-      relations: ['animes'],
-    });
+    const user = await this.userRepository.findProfileByNickname(nickname);
 
     if (!user) {
       throw new NotFoundException(EErrorMessage.NOT_FOUND_USER);
@@ -156,7 +135,7 @@ export class UserService {
     );
   }
 
-  async getUserInfo(user: User) {
+  getUserInfo(user: User) {
     return new ResponseDto(EStatusCode.OK, user, EResponseMessage.SUCCESS);
   }
 }
