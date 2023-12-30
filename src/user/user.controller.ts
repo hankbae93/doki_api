@@ -20,27 +20,27 @@ import { ApiTags } from '@nestjs/swagger';
 @Controller('user')
 @ApiTags('USER & AUTH')
 export class UserController {
-  constructor(private authService: UserService) {}
+  constructor(private userService: UserService) {}
 
-  @Get('/info')
+  @Get('info')
   @UseGuards(AuthGuard())
   getUserInfo(@GetUser() user: User) {
-    return this.authService.getUserInfo(user);
+    return this.userService.getUserInfo(user);
   }
 
   @Get(':nickname')
   getUserProfile(@Param('nickname') nickname) {
-    return this.authService.getUserProfile(nickname);
+    return this.userService.getUserProfile(nickname);
   }
 
   @Post('signup')
   signUp(@Body() signUpDto: SignUpDto) {
-    return this.authService.signUp(signUpDto);
+    return this.userService.signUp(signUpDto);
   }
 
   @Post('signin')
   signIn(@Body() signInDto: SignInDto) {
-    return this.authService.signIn(signInDto);
+    return this.userService.signIn(signInDto);
   }
 
   @Post('password')
@@ -49,7 +49,7 @@ export class UserController {
     @Body() changePasswordDto: ChangePasswordDto,
     @GetUser() user: User,
   ) {
-    return this.authService.changePassword(changePasswordDto, user);
+    return this.userService.changePassword(changePasswordDto, user);
   }
 
   @Post('profile')
@@ -58,12 +58,12 @@ export class UserController {
     @Body() updateProfileDto: UpdateProfileDto,
     @GetUser() user: User,
   ) {
-    return this.authService.updateProfile(updateProfileDto, user);
+    return this.userService.updateProfile(updateProfileDto, user);
   }
 
   @Delete('delete')
   @UseGuards(AuthGuard())
   deleteAccount(@GetUser() user: User) {
-    return this.authService.deleteAccount(user);
+    return this.userService.deleteAccount(user);
   }
 }

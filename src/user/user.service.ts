@@ -24,12 +24,30 @@ export class UserService {
     private jwtService: JwtService,
   ) {}
 
+  getUserInfo(user: User) {
+    return new ResponseDto(EStatusCode.OK, user, EResponseMessage.SUCCESS);
+  }
+
+  async getUserProfile(nickname: string) {
+    const user = await this.userRepository.findProfileByNickname(nickname);
+
+    if (!user) {
+      throw new NotFoundException(EErrorMessage.NOT_FOUND_USER);
+    }
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      { ...user, rank: UserRankName[user.rank] },
+      EResponseMessage.SUCCESS,
+    );
+  }
+
   async signUp(signUpDto: SignUpDto) {
     const { email, password, nickname } = signUpDto;
 
     const isUser = await this.userRepository.findRawOneByEmail(email);
     if (isUser) {
-      throw new ConflictException('Existing User Email');
+      throw new ConflictException(EErrorMessage.EXISITING_USER);
     }
 
     const salt = await bcrypt.genSalt();
@@ -53,7 +71,7 @@ export class UserService {
     const user = await this.userRepository.findRawOneByEmail(email);
 
     if (!user) {
-      throw new NotFoundException('login Failed');
+      throw new NotFoundException(EErrorMessage.LOGIN_FAILED);
     }
 
     if (user.retired) {
@@ -62,7 +80,7 @@ export class UserService {
 
     const isCorrectPassword = await bcrypt.compare(password, user.password);
     if (!isCorrectPassword) {
-      throw new UnauthorizedException('login Failed');
+      throw new UnauthorizedException(EErrorMessage.LOGIN_FAILED);
     }
 
     const payload = { email };
@@ -119,23 +137,5 @@ export class UserService {
       null,
       EResponseMessage.DELETE_ACCOUNT,
     );
-  }
-
-  async getUserProfile(nickname: string) {
-    const user = await this.userRepository.findProfileByNickname(nickname);
-
-    if (!user) {
-      throw new NotFoundException(EErrorMessage.NOT_FOUND_USER);
-    }
-
-    return new ResponseDto(
-      EStatusCode.OK,
-      { ...user, rank: UserRankName[user.rank] },
-      EResponseMessage.SUCCESS,
-    );
-  }
-
-  getUserInfo(user: User) {
-    return new ResponseDto(EStatusCode.OK, user, EResponseMessage.SUCCESS);
   }
 }
