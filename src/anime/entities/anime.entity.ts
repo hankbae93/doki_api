@@ -14,7 +14,7 @@ import { AnimeSource } from '../anime.enum';
 import { Review } from '../../review/entities/review.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Tag } from '../../tag/entities/tag.entity';
-import { Image } from '../../image/entities/image.entity';
+import { Image } from './image.entity';
 
 @Entity()
 export class Anime extends BaseEntity {

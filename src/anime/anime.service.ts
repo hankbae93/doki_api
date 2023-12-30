@@ -7,23 +7,22 @@ import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
-import { DataSource, IsNull, Like, Repository } from 'typeorm';
+import { DataSource, Like, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { ResponseDto } from '../common/dto/responseDto';
 import { EStatusCode } from '../common/enum/status.enum';
 import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
-import { AnimeOrder } from './anime.enum';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
-import { Image } from '../image/entities/image.entity';
+import { Image } from './entities/image.entity';
 import { Review } from '../review/entities/review.entity';
+import { AnimeRepository } from './repository/anime.repository';
 
 @Injectable()
 export class AnimeService {
   constructor(
-    @InjectRepository(Anime)
-    private animeRepository: Repository<Anime>,
+    private animeRepository: AnimeRepository,
     @InjectRepository(Tag)
     private tagRepository: Repository<Tag>,
     @InjectRepository(Scrap)
@@ -41,6 +40,7 @@ export class AnimeService {
       file?: Express.Multer.File[];
     },
     user: User,
+    e,
   ) {
     const {
       title,
@@ -135,14 +135,6 @@ export class AnimeService {
           fileName: file.path,
         })),
       );
-      //
-      // if (files.video && files.video[0]) {
-      //   const newVideo = await videoRepository.create({
-      //     anime,
-      //     fileName: files.video[0].path,
-      //   });
-      //   await videoRepository.insert(newVideo);
-      // }
 
       await imageRepository.insert(newImages);
 
@@ -159,93 +151,11 @@ export class AnimeService {
     }
   }
 
-  getOrderBy = (order: AnimeOrder) => {
-    switch (order) {
-      case AnimeOrder.RECENT:
-        return 'DESC';
-
-      case AnimeOrder.OLD:
-        return 'ASC';
-
-      default:
-        return 'DESC';
-    }
-  };
-
   async getAnimeListByUser(getAnimeByPageDto: GetAllAnimeQueryDto, user: User) {
-    const {
-      page,
-      limit,
-      tag,
-      source = null,
-      title = null,
-      order = null,
-      condition = false,
-    } = getAnimeByPageDto;
-
-    const animeListQuery = this.animeRepository
-      .createQueryBuilder('anime')
-      .leftJoin('anime.reviews', 'review')
-      .leftJoin('anime.scraps', 'scrap');
-
-    if (tag) {
-      animeListQuery
-        .innerJoin('anime_tags_tag', 'att', 'anime.id = att.anime_id')
-        .innerJoin('tag', 'tag', 'tag.id = att.tag_id');
-
-      condition
-        ? tag.forEach((tag, index) => {
-            animeListQuery.andWhere(`tag.name = :tagName${index}`, {
-              [`tagName${index}`]: tag,
-            });
-          })
-        : tag.forEach((tag, index) => {
-            animeListQuery.orWhere(`tag.name = :tagName${index}`, {
-              [`tagName${index}`]: tag,
-            });
-          });
-    }
-
-    animeListQuery
-      .select([
-        'anime.id AS id',
-        'anime.title AS title',
-        'anime.author AS author',
-        'anime.description AS description',
-        'anime.thumbnail AS thumbnail',
-        'anime.source AS source',
-        'anime.average_score AS averageScore',
-        `(EXISTS (SELECT 1 FROM scrap WHERE scrap.user_id = :userId AND scrap.anime_id = anime.id)) AS isScrapped`,
-        'COUNT(review.id) AS reviewCount',
-      ])
-      .groupBy('anime.id')
-      .setParameter('userId', user.id)
-      .offset(page - 1)
-      .limit(limit);
-
-    if (source) {
-      condition
-        ? animeListQuery.andWhere('anime.source = :source', { source })
-        : animeListQuery.orWhere('anime.source = :source', { source });
-    }
-
-    if (title) {
-      condition
-        ? animeListQuery.andWhere('anime.title LIKE :title', {
-            title: `%${title}%`,
-          })
-        : animeListQuery.orWhere('anime.title LIKE :title', {
-            title: `%${title}%`,
-          });
-    }
-
-    animeListQuery.orderBy(
-      order === AnimeOrder.TREND ? 'COUNT(review.id)' : 'anime.id',
-      order === AnimeOrder.TREND ? 'DESC' : this.getOrderBy(order),
+    const { data, total } = await this.animeRepository.getAnimesByPageAndUserId(
+      getAnimeByPageDto,
+      user.id,
     );
-
-    const data = await animeListQuery.getRawMany();
-
     const tags = await this.tagRepository.find({
       relations: ['animes'],
     });
@@ -265,8 +175,6 @@ export class AnimeService {
         tags: data,
       };
     });
-
-    const total = await animeListQuery.getCount();
 
     return new ResponseDto(
       EStatusCode.OK,
@@ -275,97 +183,10 @@ export class AnimeService {
     );
   }
 
-  /**
-   SELECT
-     `anime`.`id` AS id,
-     `anime`.`title` AS title,
-     `anime`.`author` AS author,
-     `anime`.`description` AS description,
-     `anime`.`thumbnail` AS thumbnail,
-     `anime`.`source` AS source,
-     `anime`.`average_score` AS averageScore,
-     (EXISTS (SELECT 1 FROM scrap WHERE `scrap`.`user_id` = ? AND `scrap`.`anime_id` = `anime`.`id`)) AS isScrapped,
-     COUNT(`review`.`id`) AS reviewCount,
-     `anime`.`anime_id`
-   FROM `anime` `anime`
-    LEFT JOIN `review` `review` ON `review`.`anime_id`=`anime`.`id`
-    LEFT JOIN `scrap` `scrap` ON `scrap`.`anime_id`=`anime`.`id`
-    LEFT JOIN `video` `video` ON `video`.`anime_id`=`anime`.`id`
-   GROUP BY `anime`.`id`
-   ORDER BY `anime`.`id`
-   DESC LIMIT 10
-   */
   async getAnimeList(getAnimeByPageDto: GetAllAnimeQueryDto) {
-    const {
-      page,
-      limit,
-      tag,
-      source = null,
-      title = null,
-      order = null,
-      condition = false,
-    } = getAnimeByPageDto;
-
-    const animeListQuery = this.animeRepository
-      .createQueryBuilder('anime')
-      .leftJoin('anime.reviews', 'review');
-
-    if (tag) {
-      animeListQuery
-        .innerJoin('anime_tags_tag', 'att', 'anime.id = att.anime_id')
-        .innerJoin('tag', 'tag', 'tag.id = att.tag_id');
-
-      condition
-        ? tag.forEach((tag, index) => {
-            animeListQuery.andWhere(`tag.name = :tagName${index}`, {
-              [`tagName${index}`]: tag,
-            });
-          })
-        : tag.forEach((tag, index) => {
-            animeListQuery.orWhere(`tag.name = :tagName${index}`, {
-              [`tagName${index}`]: tag,
-            });
-          });
-    }
-
-    animeListQuery
-      .select([
-        'anime.id AS id',
-        'anime.title AS title',
-        'anime.author AS author',
-        'anime.description AS description',
-        'anime.thumbnail AS thumbnail',
-        'anime.source AS source',
-        'anime.average_score AS averageScore',
-        'COUNT(review.id) AS reviewCount',
-        'video.file_name AS video',
-      ])
-      .groupBy('anime.id')
-      .offset(page - 1)
-      .limit(limit);
-
-    if (source) {
-      condition
-        ? animeListQuery.andWhere('anime.source = :source', { source })
-        : animeListQuery.orWhere('anime.source = :source', { source });
-    }
-
-    if (title) {
-      condition
-        ? animeListQuery.andWhere('anime.title LIKE :title', {
-            title: `%${title}%`,
-          })
-        : animeListQuery.orWhere('anime.title LIKE :title', {
-            title: `%${title}%`,
-          });
-    }
-
-    animeListQuery.orderBy(
-      order === AnimeOrder.TREND ? 'COUNT(review.id)' : 'anime.id',
-      order === AnimeOrder.TREND ? 'DESC' : this.getOrderBy(order),
+    const { data, total } = await this.animeRepository.getAnimesByPage(
+      getAnimeByPageDto,
     );
-
-    const data = await animeListQuery.getRawMany();
 
     const tags = await this.tagRepository.find({
       relations: ['animes'],
@@ -386,8 +207,6 @@ export class AnimeService {
         tags: data,
       };
     });
-
-    const total = await animeListQuery.getCount();
 
     return new ResponseDto(
       EStatusCode.OK,
@@ -397,16 +216,7 @@ export class AnimeService {
   }
 
   async getAnimeDetail(id: number, user?: User) {
-    const anime = await this.animeRepository
-      .createQueryBuilder('anime')
-      .leftJoinAndSelect('anime.user', 'user_id')
-      .leftJoinAndSelect('anime.crew', 'crew')
-      .leftJoinAndSelect('anime.tags', 'tag')
-      .leftJoinAndSelect('anime.reviews', 'review')
-      .leftJoinAndSelect('anime.images', 'image')
-      .leftJoinAndSelect('review.user', 'user')
-      .where('anime.id = :id', { id })
-      .getOne();
+    const anime = await this.animeRepository.getAnimeById(id);
 
     let scrap = null;
     if (user) {
@@ -518,10 +328,7 @@ export class AnimeService {
   }
 
   async removeAnime(id: number, user: User) {
-    const anime = await this.animeRepository.findOne({
-      where: { id },
-      relations: ['user', 'reviews'],
-    });
+    const anime = await this.animeRepository.getAnimeToDeleteById(id);
 
     if (user.id !== anime.user.id) {
       throw new ForbiddenException();
@@ -534,11 +341,7 @@ export class AnimeService {
   }
 
   async getAnimeSeries() {
-    const animes = await this.animeRepository.find({
-      where: {
-        animeParentId: IsNull(),
-      },
-    });
+    const animes = await this.animeRepository.getOriginalAnimes();
 
     return new ResponseDto(
       EStatusCode.OK,
@@ -550,18 +353,7 @@ export class AnimeService {
   }
 
   async getAnimesBySeriesId(seriesId: number) {
-    const animes = await this.animeRepository.find({
-      where: [
-        {
-          animeParentId: seriesId,
-        },
-        {
-          id: seriesId,
-        },
-      ],
-      relations: ['crew', 'tags'],
-    });
-
+    const animes = await this.animeRepository.getAnimesBySeriesId(seriesId);
     const series = animes.find((anime) => anime.id === seriesId);
 
     return new ResponseDto(

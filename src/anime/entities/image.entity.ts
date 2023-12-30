@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { Anime } from '../../anime/entities/anime.entity';
+import { Anime } from './anime.entity';
 
 @Entity()
 @Unique(['fileName'])

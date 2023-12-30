@@ -7,8 +7,9 @@ import { UserModule } from '../user/user.module';
 import { Review } from '../review/entities/review.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
-import { Image } from '../image/entities/image.entity';
+import { Image } from './entities/image.entity';
 import { MulterModule } from '@nestjs/platform-express';
+import { AnimeRepository } from './repository/anime.repository';
 
 @Module({
   imports: [
@@ -19,6 +20,6 @@ import { MulterModule } from '@nestjs/platform-express';
     }),
   ],
   controllers: [AnimeController],
-  providers: [AnimeService],
+  providers: [AnimeService, AnimeRepository],
 })
 export class AnimeModule {}
