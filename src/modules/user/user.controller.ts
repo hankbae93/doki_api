@@ -8,17 +8,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { SignInDto } from './dto/sign-in.dto';
-import { SignUpDto } from './dto/sign-up.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { GetUser } from './get-user.decorator';
+import { GetUser } from './decorator/get-user.decorator';
 import { User } from './entities/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @Controller('user')
-@ApiTags('USER & AUTH')
+@ApiTags('USER')
 export class UserController {
   constructor(private userService: UserService) {}
 
@@ -31,16 +29,6 @@ export class UserController {
   @Get('/:nickname')
   getUserProfile(@Param('nickname') nickname) {
     return this.userService.getUserProfile(nickname);
-  }
-
-  @Post('/signup')
-  signUp(@Body() signUpDto: SignUpDto) {
-    return this.userService.signUp(signUpDto);
-  }
-
-  @Post('/signin')
-  signIn(@Body() signInDto: SignInDto) {
-    return this.userService.signIn(signInDto);
   }
 
   @Post('/password')

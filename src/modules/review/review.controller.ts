@@ -11,7 +11,7 @@ import { ReviewService } from './review.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from '../user/get-user.decorator';
+import { GetUser } from '../user/decorator/get-user.decorator';
 import { User } from '../user/entities/user.entity';
 
 @Controller('review')

@@ -8,6 +8,7 @@ import { ReviewModule } from './modules/review/review.module';
 import { ScrapModule } from './modules/scrap/scrap.module';
 import { typeOrmConfig } from './config/typeorm.config';
 import { MulterModule } from '@nestjs/platform-express';
+import { AuthModule } from './modules/auth/auth.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -21,8 +22,9 @@ const ENV = process.env.NODE_ENV;
     MulterModule.register({
       dest: './files',
     }),
-    AnimeModule,
+    AuthModule,
     UserModule,
+    AnimeModule,
     TagModule,
     ReviewModule,
     ScrapModule,

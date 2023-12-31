@@ -15,7 +15,7 @@ import { AnimeService } from './anime.service';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from '../user/get-user.decorator';
+import { GetUser } from '../user/decorator/get-user.decorator';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';

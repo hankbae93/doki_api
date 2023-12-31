@@ -1,19 +1,14 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
-  Delete,
   ParseIntPipe,
+  Post,
   UseGuards,
 } from '@nestjs/common';
 import { ScrapService } from './scrap.service';
-import { CreateScrapDto } from './dto/create-scrap.dto';
-import { UpdateScrapDto } from './dto/update-scrap.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from '../user/get-user.decorator';
+import { GetUser } from '../user/decorator/get-user.decorator';
 import { User } from '../user/entities/user.entity';
 
 @Controller('scrap')
