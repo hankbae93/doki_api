@@ -22,28 +22,28 @@ import { ApiTags } from '@nestjs/swagger';
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @Get('info')
+  @Get('/info')
   @UseGuards(AuthGuard())
   getUserInfo(@GetUser() user: User) {
     return this.userService.getUserInfo(user);
   }
 
-  @Get(':nickname')
+  @Get('/:nickname')
   getUserProfile(@Param('nickname') nickname) {
     return this.userService.getUserProfile(nickname);
   }
 
-  @Post('signup')
+  @Post('/signup')
   signUp(@Body() signUpDto: SignUpDto) {
     return this.userService.signUp(signUpDto);
   }
 
-  @Post('signin')
+  @Post('/signin')
   signIn(@Body() signInDto: SignInDto) {
     return this.userService.signIn(signInDto);
   }
 
-  @Post('password')
+  @Post('/password')
   @UseGuards(AuthGuard())
   changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
@@ -52,7 +52,7 @@ export class UserController {
     return this.userService.changePassword(changePasswordDto, user);
   }
 
-  @Post('profile')
+  @Post('/profile')
   @UseGuards(AuthGuard())
   updateProfile(
     @Body() updateProfileDto: UpdateProfileDto,
@@ -61,7 +61,7 @@ export class UserController {
     return this.userService.updateProfile(updateProfileDto, user);
   }
 
-  @Delete('delete')
+  @Delete('/delete')
   @UseGuards(AuthGuard())
   deleteAccount(@GetUser() user: User) {
     return this.userService.deleteAccount(user);

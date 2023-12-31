@@ -8,9 +8,14 @@ import { ReviewModule } from './review/review.module';
 import { ScrapModule } from './scrap/scrap.module';
 import { typeOrmConfig } from './config/typeorm.config';
 
+const ENV = process.env.NODE_ENV;
+
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ENV === 'production' ? `.env.${ENV}` : '.env',
+    }),
     TypeOrmModule.forRootAsync(typeOrmConfig),
     AnimeModule,
     UserModule,
