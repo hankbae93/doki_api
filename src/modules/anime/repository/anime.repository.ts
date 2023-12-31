@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
+import { DataSource, EntityManager, IsNull, Like, Repository } from 'typeorm';
 import { Anime } from '../entities/anime.entity';
 import { AnimeOrder } from '../anime.enum';
 import { GetAllAnimeQueryDto } from '../dto/get-all-anime-query.dto';
@@ -12,6 +12,14 @@ export class AnimeRepository extends Repository<Anime> {
 
   setManager(manager?: EntityManager): Repository<Anime> {
     return manager ? manager.getRepository(Anime) : this;
+  }
+
+  getAnimeBySeriesName(series: string, manager?: EntityManager) {
+    return this.setManager(manager).findOne({
+      where: {
+        title: Like(`%${series}%`),
+      },
+    });
   }
 
   getAnimeById(id: number) {

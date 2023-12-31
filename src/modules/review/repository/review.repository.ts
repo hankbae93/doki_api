@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import { Scrap } from '../../scrap/entities/scrap.entity';
+import { Review } from '../entities/review.entity';
 
 @Injectable()
-export class ScrapRepository extends Repository<Scrap> {
+export class ReviewRepository extends Repository<Review> {
   constructor(private dataSource: DataSource) {
-    super(Scrap, dataSource.createEntityManager());
+    super(Review, dataSource.createEntityManager());
   }
 
-  setManager(manager?: EntityManager): Repository<Scrap> {
-    return manager ? manager.getRepository(Scrap) : this;
+  setManager(manager?: EntityManager): Repository<Review> {
+    return manager ? manager.getRepository(Review) : this;
   }
 
-  getScrapsByIds(animeId: number, userId: number) {
+  getReviewsByIds(animeId: number, userId: number) {
     return this.findOne({
       where: {
         anime: {

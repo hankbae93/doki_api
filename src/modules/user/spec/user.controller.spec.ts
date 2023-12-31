@@ -12,7 +12,7 @@ import { Review } from '../../review/entities/review.entity';
 import { Agenda } from '../../agenda/entities/agenda.entity';
 import { AgendaVote } from '../../agenda/entities/agenda-vote.entity';
 import { AgendaCandidateVote } from '../../agenda/entities/agenda-canidate-vote.entity';
-import { EErrorMessage } from '../../common/enum/message.enum';
+import { EErrorMessage } from '../../../common/enum/message.enum';
 import { SignInDto } from '../dto/sign-in.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';

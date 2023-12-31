@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Tag } from './entities/tag.entity';
 import { Repository } from 'typeorm';
-import { ResponseDto } from '../common/dto/responseDto';
-import { EStatusCode } from '../common/enum/status.enum';
-import { EResponseMessage } from '../common/enum/message.enum';
+import { ResponseDto } from '../../common/dto/responseDto';
+import { EStatusCode } from '../../common/enum/status.enum';
+import { EResponseMessage } from '../../common/enum/message.enum';
 
 @Injectable()
 export class TagService {

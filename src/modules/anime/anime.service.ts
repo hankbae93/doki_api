@@ -5,31 +5,30 @@ import {
 } from '@nestjs/common';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Anime } from './entities/anime.entity';
-import { DataSource, Like, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
-import { ResponseDto } from '../common/dto/responseDto';
-import { EStatusCode } from '../common/enum/status.enum';
-import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
+import { ResponseDto } from '../../common/dto/responseDto';
+import { EStatusCode } from '../../common/enum/status.enum';
+import {
+  EErrorMessage,
+  EResponseMessage,
+} from '../../common/enum/message.enum';
 import { Tag } from '../tag/entities/tag.entity';
-import { Image } from './entities/image.entity';
-import { Review } from '../review/entities/review.entity';
 import { AnimeRepository } from './repository/anime.repository';
-import { ScrapRepository } from './repository/scrap.repository';
+import { ScrapRepository } from '../scrap/repository/scrap.repository';
+import { ReviewRepository } from '../review/repository/review.repository';
+import { ImageRepository } from './repository/image.repository';
+import { TagRepository } from '../tag/repository/tag.repository';
 
 @Injectable()
 export class AnimeService {
   constructor(
     private animeRepository: AnimeRepository,
     private scrapRepository: ScrapRepository,
-    @InjectRepository(Tag)
-    private tagRepository: Repository<Tag>,
-    @InjectRepository(Image)
-    private imageRepository: Repository<Image>,
-    @InjectRepository(Review)
-    private reviewRepository: Repository<Review>,
+    private reviewRepository: ReviewRepository,
+    private imageRepository: ImageRepository,
+    private tagRepository: TagRepository,
     private dataSource: DataSource,
   ) {}
   async createAnime(
@@ -53,47 +52,25 @@ export class AnimeService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const animeRepository = this.dataSource.manager.getRepository(Anime);
-    const tagRepository = this.dataSource.manager.getRepository(Tag);
-    const imageRepository = this.dataSource.manager.getRepository(Image);
 
     try {
-      // let crewWithRelations: Crew;
       let animeParentId: number | null = null;
       if (series) {
-        const originAnime = await animeRepository.findOne({
-          where: {
-            title: Like(`%${series}%`),
-          },
-        });
+        const originAnime = await this.animeRepository.getAnimeBySeriesName(
+          series,
+          queryRunner.manager,
+        );
+
         if (originAnime) {
           animeParentId = originAnime.id;
         }
       }
 
-      // const originCrew = await crewRepository.findOne({
-      //   where: {
-      //     name: crew,
-      //   },
-      // });
-      //
-      // if (!originCrew) {
-      //   crewWithRelations = await crewRepository.create({
-      //     name: crew,
-      //   });
-      //
-      //   await crewRepository.save(crewWithRelations);
-      // }
-
       const tagsData: Tag[] = [];
       if (tags.length !== 0) {
         const tagsWithRelation = await Promise.all(
           tags.map((value) => {
-            return tagRepository.findOne({
-              where: {
-                name: value,
-              },
-            });
+            return this.tagRepository.findTagByName(value, queryRunner.manager);
           }),
         );
 
@@ -102,39 +79,51 @@ export class AnimeService {
             if (data) {
               return tagsData.push(data);
             } else {
-              const createdTag = await tagRepository.create({
-                name: tags[index],
-              });
-              await tagRepository.save(createdTag);
+              const createdTag = await this.tagRepository
+                .setManager(queryRunner.manager)
+                .create({
+                  name: tags[index],
+                });
+              await this.tagRepository
+                .setManager(queryRunner.manager)
+                .save(createdTag);
               tagsData.push(createdTag);
             }
           }),
         );
       }
 
-      const newAnime = animeRepository.create({
-        title,
-        author,
-        source,
-        averageScore: 0,
-        animeParentId,
-        thumbnail: files.file[0].path,
-        description,
-        // crew: crewWithRelations || originCrew,
-        tags: tagsData.length === 0 ? null : tagsData,
-        user,
-      });
-      const anime = await this.animeRepository.save(newAnime);
+      const newAnime = this.animeRepository
+        .setManager(queryRunner.manager)
+        .create({
+          title,
+          author,
+          source,
+          averageScore: 0,
+          animeParentId,
+          thumbnail: files.file[0].path,
+          description,
+          // crew: crewWithRelations || originCrew,
+          tags: tagsData.length === 0 ? null : tagsData,
+          user,
+        });
+      const anime = await this.animeRepository
+        .setManager(queryRunner.manager)
+        .save(newAnime);
 
       // 이미지 엔티티 업데이트
-      const newImages = await imageRepository.create(
-        files.file.map((file) => ({
-          anime,
-          fileName: file.path,
-        })),
-      );
+      const newImages = await this.imageRepository
+        .setManager(queryRunner.manager)
+        .create(
+          files.file.map((file) => ({
+            anime,
+            fileName: file.path,
+          })),
+        );
 
-      await imageRepository.insert(newImages);
+      await this.imageRepository
+        .setManager(queryRunner.manager)
+        .insert(newImages);
 
       await queryRunner.commitTransaction();
 
@@ -154,10 +143,7 @@ export class AnimeService {
       getAnimeByPageDto,
       user.id,
     );
-    const tags = await this.tagRepository.find({
-      relations: ['animes'],
-    });
-
+    const tags = await this.tagRepository.findAllWithAnimes();
     const result = data.map((item) => {
       const data = [];
 
@@ -186,9 +172,7 @@ export class AnimeService {
       getAnimeByPageDto,
     );
 
-    const tags = await this.tagRepository.find({
-      relations: ['animes'],
-    });
+    const tags = await this.tagRepository.findAllWithAnimes();
 
     const result = data.map((item) => {
       const data = [];
@@ -219,7 +203,7 @@ export class AnimeService {
     const scrap = user
       ? await this.scrapRepository.getScrapsByIds(id, user.id)
       : null;
-    console.log(scrap);
+
     if (!anime) {
       throw new NotFoundException(EErrorMessage.NOT_FOUND);
     }
@@ -242,40 +226,17 @@ export class AnimeService {
       description,
     } = updateAnimeDto;
 
-    // let crewWithRelations: Crew;
-
     const anime = await this.animeRepository.findOneBy({ id });
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const animeRepository = this.dataSource.manager.getRepository(Anime);
-    const tagRepository = this.dataSource.manager.getRepository(Tag);
-    // const crewRepository = this.dataSource.manager.getRepository(Crew);
-
-    // const originCrew = await crewRepository.findOne({
-    //   where: {
-    //     name: crew,
-    //   },
-    // });
-
-    // if (!originCrew) {
-    //   crewWithRelations = await crewRepository.create({
-    //     name: crew,
-    //   });
-    //
-    //   await crewRepository.insert(crewWithRelations);
-    // }
 
     const tagsData: Tag[] = [];
     if (tags.length !== 0) {
       const tagsWithRelation = await Promise.all(
         tags.map((value) => {
-          return tagRepository.findOne({
-            where: {
-              name: value,
-            },
-          });
+          return this.tagRepository.findTagByName(value, queryRunner.manager);
         }),
       );
 
@@ -284,27 +245,32 @@ export class AnimeService {
           if (data) {
             return tagsData.push(data);
           } else {
-            const createdTag = await tagRepository.create({
-              name: tags[index],
-            });
-            await this.tagRepository.insert(createdTag);
+            const createdTag = await this.tagRepository
+              .setManager(queryRunner.manager)
+              .create({
+                name: tags[index],
+              });
+            await this.tagRepository
+              .setManager(queryRunner.manager)
+              .insert(createdTag);
             tagsData.push(createdTag);
           }
         }),
       );
     }
 
-    const updatedAnime = await animeRepository.save({
-      ...anime,
-      title,
-      author,
-      source,
-      animeParentId: null,
-      thumbnail,
-      description,
-      // crew: crewWithRelations || originCrew,
-      tags: tagsData,
-    });
+    const updatedAnime = await this.animeRepository
+      .setManager(queryRunner.manager)
+      .save({
+        ...anime,
+        title,
+        author,
+        source,
+        animeParentId: null,
+        thumbnail,
+        description,
+        tags: tagsData,
+      });
 
     await queryRunner.commitTransaction();
 

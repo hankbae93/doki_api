@@ -10,9 +10,9 @@ import { Anime } from '../anime/entities/anime.entity';
 import { DataSource, Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
 import { User } from '../user/entities/user.entity';
-import { ResponseDto } from '../common/dto/responseDto';
-import { EStatusCode } from '../common/enum/status.enum';
-import { EResponseMessage } from '../common/enum/message.enum';
+import { ResponseDto } from '../../common/dto/responseDto';
+import { EStatusCode } from '../../common/enum/status.enum';
+import { EResponseMessage } from '../../common/enum/message.enum';
 import { UserRank } from '../user/user.enum';
 import { getIsNextRank } from './review.util';
 

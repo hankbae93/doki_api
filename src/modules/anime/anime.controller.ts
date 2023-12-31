@@ -20,7 +20,7 @@ import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { editFileName } from '../utils/file-uploading.util';
+import { editFileName } from '../../utils/file-uploading.util';
 
 @Controller('anime')
 export class AnimeController {
@@ -50,7 +50,7 @@ export class AnimeController {
     return this.animeService.getAnimesBySeriesId(seriesId);
   }
 
-  @Get(':id')
+  @Get('/:id')
   @UseGuards()
   getAnimeDetail(
     @Param('id', ParseIntPipe) id: number,
@@ -87,7 +87,7 @@ export class AnimeController {
     return this.animeService.createAnime(createAnimeDto, files, user);
   }
 
-  @Post(':id')
+  @Post('/:id')
   @UseGuards(AuthGuard())
   updateAnime(
     @Param('id', ParseIntPipe) id: number,
@@ -97,7 +97,7 @@ export class AnimeController {
     return this.animeService.updateAnime(id, updateAnimeDto, user);
   }
 
-  @Delete(':id')
+  @Delete('/:id')
   @UseGuards(AuthGuard())
   removeAnime(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
     return this.animeService.removeAnime(id, user);

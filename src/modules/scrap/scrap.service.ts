@@ -8,9 +8,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Scrap } from './entities/scrap.entity';
 import { Repository } from 'typeorm';
 import { Anime } from '../anime/entities/anime.entity';
-import { ResponseDto } from '../common/dto/responseDto';
-import { EStatusCode } from '../common/enum/status.enum';
-import { EResponseMessage } from '../common/enum/message.enum';
+import { ResponseDto } from '../../common/dto/responseDto';
+import { EStatusCode } from '../../common/enum/status.enum';
+import { EResponseMessage } from '../../common/enum/message.enum';
 
 @Injectable()
 export class ScrapService {

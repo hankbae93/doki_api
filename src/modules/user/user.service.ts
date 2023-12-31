@@ -11,9 +11,12 @@ import * as bcrypt from 'bcryptjs';
 import { SignInDto } from './dto/sign-in.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ResponseDto } from '../common/dto/responseDto';
-import { EStatusCode } from '../common/enum/status.enum';
-import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
+import { ResponseDto } from '../../common/dto/responseDto';
+import { EStatusCode } from '../../common/enum/status.enum';
+import {
+  EErrorMessage,
+  EResponseMessage,
+} from '../../common/enum/message.enum';
 import { UserRankName } from './user.enum';
 import { UserRepository } from './repository/user.repository';
 

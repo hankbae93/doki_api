@@ -8,19 +8,25 @@ import { Review } from '../review/entities/review.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Scrap } from '../scrap/entities/scrap.entity';
 import { Image } from './entities/image.entity';
-import { MulterModule } from '@nestjs/platform-express';
 import { AnimeRepository } from './repository/anime.repository';
-import { ScrapRepository } from './repository/scrap.repository';
+import { ScrapRepository } from '../scrap/repository/scrap.repository';
+import { TagRepository } from '../tag/repository/tag.repository';
+import { ReviewRepository } from '../review/repository/review.repository';
+import { ImageRepository } from './repository/image.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Anime, Review, Tag, Scrap, Image]),
     UserModule,
-    MulterModule.register({
-      dest: './files',
-    }),
   ],
   controllers: [AnimeController],
-  providers: [AnimeService, AnimeRepository, ScrapRepository],
+  providers: [
+    AnimeService,
+    AnimeRepository,
+    ImageRepository,
+    ScrapRepository,
+    TagRepository,
+    ReviewRepository,
+  ],
 })
 export class AnimeModule {}
