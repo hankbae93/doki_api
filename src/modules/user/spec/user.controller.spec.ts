@@ -125,7 +125,6 @@ describe('UserController', () => {
         {
           nickname: 'iro',
           description: mockUser.description,
-          rank: mockUser.rank,
           profile: mockUser.profile,
         },
         mockUser,

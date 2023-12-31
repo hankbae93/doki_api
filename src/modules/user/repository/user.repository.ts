@@ -19,6 +19,23 @@ export class UserRepository extends Repository<User> {
       .getRawOne();
   }
 
+  updatePassword(userId: number, hashedPassword: string) {
+    return this.update({ id: userId }, { password: hashedPassword });
+  }
+
+  updateProfile(userId: number, newUser: User) {
+    return this.update({ id: userId }, newUser);
+  }
+
+  deleteUser(userId: number) {
+    return this.update(
+      { id: userId },
+      {
+        retired: true,
+      },
+    );
+  }
+
   findProfileByNickname(nickname: string) {
     return this.findOne({
       select: ['id', 'nickname', 'description', 'rank', 'createdAt'],

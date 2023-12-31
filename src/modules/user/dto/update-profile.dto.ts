@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-import { UserRank } from '../user.enum';
+import { NICKNAME_MAX_LENGTH } from '../user.constant';
 
 export class UpdateProfileDto {
   @IsString()
-  @MaxLength(12)
+  @MaxLength(NICKNAME_MAX_LENGTH)
   @IsNotEmpty()
   @IsOptional()
   nickname: string;
@@ -11,10 +11,6 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   description: string;
-
-  @IsString()
-  @IsOptional()
-  rank: UserRank;
 
   @IsString()
   @IsOptional()

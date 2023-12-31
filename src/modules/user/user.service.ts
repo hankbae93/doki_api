@@ -38,11 +38,7 @@ export class UserService {
     const { password } = changePasswordDto;
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
-
-    await this.userRepository.update(
-      { id: user.id },
-      { password: hashedPassword },
-    );
+    await this.userRepository.updatePassword(user.id, hashedPassword);
 
     return new ResponseDto(
       EStatusCode.OK,
@@ -53,22 +49,17 @@ export class UserService {
 
   async updateProfile(updateProfileDto: UpdateProfileDto, user: User) {
     const newUser: User = Object.assign(user, updateProfileDto);
-    await this.userRepository.update({ id: user.id }, newUser);
+    const updatedUser = await this.userRepository.save(newUser);
 
     return new ResponseDto(
       EStatusCode.OK,
-      null,
+      updatedUser,
       EResponseMessage.USER_UPDATE_SUCCESS,
     );
   }
 
   async deleteAccount(user: User) {
-    await this.userRepository.update(
-      { id: user.id },
-      {
-        retired: true,
-      },
-    );
+    await this.userRepository.deleteUser(user.id);
 
     return new ResponseDto(
       EStatusCode.OK,

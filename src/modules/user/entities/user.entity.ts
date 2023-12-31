@@ -10,6 +10,11 @@ import { Anime } from '../../anime/entities/anime.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
 import { UserRank } from '../user.enum';
+import {
+  DESCRIPTION_MAX_LENGTH,
+  EMAIL_MAX_LENGTH,
+  NICKNAME_MAX_LENGTH,
+} from '../user.constant';
 
 @Entity()
 @Unique('uq_user_email', ['email'])
@@ -17,16 +22,16 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('varchar', { name: 'email', length: 50 })
+  @Column('varchar', { name: 'email', length: EMAIL_MAX_LENGTH })
   email: string;
 
   @Column('text', { select: false })
   password: string;
 
-  @Column('varchar', { name: 'nickname', length: 20 })
+  @Column('varchar', { name: 'nickname', length: NICKNAME_MAX_LENGTH })
   nickname: string;
 
-  @Column('varchar', { length: 1000, nullable: true })
+  @Column('varchar', { length: DESCRIPTION_MAX_LENGTH, nullable: true })
   description: string;
 
   @Column({ nullable: true })
