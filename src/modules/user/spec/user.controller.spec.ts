@@ -9,11 +9,6 @@ import { UserRank, UserRankName } from '../user.enum';
 import { Anime } from '../../anime/entities/anime.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
-import { Agenda } from '../../agenda/entities/agenda.entity';
-import { AgendaVote } from '../../agenda/entities/agenda-vote.entity';
-import { AgendaCandidateVote } from '../../agenda/entities/agenda-canidate-vote.entity';
-import { EErrorMessage } from '../../../common/enum/message.enum';
-import { SignInDto } from '../../auth/dto/sign-in.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 
@@ -34,9 +29,6 @@ describe('UserController', () => {
     animes: [] as Anime[],
     scraps: [] as Scrap[],
     reviews: [] as Review[],
-    agendas: [] as Agenda[],
-    agendaVotes: [] as AgendaVote[],
-    agendaCandidateVotes: [] as AgendaCandidateVote[],
   };
 
   const mockUserService = {
@@ -49,11 +41,6 @@ describe('UserController', () => {
       rank: UserRankName[mockUser.rank],
       createdAt: mockUser.createdAt,
       animes: mockUser.animes,
-    })),
-    signUp: jest.fn().mockResolvedValue(null),
-    signIn: jest.fn().mockImplementation((signInDto: SignInDto) => ({
-      user: mockUser,
-      accessToken: '',
     })),
     changePassword: jest
       .fn()
@@ -115,62 +102,6 @@ describe('UserController', () => {
       rank: '이세계 난민',
       createdAt: new Date('2024-01-01'),
       animes: [],
-    });
-  });
-
-  describe('signUp', () => {
-    it('should successfully create a new user account', async () => {
-      const result = await userController.signUp({
-        nickname: 'irori',
-        password: 'test1234',
-        email: 'test@gmail.com',
-      });
-
-      expect(userService.signUp).toHaveBeenCalled();
-      expect(result).toEqual(null);
-    });
-
-    it('should handle to validate existed user and return an error', async () => {
-      jest
-        .spyOn(userService, 'signUp')
-        .mockRejectedValue(new Error(EErrorMessage.EXISITING_USER));
-
-      try {
-        await userController.signUp({
-          nickname: 'irori',
-          password: 'test1234',
-          email: 'test@gmail.com',
-        });
-      } catch (err) {
-        expect(err.message).toEqual(EErrorMessage.EXISITING_USER);
-      }
-    });
-  });
-
-  describe('signIn', () => {
-    it('should successfully sign in an existing user', async () => {
-      const result = await userController.signIn({
-        password: 'test1234',
-        email: 'test@gmail.com',
-      });
-
-      expect(userService.signIn).toHaveBeenCalled();
-      expect(result).toEqual({ user: mockUser, accessToken: '' });
-    });
-
-    it('should handle incorrect password and return an error', async () => {
-      jest
-        .spyOn(userService, 'signUp')
-        .mockRejectedValue(new Error(EErrorMessage.LOGIN_FAILED));
-
-      try {
-        await userController.signIn({
-          password: 'test1234',
-          email: 'test@gmail.com',
-        });
-      } catch (err) {
-        expect(err.message).toEqual(EErrorMessage.LOGIN_FAILED);
-      }
     });
   });
 
