@@ -10,6 +10,7 @@ import { Scrap } from '../scrap/entities/scrap.entity';
 import { Image } from './entities/image.entity';
 import { MulterModule } from '@nestjs/platform-express';
 import { AnimeRepository } from './repository/anime.repository';
+import { ScrapRepository } from './repository/scrap.repository';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { AnimeRepository } from './repository/anime.repository';
     }),
   ],
   controllers: [AnimeController],
-  providers: [AnimeService, AnimeRepository],
+  providers: [AnimeService, AnimeRepository, ScrapRepository],
 })
 export class AnimeModule {}

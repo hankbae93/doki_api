@@ -6,12 +6,12 @@ import { ConfigModule } from '@nestjs/config';
 import { TagModule } from './tag/tag.module';
 import { ReviewModule } from './review/review.module';
 import { ScrapModule } from './scrap/scrap.module';
-import config from './config';
+import { typeOrmConfig } from './config/typeorm.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    TypeOrmModule.forRoot(config.typeOrmModuleOption),
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync(typeOrmConfig),
     AnimeModule,
     UserModule,
     TagModule,

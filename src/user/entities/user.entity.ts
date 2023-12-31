@@ -10,9 +10,6 @@ import { Anime } from '../../anime/entities/anime.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
 import { UserRank } from '../user.enum';
-import { Agenda } from '../../agenda/entities/agenda.entity';
-import { AgendaCandidateVote } from '../../agenda/entities/agenda-canidate-vote.entity';
-import { AgendaVote } from '../../agenda/entities/agenda-vote.entity';
 
 @Entity()
 @Unique('uq_user_email', ['email'])
@@ -52,16 +49,4 @@ export class User {
 
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
-
-  @OneToMany(() => Agenda, (agenda) => agenda.user)
-  agendas: Agenda[];
-
-  @OneToMany(
-    () => AgendaCandidateVote,
-    (agendaCandidateVote) => agendaCandidateVote.user,
-  )
-  agendaCandidateVotes: AgendaCandidateVote[];
-
-  @OneToMany(() => AgendaVote, (agendaVote) => agendaVote.user)
-  agendaVotes: AgendaVote[];
 }

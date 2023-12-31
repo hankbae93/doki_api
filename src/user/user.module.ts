@@ -7,15 +7,12 @@ import { User } from './entities/user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { UserRepository } from './repository/user.repository';
+import { jwtConfig } from '../config/jwt.config';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      global: true,
-      secret: 'COOKIE_SECRET',
-      signOptions: { expiresIn: '1 day' },
-    }),
+    JwtModule.registerAsync(jwtConfig),
     TypeOrmModule.forFeature([User]),
   ],
   controllers: [UserController],

@@ -14,19 +14,18 @@ import { ResponseDto } from '../common/dto/responseDto';
 import { EStatusCode } from '../common/enum/status.enum';
 import { EErrorMessage, EResponseMessage } from '../common/enum/message.enum';
 import { Tag } from '../tag/entities/tag.entity';
-import { Scrap } from '../scrap/entities/scrap.entity';
 import { Image } from './entities/image.entity';
 import { Review } from '../review/entities/review.entity';
 import { AnimeRepository } from './repository/anime.repository';
+import { ScrapRepository } from './repository/scrap.repository';
 
 @Injectable()
 export class AnimeService {
   constructor(
     private animeRepository: AnimeRepository,
+    private scrapRepository: ScrapRepository,
     @InjectRepository(Tag)
     private tagRepository: Repository<Tag>,
-    @InjectRepository(Scrap)
-    private scrapRepository: Repository<Scrap>,
     @InjectRepository(Image)
     private imageRepository: Repository<Image>,
     @InjectRepository(Review)
@@ -40,7 +39,6 @@ export class AnimeService {
       file?: Express.Multer.File[];
     },
     user: User,
-    e,
   ) {
     const {
       title,
@@ -218,27 +216,17 @@ export class AnimeService {
   async getAnimeDetail(id: number, user?: User) {
     const anime = await this.animeRepository.getAnimeById(id);
 
-    let scrap = null;
-    if (user) {
-      scrap = await this.scrapRepository.findOne({
-        where: {
-          anime: {
-            id: anime.id,
-          },
-          user: {
-            id: user.id,
-          },
-        },
-      });
-    }
-
+    const scrap = user
+      ? await this.scrapRepository.getScrapsByIds(id, user.id)
+      : null;
+    console.log(scrap);
     if (!anime) {
       throw new NotFoundException(EErrorMessage.NOT_FOUND);
     }
 
     return new ResponseDto(
       EStatusCode.OK,
-      { anime, scrap },
+      { anime, isScrapped: !!scrap },
       EResponseMessage.SUCCESS,
     );
   }
