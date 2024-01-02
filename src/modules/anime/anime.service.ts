@@ -31,6 +31,53 @@ export class AnimeService {
     private tagRepository: TagRepository,
     private dataSource: DataSource,
   ) {}
+
+  async addTagToAnimeList(animes: any[]) {
+    const tags = await this.tagRepository.findAllWithAnimes();
+    return animes.map((item) => {
+      const data = [];
+
+      tags.forEach((tag) => {
+        const animeTag = tag.animes.find((anime) => anime.id === item.id);
+        if (animeTag) {
+          data.push({ tagId: tag.id, tagName: tag.name });
+        }
+      });
+
+      return {
+        ...item,
+        tags: data,
+      };
+    });
+  }
+
+  async getAnimeList(getAnimeByPageDto: GetAllAnimeQueryDto) {
+    const { data, total } = await this.animeRepository.getAnimesByPage(
+      getAnimeByPageDto,
+    );
+    const result = await this.addTagToAnimeList(data);
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      { animes: result, total },
+      EResponseMessage.SUCCESS,
+    );
+  }
+
+  async getAnimeListByUser(getAnimeByPageDto: GetAllAnimeQueryDto, user: User) {
+    const { data, total } = await this.animeRepository.getAnimesByPageAndUserId(
+      getAnimeByPageDto,
+      user.id,
+    );
+    const result = await this.addTagToAnimeList(data);
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      { animes: result, total },
+      EResponseMessage.SUCCESS,
+    );
+  }
+
   async createAnime(
     createAnimeDto: CreateAnimeDto,
     files: {
@@ -136,65 +183,6 @@ export class AnimeService {
       console.error(err);
       throw new Error(err);
     }
-  }
-
-  async getAnimeListByUser(getAnimeByPageDto: GetAllAnimeQueryDto, user: User) {
-    const { data, total } = await this.animeRepository.getAnimesByPageAndUserId(
-      getAnimeByPageDto,
-      user.id,
-    );
-    const tags = await this.tagRepository.findAllWithAnimes();
-    const result = data.map((item) => {
-      const data = [];
-
-      tags.forEach((tag) => {
-        const animeTag = tag.animes.find((anime) => anime.id === item.id);
-        if (animeTag) {
-          data.push({ id: tag.id, name: tag.name });
-        }
-      });
-
-      return {
-        ...item,
-        tags: data,
-      };
-    });
-
-    return new ResponseDto(
-      EStatusCode.OK,
-      { animes: result, total },
-      EResponseMessage.SUCCESS,
-    );
-  }
-
-  async getAnimeList(getAnimeByPageDto: GetAllAnimeQueryDto) {
-    const { data, total } = await this.animeRepository.getAnimesByPage(
-      getAnimeByPageDto,
-    );
-
-    const tags = await this.tagRepository.findAllWithAnimes();
-
-    const result = data.map((item) => {
-      const data = [];
-
-      tags.forEach((tag) => {
-        const animeTag = tag.animes.find((anime) => anime.id === item.id);
-        if (animeTag) {
-          data.push({ id: tag.id, name: tag.name });
-        }
-      });
-
-      return {
-        ...item,
-        tags: data,
-      };
-    });
-
-    return new ResponseDto(
-      EStatusCode.OK,
-      { animes: result, total },
-      EResponseMessage.SUCCESS,
-    );
   }
 
   async getAnimeDetail(id: number, user?: User) {

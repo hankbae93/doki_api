@@ -78,7 +78,6 @@ export class AnimeRepository extends Repository<Anime> {
         'anime.source AS source',
         'anime.average_score AS averageScore',
         'COUNT(review.id) AS reviewCount',
-        'video.file_name AS video',
       ])
       .groupBy('anime.id')
       .offset(page - 1)
@@ -105,7 +104,15 @@ export class AnimeRepository extends Repository<Anime> {
       order === AnimeOrder.TREND ? 'DESC' : this.getOrderBy(order),
     );
 
-    const data = await animeListQuery.getRawMany();
+    const data = await animeListQuery.getRawMany().then((list) =>
+      list.map((anime) => {
+        return {
+          ...anime,
+          averageScore: parseFloat(anime.averageScore),
+          reviewCount: parseInt(anime.reviewCount),
+        };
+      }),
+    );
     const total = await animeListQuery.getCount();
 
     return { data, total };
