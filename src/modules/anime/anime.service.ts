@@ -33,6 +33,24 @@ export class AnimeService {
     private dataSource: DataSource,
   ) {}
 
+  async getAnimeDetail(id: number, user?: User) {
+    const anime = await this.animeRepository.getAnimeDetailById(id);
+
+    const scrap = user
+      ? await this.scrapRepository.getScrapsByIds(id, user.id)
+      : null;
+
+    if (!anime) {
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
+    }
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      { anime, isScrapped: !!scrap },
+      EResponseMessage.SUCCESS,
+    );
+  }
+
   async addTagToAnimeList(animes: any[]) {
     const tags = await this.tagRepository.findAllWithAnimes();
     return animes.map((item) => {
@@ -75,6 +93,32 @@ export class AnimeService {
     return new ResponseDto(
       EStatusCode.OK,
       { animes: result, total },
+      EResponseMessage.SUCCESS,
+    );
+  }
+
+  async getAnimeSeries() {
+    const animes = await this.animeRepository.getOriginalAnimes();
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      {
+        animes,
+      },
+      EResponseMessage.SUCCESS,
+    );
+  }
+
+  async getAnimesBySeriesId(seriesId: number) {
+    const animes = await this.animeRepository.getAnimesBySeriesId(seriesId);
+    const series = animes.find((anime) => anime.id === seriesId);
+
+    return new ResponseDto(
+      EStatusCode.OK,
+      {
+        animes: animes.filter((anime) => anime.id !== seriesId),
+        series,
+      },
       EResponseMessage.SUCCESS,
     );
   }
@@ -165,24 +209,6 @@ export class AnimeService {
     );
   }
 
-  async getAnimeDetail(id: number, user?: User) {
-    const anime = await this.animeRepository.getAnimeById(id);
-
-    const scrap = user
-      ? await this.scrapRepository.getScrapsByIds(id, user.id)
-      : null;
-
-    if (!anime) {
-      throw new NotFoundException(EErrorMessage.NOT_FOUND);
-    }
-
-    return new ResponseDto(
-      EStatusCode.OK,
-      { anime, isScrapped: !!scrap },
-      EResponseMessage.SUCCESS,
-    );
-  }
-
   async updateAnime(id: number, updateAnimeDto: UpdateAnimeDto, user) {
     const {
       title,
@@ -200,6 +226,10 @@ export class AnimeService {
         const anime = await this.animeRepository
           .setManager(entityManager)
           .findOneBy({ id });
+
+        if (user.id !== anime.user.id) {
+          throw new ForbiddenException();
+        }
 
         let tagData: Tag[] = [];
 
@@ -240,41 +270,26 @@ export class AnimeService {
   }
 
   async removeAnime(id: number, user: User) {
-    const anime = await this.animeRepository.getAnimeToDeleteById(id);
+    await TransactionHelper.transaction(
+      this.dataSource,
+      async (entityManager) => {
+        const anime = await this.animeRepository.getAnimeToDeleteById(
+          id,
+          entityManager,
+        );
 
-    if (user.id !== anime.user.id) {
-      throw new ForbiddenException();
-    }
+        if (user.id !== anime.user.id) {
+          throw new ForbiddenException();
+        }
 
-    await this.reviewRepository.remove(anime.reviews);
-    await this.animeRepository.remove(anime);
+        await this.reviewRepository.deleteReviews(
+          anime.reviews.map((review) => review.id),
+          entityManager,
+        );
+        await this.animeRepository.deleteAnime(anime.id, entityManager);
+      },
+    );
 
     return new ResponseDto(EStatusCode.OK, null, EResponseMessage.DELETE_ITEM);
-  }
-
-  async getAnimeSeries() {
-    const animes = await this.animeRepository.getOriginalAnimes();
-
-    return new ResponseDto(
-      EStatusCode.OK,
-      {
-        animes,
-      },
-      EResponseMessage.SUCCESS,
-    );
-  }
-
-  async getAnimesBySeriesId(seriesId: number) {
-    const animes = await this.animeRepository.getAnimesBySeriesId(seriesId);
-    const series = animes.find((anime) => anime.id === seriesId);
-
-    return new ResponseDto(
-      EStatusCode.OK,
-      {
-        animes: animes.filter((anime) => anime.id !== seriesId),
-        series,
-      },
-      EResponseMessage.SUCCESS,
-    );
   }
 }

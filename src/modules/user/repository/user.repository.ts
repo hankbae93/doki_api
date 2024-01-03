@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import { UserRank } from '../user.enum';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
@@ -42,5 +43,9 @@ export class UserRepository extends Repository<User> {
       where: { nickname },
       relations: ['animes'],
     });
+  }
+
+  updateUserRank(userId: number, rank: UserRank, manager?: EntityManager) {
+    return this.setManager(manager).update(userId, { rank });
   }
 }

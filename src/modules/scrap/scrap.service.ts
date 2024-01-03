@@ -4,63 +4,33 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { User } from '../user/entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Scrap } from './entities/scrap.entity';
-import { Repository } from 'typeorm';
-import { Anime } from '../anime/entities/anime.entity';
 import { ResponseDto } from '../../common/dto/responseDto';
 import { EStatusCode } from '../../common/enum/status.enum';
 import { EResponseMessage } from '../../common/enum/message.enum';
+import { ScrapRepository } from './repository/scrap.repository';
+import { AnimeRepository } from '../anime/repository/anime.repository';
 
 @Injectable()
 export class ScrapService {
   constructor(
-    @InjectRepository(Scrap)
-    private scrapRepository: Repository<Scrap>,
-    @InjectRepository(Anime)
-    private animeRepository: Repository<Anime>,
+    private scrapRepository: ScrapRepository,
+    private animeRepository: AnimeRepository,
   ) {}
 
   async getMyScraps(user: User) {
-    const scraps = await this.scrapRepository.find({
-      where: {
-        user: {
-          id: user.id,
-        },
-      },
-      relations: ['anime'],
-    });
+    const scraps = await this.scrapRepository.getScrapByUserId(user.id);
 
     return new ResponseDto(EStatusCode.OK, scraps, EResponseMessage.SUCCESS);
   }
   async scrapAnime(animeId: number, user: User) {
-    const anime = await this.animeRepository.findOne({
-      where: {
-        id: animeId,
-      },
-    });
+    const anime = await this.animeRepository.findAnimeById(animeId);
+    const scrap = await this.scrapRepository.getScrapsByIds(animeId, user.id);
 
-    const isScrapped = await this.scrapRepository.findOne({
-      where: {
-        user: {
-          id: user.id,
-        },
-        anime: {
-          id: animeId,
-        },
-      },
-    });
-
-    if (isScrapped) {
+    if (scrap) {
       return new ForbiddenException('이미 스크랩으로 등록되었습니다.');
     }
 
-    const newScrap = await this.scrapRepository.create({
-      user,
-      anime,
-    });
-
-    await this.scrapRepository.insert(newScrap);
+    const newScrap = await this.scrapRepository.createScrap(user, anime);
 
     return new ResponseDto(
       EStatusCode.CREATED,
@@ -70,17 +40,9 @@ export class ScrapService {
   }
 
   async removeScrapedAnime(animeId: number, user: User) {
-    const scrap = await this.scrapRepository.findOne({
-      where: {
-        anime: {
-          id: animeId,
-        },
-        user: {
-          id: user.id,
-        },
-      },
-      relations: ['user'],
-    });
+    const scrap = await this.scrapRepository.getScrapsByIds(animeId, user.id, [
+      'user',
+    ]);
 
     if (scrap.user.id !== user.id) {
       return new UnauthorizedException('누구십니까');

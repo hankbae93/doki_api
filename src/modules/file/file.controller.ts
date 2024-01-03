@@ -5,7 +5,7 @@ export class FileController {
   constructor() {}
 
   @Get('/:path')
-  getAmazingFile(@Param('path') path: string, @Res() res) {
+  getStaticFile(@Param('path') path: string, @Res() res) {
     res.sendFile(path, { root: './files' });
   }
 }

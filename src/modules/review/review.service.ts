@@ -5,24 +5,27 @@ import {
 } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Anime } from '../anime/entities/anime.entity';
-import { DataSource, Repository } from 'typeorm';
-import { Review } from './entities/review.entity';
+import { DataSource } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { ResponseDto } from '../../common/dto/responseDto';
 import { EStatusCode } from '../../common/enum/status.enum';
-import { EResponseMessage } from '../../common/enum/message.enum';
+import {
+  EErrorMessage,
+  EResponseMessage,
+} from '../../common/enum/message.enum';
 import { UserRank } from '../user/user.enum';
 import { getIsNextRank } from './review.util';
+import { ReviewRepository } from './repository/review.repository';
+import { AnimeRepository } from '../anime/repository/anime.repository';
+import { TransactionHelper } from '../../common/helper/transaction.helper';
+import { UserRepository } from '../user/repository/user.repository';
 
 @Injectable()
 export class ReviewService {
   constructor(
-    @InjectRepository(Review)
-    private reviewRepository: Repository<Review>,
-    @InjectRepository(Anime)
-    private animeRepository: Repository<Anime>,
+    private reviewRepository: ReviewRepository,
+    private animeRepository: AnimeRepository,
+    private userRepository: UserRepository,
     private dataSource: DataSource,
   ) {}
 
@@ -33,93 +36,78 @@ export class ReviewService {
   ) {
     const { content, score } = createReviewDto;
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    const animeRepository = this.dataSource.manager.getRepository(Anime);
-    const reviewRepository = this.dataSource.manager.getRepository(Review);
-    const userRepository = this.dataSource.manager.getRepository(User);
+    const result = await TransactionHelper.transaction(
+      this.dataSource,
+      async (entityManager) => {
+        const anime = await this.animeRepository.getAnimeWithReviews(
+          animeId,
+          entityManager,
+        );
+        const review = await this.reviewRepository.getReviewsByIds(
+          animeId,
+          user.id,
+          entityManager,
+        );
 
-    try {
-      const anime = await animeRepository.findOne({
-        where: { id: animeId },
-        relations: ['reviews'],
-      });
+        if (review) {
+          return new ForbiddenException(EErrorMessage.EXISITEING_REVIEW);
+        }
 
-      const review = await reviewRepository.findOne({
-        where: {
-          anime: { id: animeId },
-          user: { id: user.id },
-        },
-      });
-
-      if (review) return new ForbiddenException('이미 생성된 리뷰가 있습니다.');
-
-      const newReview = await reviewRepository.create({
-        content,
-        score,
-        anime,
-        user,
-        img: '',
-      });
-
-      const scoreSum =
-        anime.reviews.reduce((acc, cur) => acc + cur.score, 0) + score;
-      const reviewCount =
-        anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
-      const averageScore = Math.floor(scoreSum / reviewCount);
-
-      await reviewRepository.insert(newReview);
-
-      await animeRepository.update(
-        { id: animeId },
-        {
-          averageScore,
-        },
-      );
-
-      const userReviews = await reviewRepository.find({
-        where: {
-          user: {
-            id: user.id,
-          },
-        },
-      });
-
-      //
-      const { nextRank, rank } = getIsNextRank(
-        userReviews.length,
-        UserRank[user.rank],
-      );
-
-      if (nextRank !== rank) {
-        await userRepository.save({
-          ...user,
-          rank: UserRank[nextRank],
+        const newReview = await this.reviewRepository.createReview({
+          content,
+          score,
+          anime,
+          user,
+          img: '',
         });
-      }
 
-      await queryRunner.commitTransaction();
-      return new ResponseDto(
-        EStatusCode.CREATED,
-        { review: newReview, averageScore },
-        EResponseMessage.SUCCESS,
-      );
-    } catch (error) {
-      console.error(error);
-      await queryRunner.rollbackTransaction();
-    } finally {
-      await queryRunner.release();
-    }
+        const scoreSum =
+          anime.reviews.reduce((acc, cur) => acc + cur.score, 0) + score;
+        const reviewCount =
+          anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
+        const averageScore = Math.floor(scoreSum / reviewCount);
+
+        await this.animeRepository.update(
+          { id: animeId },
+          {
+            averageScore,
+          },
+        );
+
+        const userReviews = await this.reviewRepository.getReviewsByUserId(
+          user.id,
+          entityManager,
+        );
+
+        const { nextRank, rank } = getIsNextRank(
+          userReviews.length,
+          UserRank[user.rank],
+        );
+
+        if (nextRank !== rank) {
+          await this.userRepository.updateUserRank(
+            user.id,
+            UserRank[nextRank],
+            entityManager,
+          );
+        }
+
+        return { review: newReview, averageScore };
+      },
+    );
+
+    return new ResponseDto(
+      EStatusCode.CREATED,
+      result,
+      EResponseMessage.SUCCESS,
+    );
   }
 
   async getMyReviewByAnime(animeId: number, user: User) {
-    const review = await this.reviewRepository.findOne({
-      where: {
-        anime: { id: animeId },
-        user: { id: user.id },
-      },
-    });
+    const review = await this.reviewRepository.getReviewsByIds(
+      animeId,
+      user.id,
+    );
 
     return new ResponseDto(EStatusCode.OK, review, EResponseMessage.SUCCESS);
   }

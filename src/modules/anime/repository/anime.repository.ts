@@ -27,7 +27,16 @@ export class AnimeRepository extends Repository<Anime> {
     });
   }
 
-  getAnimeById(id: number) {
+  getAnimeWithReviews(animeId: number, manager?: EntityManager) {
+    return this.setManager(manager).findOne({
+      where: {
+        id: animeId,
+      },
+      relations: ['reviews'],
+    });
+  }
+
+  getAnimeDetailById(id: number) {
     return this.createQueryBuilder('anime')
       .leftJoinAndSelect('anime.user', 'user_id')
       .leftJoinAndSelect('anime.tags', 'tag')
@@ -36,6 +45,14 @@ export class AnimeRepository extends Repository<Anime> {
       .leftJoinAndSelect('review.user', 'user')
       .where('anime.id = :id', { id })
       .getOne();
+  }
+
+  findAnimeById(animeId: number) {
+    return this.findOne({
+      where: {
+        id: animeId,
+      },
+    });
   }
 
   async getAnimesByPage(getAnimeByPageDto: GetAllAnimeQueryDto) {
@@ -236,10 +253,16 @@ export class AnimeRepository extends Repository<Anime> {
     });
   }
 
-  getAnimeToDeleteById(animeId: number) {
-    return this.findOne({
+  getAnimeToDeleteById(animeId: number, manager?: EntityManager) {
+    return this.setManager(manager).findOne({
       where: { id: animeId },
       relations: ['user', 'reviews'],
     });
   }
+
+  deleteAnime(animeId: number, manager?: EntityManager) {
+    return this.setManager(manager).update(animeId, { deleted: true });
+  }
+
+  updateAnime;
 }

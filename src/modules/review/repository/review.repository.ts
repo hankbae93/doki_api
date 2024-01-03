@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, DeepPartial, EntityManager, Repository } from 'typeorm';
 import { Review } from '../entities/review.entity';
 
 @Injectable()
@@ -12,8 +12,15 @@ export class ReviewRepository extends Repository<Review> {
     return manager ? manager.getRepository(Review) : this;
   }
 
-  getReviewsByIds(animeId: number, userId: number) {
-    return this.findOne({
+  async createReview(review: DeepPartial<Review>, manager?: EntityManager) {
+    const newReview = this.setManager(manager).create(review);
+    await this.insert(newReview);
+
+    return newReview;
+  }
+
+  getReviewsByIds(animeId: number, userId: number, manager?: EntityManager) {
+    return this.setManager(manager).findOne({
       where: {
         anime: {
           id: animeId,
@@ -23,5 +30,19 @@ export class ReviewRepository extends Repository<Review> {
         },
       },
     });
+  }
+
+  getReviewsByUserId(userId: number, manager?: EntityManager) {
+    return this.setManager(manager).find({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+  }
+
+  deleteReviews(reviewIds: number[], manager?: EntityManager) {
+    return this.setManager(manager).update(reviewIds, { deleted: true });
   }
 }

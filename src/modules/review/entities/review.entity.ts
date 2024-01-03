@@ -23,6 +23,9 @@ export class Review extends BaseEntity {
   @Column()
   score: number;
 
+  @Column({ default: false })
+  deleted: boolean;
+
   @ManyToOne(() => Anime, (anime) => anime.reviews, {
     onDelete: 'CASCADE',
     nullable: false,
