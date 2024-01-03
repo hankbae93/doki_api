@@ -20,7 +20,7 @@ import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { editFileName } from '../../utils/file-uploading.util';
+import { editFileName } from '../../common/utils/file-uploading.util';
 
 @Controller('anime')
 export class AnimeController {

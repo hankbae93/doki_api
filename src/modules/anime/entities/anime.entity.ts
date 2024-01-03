@@ -14,7 +14,7 @@ import { AnimeSource } from '../anime.enum';
 import { Review } from '../../review/entities/review.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Tag } from '../../tag/entities/tag.entity';
-import { Image } from './image.entity';
+import { File } from '../../file/entities/file.entity';
 
 @Entity()
 export class Anime extends BaseEntity {
@@ -54,8 +54,8 @@ export class Anime extends BaseEntity {
   @OneToMany(() => Scrap, (scrap) => scrap.anime)
   scraps: Scrap[];
 
-  @OneToMany(() => Image, (image) => image.anime)
-  images: Image[];
+  @OneToMany(() => File, (image) => image.anime)
+  images: File[];
 
   @ManyToOne(() => User, (user) => user.animes, { eager: false })
   @JoinColumn({ foreignKeyConstraintName: 'fk_user_animes' })

@@ -11,7 +11,7 @@ import {
 } from '../../common/enum/message.enum';
 import { User } from '../user/entities/user.entity';
 import { UserRankName } from '../user/user.enum';
-import { ResponseDto } from '../../common/dto/responseDto';
+import { ResponseDto } from '../../common/dto/response.dto';
 import { EStatusCode } from '../../common/enum/status.enum';
 import { UserRepository } from '../user/repository/user.repository';
 import { JwtService } from '@nestjs/jwt';

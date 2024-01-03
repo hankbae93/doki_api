@@ -8,7 +8,7 @@ import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { DataSource, EntityManager } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
-import { ResponseDto } from '../../common/dto/responseDto';
+import { ResponseDto } from '../../common/dto/response.dto';
 import { EStatusCode } from '../../common/enum/status.enum';
 import {
   EErrorMessage,
@@ -18,7 +18,7 @@ import { Tag } from '../tag/entities/tag.entity';
 import { AnimeRepository } from './repository/anime.repository';
 import { ScrapRepository } from '../scrap/repository/scrap.repository';
 import { ReviewRepository } from '../review/repository/review.repository';
-import { ImageRepository } from './repository/image.repository';
+import { FileRepository } from '../file/repository/file.repository';
 import { TagRepository } from '../tag/repository/tag.repository';
 import { TransactionHelper } from '../../common/helper/transaction.helper';
 
@@ -28,7 +28,7 @@ export class AnimeService {
     private animeRepository: AnimeRepository,
     private scrapRepository: ScrapRepository,
     private reviewRepository: ReviewRepository,
-    private imageRepository: ImageRepository,
+    private imageRepository: FileRepository,
     private tagRepository: TagRepository,
     private dataSource: DataSource,
   ) {}
@@ -190,7 +190,7 @@ export class AnimeService {
         );
 
         // 이미지 엔티티 업데이트
-        await this.imageRepository.createImages(
+        await this.imageRepository.createFiles(
           files.file.map((file) => ({
             anime: newAnime,
             fileName: file.path,

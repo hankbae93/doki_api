@@ -8,7 +8,7 @@ import { Anime } from '../modules/anime/entities/anime.entity';
 import { Review } from '../modules/review/entities/review.entity';
 import { Tag } from '../modules/tag/entities/tag.entity';
 import { Scrap } from '../modules/scrap/entities/scrap.entity';
-import { Image } from '../modules/anime/entities/image.entity';
+import { File } from '../modules/file/entities/file.entity';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 export const typeOrmConfig: TypeOrmModuleAsyncOptions = {
@@ -22,7 +22,7 @@ export const typeOrmConfig: TypeOrmModuleAsyncOptions = {
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: 'doki_db',
-      entities: [User, Anime, Review, Tag, Scrap, Image],
+      entities: [User, Anime, Review, Tag, Scrap, File],
       synchronize: true,
       logging: true,
       namingStrategy: new SnakeNamingStrategy(),

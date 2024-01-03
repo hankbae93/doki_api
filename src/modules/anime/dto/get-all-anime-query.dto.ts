@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { AnimeOrder, AnimeSource } from '../anime.enum';
 import { Transform } from 'class-transformer';
-import { toBoolean, toNumber } from '../../../common/utils/format-data';
+import { toBoolean, toNumber } from '../../../common/utils/format-data.util';
 
 export class GetAllAnimeQueryDto {
   @Transform(({ value }) => toNumber(value, { default: 1, min: 1 }))

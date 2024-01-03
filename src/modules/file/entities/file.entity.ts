@@ -7,20 +7,24 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { Anime } from './anime.entity';
+import { Anime } from '../../anime/entities/anime.entity';
+import { FileType } from '../file.enum';
 
 @Entity()
 @Unique(['fileName'])
-export class Image extends BaseEntity {
+export class File extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: false })
   fileName: string;
+
+  @Column('enum', { enum: FileType, nullable: true })
+  type: FileType;
 
   @ManyToOne(() => Anime, (anime) => anime.images, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ foreignKeyConstraintName: 'fk_anime_images' })
+  @JoinColumn({ foreignKeyConstraintName: 'fk_anime_files' })
   anime: Anime;
 }

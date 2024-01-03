@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { User } from '../user/entities/user.entity';
-import { ResponseDto } from '../../common/dto/responseDto';
+import { ResponseDto } from '../../common/dto/response.dto';
 import { EStatusCode } from '../../common/enum/status.enum';
 import { EResponseMessage } from '../../common/enum/message.enum';
 import { ScrapRepository } from './repository/scrap.repository';

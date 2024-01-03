@@ -3,7 +3,7 @@ import { User } from './entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ResponseDto } from '../../common/dto/responseDto';
+import { ResponseDto } from '../../common/dto/response.dto';
 import { EStatusCode } from '../../common/enum/status.enum';
 import {
   EErrorMessage,

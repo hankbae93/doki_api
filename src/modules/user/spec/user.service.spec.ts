@@ -7,7 +7,7 @@ import { Anime } from '../../anime/entities/anime.entity';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ResponseDto } from '../../../common/dto/responseDto';
+import { ResponseDto } from '../../../common/dto/response.dto';
 import { EStatusCode } from '../../../common/enum/status.enum';
 import {
   EErrorMessage,

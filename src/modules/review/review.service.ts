@@ -7,7 +7,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { DataSource } from 'typeorm';
 import { User } from '../user/entities/user.entity';
-import { ResponseDto } from '../../common/dto/responseDto';
+import { ResponseDto } from '../../common/dto/response.dto';
 import { EStatusCode } from '../../common/enum/status.enum';
 import {
   EErrorMessage,
