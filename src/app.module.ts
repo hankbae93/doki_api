@@ -9,6 +9,7 @@ import { ScrapModule } from './modules/scrap/scrap.module';
 import { typeOrmConfig } from './config/typeorm.config';
 import { MulterModule } from '@nestjs/platform-express';
 import { AuthModule } from './modules/auth/auth.module';
+import { FileModule } from './modules/file/file.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -23,6 +24,7 @@ const ENV = process.env.NODE_ENV;
       dest: './files',
     }),
     AuthModule,
+    FileModule,
     UserModule,
     AnimeModule,
     TagModule,

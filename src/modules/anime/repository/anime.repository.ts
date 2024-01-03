@@ -14,6 +14,11 @@ export class AnimeRepository extends Repository<Anime> {
     return manager ? manager.getRepository(Anime) : this;
   }
 
+  createAnime(anime: Partial<Anime>, manager?: EntityManager) {
+    const newAnime = this.setManager(manager).create(anime);
+    return this.setManager(manager).save(newAnime);
+  }
+
   getAnimeBySeriesName(series: string, manager?: EntityManager) {
     return this.setManager(manager).findOne({
       where: {
@@ -25,7 +30,6 @@ export class AnimeRepository extends Repository<Anime> {
   getAnimeById(id: number) {
     return this.createQueryBuilder('anime')
       .leftJoinAndSelect('anime.user', 'user_id')
-      .leftJoinAndSelect('anime.crew', 'crew')
       .leftJoinAndSelect('anime.tags', 'tag')
       .leftJoinAndSelect('anime.reviews', 'review')
       .leftJoinAndSelect('anime.images', 'image')

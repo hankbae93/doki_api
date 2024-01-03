@@ -45,6 +45,9 @@ export class Anime extends BaseEntity {
   @Column('decimal', { precision: 5, scale: 2, default: 0 })
   averageScore: number;
 
+  @Column({ default: false })
+  deleted: boolean;
+
   @OneToMany(() => Review, (review) => review.anime)
   reviews: Review[];
 

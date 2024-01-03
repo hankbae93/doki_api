@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { ResponseDto } from '../../common/dto/responseDto';
@@ -20,6 +20,7 @@ import { ScrapRepository } from '../scrap/repository/scrap.repository';
 import { ReviewRepository } from '../review/repository/review.repository';
 import { ImageRepository } from './repository/image.repository';
 import { TagRepository } from '../tag/repository/tag.repository';
+import { TransactionHelper } from '../../common/helper/transaction.helper';
 
 @Injectable()
 export class AnimeService {
@@ -96,93 +97,72 @@ export class AnimeService {
       series = '',
     } = createAnimeDto;
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const result = await TransactionHelper.transaction(
+      this.dataSource,
+      async (entityManager: EntityManager) => {
+        let animeParentId: number | null = null;
+        if (series) {
+          const originAnime = await this.animeRepository.getAnimeBySeriesName(
+            series,
+            entityManager,
+          );
 
-    try {
-      let animeParentId: number | null = null;
-      if (series) {
-        const originAnime = await this.animeRepository.getAnimeBySeriesName(
-          series,
-          queryRunner.manager,
-        );
-
-        if (originAnime) {
-          animeParentId = originAnime.id;
+          if (originAnime) {
+            animeParentId = originAnime.id;
+          }
         }
-      }
 
-      const tagsData: Tag[] = [];
-      if (tags.length !== 0) {
-        const tagsWithRelation = await Promise.all(
-          tags.map((value) => {
-            return this.tagRepository.findTagByName(value, queryRunner.manager);
-          }),
+        let tagData: Tag[] = [];
+
+        if (tags.length > 0) {
+          const tagsWithRelation = await this.tagRepository.findTagsByName(
+            tags,
+            entityManager,
+          );
+          const newTags = await this.tagRepository.createTag(
+            tags.filter((tagValue) =>
+              tagsWithRelation.some((tag) => tag.name === tagValue),
+            ),
+            entityManager,
+          );
+
+          tagData = tagsWithRelation.concat(newTags);
+        }
+
+        const newAnime = await this.animeRepository.createAnime(
+          {
+            title,
+            author,
+            source,
+            averageScore: 0,
+            animeParentId,
+            thumbnail: files.file[0].path,
+            description,
+            crew,
+            tags: tagData.length === 0 ? null : tagData,
+            user,
+          },
+          entityManager,
         );
 
-        await Promise.all(
-          tagsWithRelation.map(async (data, index) => {
-            if (data) {
-              return tagsData.push(data);
-            } else {
-              const createdTag = await this.tagRepository
-                .setManager(queryRunner.manager)
-                .create({
-                  name: tags[index],
-                });
-              await this.tagRepository
-                .setManager(queryRunner.manager)
-                .save(createdTag);
-              tagsData.push(createdTag);
-            }
-          }),
-        );
-      }
-
-      const newAnime = this.animeRepository
-        .setManager(queryRunner.manager)
-        .create({
-          title,
-          author,
-          source,
-          averageScore: 0,
-          animeParentId,
-          thumbnail: files.file[0].path,
-          description,
-          // crew: crewWithRelations || originCrew,
-          tags: tagsData.length === 0 ? null : tagsData,
-          user,
-        });
-      const anime = await this.animeRepository
-        .setManager(queryRunner.manager)
-        .save(newAnime);
-
-      // 이미지 엔티티 업데이트
-      const newImages = await this.imageRepository
-        .setManager(queryRunner.manager)
-        .create(
+        // 이미지 엔티티 업데이트
+        await this.imageRepository.createImages(
           files.file.map((file) => ({
-            anime,
+            anime: newAnime,
             fileName: file.path,
           })),
+          entityManager,
         );
 
-      await this.imageRepository
-        .setManager(queryRunner.manager)
-        .insert(newImages);
+        return newAnime;
+      },
+    );
 
-      await queryRunner.commitTransaction();
-
-      return new ResponseDto(
-        EStatusCode.CREATED,
-        anime,
-        EResponseMessage.SUCCESS,
-      );
-    } catch (err) {
-      console.error(err);
-      throw new Error(err);
-    }
+    return new ResponseDto(
+      EStatusCode.CREATED,
+      result,
+      EResponseMessage.SUCCESS,
+    );
   }
 
   async getAnimeDetail(id: number, user?: User) {
@@ -214,57 +194,47 @@ export class AnimeService {
       description,
     } = updateAnimeDto;
 
-    const anime = await this.animeRepository.findOneBy({ id });
+    const result = await TransactionHelper.transaction(
+      this.dataSource,
+      async (entityManager) => {
+        const anime = await this.animeRepository
+          .setManager(entityManager)
+          .findOneBy({ id });
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+        let tagData: Tag[] = [];
 
-    const tagsData: Tag[] = [];
-    if (tags.length !== 0) {
-      const tagsWithRelation = await Promise.all(
-        tags.map((value) => {
-          return this.tagRepository.findTagByName(value, queryRunner.manager);
-        }),
-      );
+        if (tags.length > 0) {
+          const tagsWithRelation = await this.tagRepository.findTagsByName(
+            tags,
+            entityManager,
+          );
+          const newTags = await this.tagRepository.createTag(
+            tags.filter((tagValue) =>
+              tagsWithRelation.some((tag) => tag.name === tagValue),
+            ),
+            entityManager,
+          );
 
-      await Promise.all(
-        tagsWithRelation.map(async (data, index) => {
-          if (data) {
-            return tagsData.push(data);
-          } else {
-            const createdTag = await this.tagRepository
-              .setManager(queryRunner.manager)
-              .create({
-                name: tags[index],
-              });
-            await this.tagRepository
-              .setManager(queryRunner.manager)
-              .insert(createdTag);
-            tagsData.push(createdTag);
-          }
-        }),
-      );
-    }
+          tagData = tagsWithRelation.concat(newTags);
+        }
 
-    const updatedAnime = await this.animeRepository
-      .setManager(queryRunner.manager)
-      .save({
-        ...anime,
-        title,
-        author,
-        source,
-        animeParentId: null,
-        thumbnail,
-        description,
-        tags: tagsData,
-      });
-
-    await queryRunner.commitTransaction();
+        return await this.animeRepository.setManager(entityManager).save({
+          ...anime,
+          title,
+          author,
+          source,
+          crew,
+          animeParentId: null,
+          thumbnail,
+          description,
+          tags: tagData.length === 0 ? null : tagData,
+        });
+      },
+    );
 
     return new ResponseDto(
       EStatusCode.CREATED,
-      updatedAnime,
+      result,
       EResponseMessage.SUCCESS,
     );
   }

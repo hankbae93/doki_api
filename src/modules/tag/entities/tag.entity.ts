@@ -2,7 +2,6 @@ import {
   BaseEntity,
   Column,
   Entity,
-  JoinTable,
   ManyToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -17,6 +16,5 @@ export class Tag extends BaseEntity {
   name: string;
 
   @ManyToMany(() => Anime, (anime) => anime.tags)
-  @JoinTable()
   animes: Anime[];
 }
