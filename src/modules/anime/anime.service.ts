@@ -28,7 +28,7 @@ export class AnimeService {
     private animeRepository: AnimeRepository,
     private scrapRepository: ScrapRepository,
     private reviewRepository: ReviewRepository,
-    private imageRepository: FileRepository,
+    private fileRepository: FileRepository,
     private tagRepository: TagRepository,
     private dataSource: DataSource,
   ) {}
@@ -36,13 +36,13 @@ export class AnimeService {
   async getAnimeDetail(id: number, user?: User) {
     const anime = await this.animeRepository.getAnimeDetailById(id);
 
-    const scrap = user
-      ? await this.scrapRepository.getScrapsByIds(id, user.id)
-      : null;
-
     if (!anime) {
       throw new NotFoundException(EErrorMessage.NOT_FOUND);
     }
+
+    const scrap = user
+      ? await this.scrapRepository.getScrapsByIds(id, user.id)
+      : null;
 
     return new ResponseDto(
       EStatusCode.OK,
@@ -190,7 +190,7 @@ export class AnimeService {
         );
 
         // 이미지 엔티티 업데이트
-        await this.imageRepository.createFiles(
+        await this.fileRepository.createFiles(
           files.file.map((file) => ({
             anime: newAnime,
             fileName: file.path,

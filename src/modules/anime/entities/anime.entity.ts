@@ -55,7 +55,7 @@ export class Anime extends BaseEntity {
   scraps: Scrap[];
 
   @OneToMany(() => File, (image) => image.anime)
-  images: File[];
+  files: File[];
 
   @ManyToOne(() => User, (user) => user.animes, { eager: false })
   @JoinColumn({ foreignKeyConstraintName: 'fk_user_animes' })

@@ -22,7 +22,7 @@ export class File extends BaseEntity {
   @Column('enum', { enum: FileType, nullable: true })
   type: FileType;
 
-  @ManyToOne(() => Anime, (anime) => anime.images, {
+  @ManyToOne(() => Anime, (anime) => anime.files, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ foreignKeyConstraintName: 'fk_anime_files' })
