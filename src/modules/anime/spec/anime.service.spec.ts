@@ -5,14 +5,16 @@ import { ScrapRepository } from '../../scrap/repository/scrap.repository';
 import { ReviewRepository } from '../../review/repository/review.repository';
 import { FileRepository } from '../../file/repository/file.repository';
 import { TagRepository } from '../../tag/repository/tag.repository';
-import { DataSource, QueryRunner } from 'typeorm';
-import { MockingHelper } from '../../../common/helper/mocking.helper';
+import { DataSource } from 'typeorm';
+import { EntityMock } from '../../../common/mock/entity.mock';
 import { EResponseMessage } from '../../../common/enum/message.enum';
 import { EStatusCode } from '../../../common/enum/status.enum';
 import { ResponseDto } from '../../../common/dto/response.dto';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { NotFoundException } from '@nestjs/common';
 import { GetAllAnimeQueryDto } from '../dto/get-all-anime-query.dto';
+import { ConnectionMock } from '../../../common/mock/connection.mock';
+import { CreateAnimeDto } from '../dto/create-anime.dto';
 
 describe('animeService', () => {
   let animeService: AnimeService;
@@ -28,25 +30,20 @@ describe('animeService', () => {
     getAnimesByPageAndUserId: jest.fn(),
     getOriginalAnimes: jest.fn(),
     getAnimesBySeriesId: jest.fn(),
+    createAnime: jest.fn(),
   };
   const mockScrapRepository = {
     getScrapsByIds: jest.fn(),
   };
   const mockReviewRepository = {};
-  const mockFileRepository = {};
-  const mockTagRepository = {
-    findAllWithAnimes: jest.fn().mockResolvedValue([MockingHelper.mockTag()]),
+  const mockFileRepository = {
+    createFiles: jest.fn(),
   };
-
-  const qr = {
-    manager: {},
-  } as QueryRunner;
-
-  class ConnectionMock {
-    createQueryRunner(mode?: 'master' | 'slave'): QueryRunner {
-      return qr;
-    }
-  }
+  const mockTagRepository = {
+    findAllWithAnimes: jest.fn().mockResolvedValue([EntityMock.mockTag()]),
+    findTagsByName: jest.fn(),
+    createTag: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -74,7 +71,7 @@ describe('animeService', () => {
 
   describe('getAnimeDetail', () => {
     it('비로그인 상태일 때, 애니메이션 정보만 조회된다.', async () => {
-      const anime = MockingHelper.mockAnime();
+      const anime = EntityMock.mockAnime();
       const response = new ResponseDto(
         EStatusCode.OK,
         { anime, isScrapped: false },
@@ -92,13 +89,13 @@ describe('animeService', () => {
     });
 
     it('로그인 상태일 때, 애니메이션 정보와 스크랩 정보가 조회된다.', async () => {
-      const anime = MockingHelper.mockAnime();
+      const anime = EntityMock.mockAnime();
       const response = new ResponseDto(
         EStatusCode.OK,
         { anime, isScrapped: true },
         EResponseMessage.SUCCESS,
       );
-      const user = MockingHelper.mockUser();
+      const user = EntityMock.mockUser();
       jest
         .spyOn(animeRepository, 'getAnimeDetailById')
         .mockResolvedValue(anime);
@@ -113,8 +110,8 @@ describe('animeService', () => {
     });
 
     it('애니메이션이 존재하지 않다면 에러를 던집니다.', async () => {
-      const animeId = MockingHelper.mockAnime().id;
-      const user = MockingHelper.mockUser();
+      const animeId = EntityMock.mockAnime().id;
+      const user = EntityMock.mockUser();
       jest.spyOn(animeRepository, 'getAnimeDetailById').mockResolvedValue(null);
 
       await expect(
@@ -125,8 +122,8 @@ describe('animeService', () => {
 
   describe('addTagToAnimeList', () => {
     it('리스트의 각 애니메이션에 태그를 추가해야 합니다.', async () => {
-      const anime = MockingHelper.mockAnime();
-      const tag = MockingHelper.mockTag();
+      const anime = EntityMock.mockAnime();
+      const tag = EntityMock.mockTag();
 
       const result = await animeService.addTagToAnimeList([anime]);
 
@@ -143,8 +140,8 @@ describe('animeService', () => {
         page: 1,
         limit: 10,
       } as GetAllAnimeQueryDto;
-      const anime = MockingHelper.mockAnime();
-      const tag = MockingHelper.mockTag();
+      const anime = EntityMock.mockAnime();
+      const tag = EntityMock.mockTag();
       const response = new ResponseDto(
         EStatusCode.OK,
         {
@@ -175,9 +172,9 @@ describe('animeService', () => {
         page: 1,
         limit: 10,
       } as GetAllAnimeQueryDto;
-      const user = MockingHelper.mockUser();
-      const anime = MockingHelper.mockAnime();
-      const tag = MockingHelper.mockTag();
+      const user = EntityMock.mockUser();
+      const anime = EntityMock.mockAnime();
+      const tag = EntityMock.mockTag();
       const response = new ResponseDto(
         EStatusCode.OK,
         {
@@ -204,7 +201,7 @@ describe('animeService', () => {
 
   describe('getAnimeSeries', () => {
     it('부모가 되는 애니메이션 목록을 반환해야 합니다.', async () => {
-      const anime = MockingHelper.mockAnime();
+      const anime = EntityMock.mockAnime();
       const response = new ResponseDto(
         EStatusCode.OK,
         {
@@ -226,7 +223,7 @@ describe('animeService', () => {
 
   describe('getAnimesBySeriesId', () => {
     it('부모에 속하는 애니메이션 목록을 반환해야 합니다.', async () => {
-      const anime = MockingHelper.mockAnime();
+      const anime = EntityMock.mockAnime();
       const response = new ResponseDto(
         EStatusCode.OK,
         {
@@ -246,7 +243,7 @@ describe('animeService', () => {
     });
 
     it('부모에 속하는 애니메이션의 아이디가 유효하지 않으면 에러를 던집니다.', async () => {
-      const anime = MockingHelper.mockAnime();
+      const anime = EntityMock.mockAnime();
 
       jest.spyOn(animeRepository, 'getAnimesBySeriesId').mockResolvedValue([]);
 
@@ -257,19 +254,93 @@ describe('animeService', () => {
   });
 
   describe('createAnime', () => {
-    it('should create a new anime', () => {
-      // Test logic here
+    it('새로운 애니메이션을 생성해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const files = {
+        file: [{ path: '' } as Express.Multer.File],
+      };
+      const dto = {
+        title: anime.title,
+        description: anime.description,
+        crew: anime.crew,
+        source: anime.source,
+      } as CreateAnimeDto;
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        anime,
+        EResponseMessage.SUCCESS,
+      );
+
+      jest.spyOn(animeRepository, 'createAnime').mockResolvedValue(anime);
+
+      const result = await animeService.createAnime(dto, files, user);
+
+      expect(animeRepository.createAnime).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
 
-    it('should associate new anime with tags', () => {
-      // Test logic here
+    it('태그를 받으면 새 애니메이션을 태그와 연결해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const tag = EntityMock.mockTag();
+      const files = {
+        file: [{ path: '' } as Express.Multer.File],
+      };
+      const dto = {
+        title: anime.title,
+        description: anime.description,
+        crew: anime.crew,
+        source: anime.source,
+        tags: [tag.name],
+      } as CreateAnimeDto;
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        Object.assign(anime, { tags: [{ tagId: tag.id, tagName: tag.name }] }),
+        EResponseMessage.SUCCESS,
+      );
+
+      jest.spyOn(animeRepository, 'createAnime').mockResolvedValue(anime);
+      jest.spyOn(tagRepository, 'findTagsByName').mockResolvedValue([tag]);
+
+      const result = await animeService.createAnime(dto, files, user);
+
+      expect(tagRepository.findTagsByName).toHaveBeenCalled();
+      expect(result).toEqual(response);
+    });
+
+    it('태그가 테이블에 없으면 생성해서라도 새 애니메이션을 태그와 연결해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const tag = EntityMock.mockTag();
+      const files = {
+        file: [{ path: '' } as Express.Multer.File],
+      };
+      const dto = {
+        title: anime.title,
+        description: anime.description,
+        crew: anime.crew,
+        source: anime.source,
+        tags: [tag.name],
+      } as CreateAnimeDto;
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        Object.assign(anime, { tags: [{ tagId: tag.id, tagName: tag.name }] }),
+        EResponseMessage.SUCCESS,
+      );
+
+      jest.spyOn(animeRepository, 'createAnime').mockResolvedValue(anime);
+      jest.spyOn(tagRepository, 'findTagsByName').mockResolvedValue([]);
+      jest.spyOn(tagRepository, 'createTag').mockResolvedValue([tag]);
+
+      const result = await animeService.createAnime(dto, files, user);
+      console.log(result);
+
+      expect(tagRepository.createTag).toHaveBeenCalledWith([tag]);
+      expect(result).toEqual(response);
     });
 
     it('should associate new anime with a series if provided', () => {
-      // Test logic here
-    });
-
-    it('should throw ForbiddenException if user is unauthorized', () => {
       // Test logic here
     });
   });

@@ -154,10 +154,7 @@ export class AnimeService {
             series,
             entityManager,
           );
-
-          if (originAnime) {
-            animeParentId = originAnime.id;
-          }
+          animeParentId = originAnime ? originAnime.id : null;
         }
 
         let tagData: Tag[] = [];
@@ -167,6 +164,8 @@ export class AnimeService {
             tags,
             entityManager,
           );
+
+          console.log({ tagsWithRelation });
           const newTags = await this.tagRepository.createTag(
             tags.filter((tagValue) =>
               tagsWithRelation.some((tag) => tag.name === tagValue),
@@ -176,6 +175,7 @@ export class AnimeService {
 
           tagData = tagsWithRelation.concat(newTags);
         }
+        console.log(tagData);
 
         const newAnime = await this.animeRepository.createAnime(
           {
@@ -192,6 +192,7 @@ export class AnimeService {
           },
           entityManager,
         );
+        console.log(newAnime);
 
         // 이미지 엔티티 업데이트
         await this.fileRepository.createFiles(

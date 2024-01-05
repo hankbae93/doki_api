@@ -4,7 +4,7 @@ import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
 import { AnimeController } from '../anime.controller';
 import { AnimeService } from '../anime.service';
-import { MockingHelper } from '../../../common/helper/mocking.helper';
+import { EntityMock } from '../../../common/mock/entity.mock';
 import { AnimeRepository } from '../repository/anime.repository';
 import { FileRepository } from '../../file/repository/file.repository';
 import { ScrapRepository } from '../../scrap/repository/scrap.repository';
@@ -62,7 +62,7 @@ describe('UserController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AnimeController],
-      providers: MockingHelper.mockProviders([
+      providers: EntityMock.mockProviders([
         AnimeRepository,
         FileRepository,
         ScrapRepository,
