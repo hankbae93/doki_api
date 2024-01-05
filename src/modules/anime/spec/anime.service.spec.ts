@@ -5,16 +5,17 @@ import { ScrapRepository } from '../../scrap/repository/scrap.repository';
 import { ReviewRepository } from '../../review/repository/review.repository';
 import { FileRepository } from '../../file/repository/file.repository';
 import { TagRepository } from '../../tag/repository/tag.repository';
-import { DataSource } from 'typeorm';
+import { DataSource, UpdateResult } from 'typeorm';
 import { EntityMock } from '../../../common/mock/entity.mock';
 import { EResponseMessage } from '../../../common/enum/message.enum';
 import { EStatusCode } from '../../../common/enum/status.enum';
 import { ResponseDto } from '../../../common/dto/response.dto';
 import { Scrap } from '../../scrap/entities/scrap.entity';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { GetAllAnimeQueryDto } from '../dto/get-all-anime-query.dto';
 import { ConnectionMock } from '../../../common/mock/connection.mock';
 import { CreateAnimeDto } from '../dto/create-anime.dto';
+import { UpdateAnimeDto } from '../dto/update-anime.dto';
 
 describe('animeService', () => {
   let animeService: AnimeService;
@@ -33,6 +34,10 @@ describe('animeService', () => {
     getAnimesBySeriesId: jest.fn(),
     createAnime: jest.fn(),
     getAnimeBySeriesName: jest.fn(),
+    findOneBy: jest.fn(),
+    findAnimeWithUserById: jest.fn(),
+    save: jest.fn(),
+    updateAnime: jest.fn(),
   };
   const mockScrapRepository = {
     getScrapsByIds: jest.fn(),
@@ -377,16 +382,55 @@ describe('animeService', () => {
   });
 
   describe('updateAnime', () => {
-    it('should update anime details', () => {
-      // Test logic here
+    it('should update anime details', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const dto = {
+        title: 'TEST',
+      } as UpdateAnimeDto;
+
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        Object.assign(anime, dto),
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'findAnimeWithUserById')
+        .mockResolvedValue(Object.assign(anime, { user }));
+
+      jest
+        .spyOn(animeRepository, 'updateAnime')
+        .mockResolvedValue({} as UpdateResult);
+
+      const result = await animeService.updateAnime(anime.id, dto, user);
+
+      expect(animeRepository.updateAnime).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
 
     it('should update tags associated with the anime', () => {
       // Test logic here
     });
 
-    it('should throw ForbiddenException if user is unauthorized', () => {
-      // Test logic here
+    it('애니메이션을 생성한 유저가 아닐 시 에러를 던저야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const dto = {
+        title: 'TEST',
+      } as UpdateAnimeDto;
+
+      jest
+        .spyOn(animeRepository, 'findAnimeWithUserById')
+        .mockResolvedValue(anime);
+
+      await expect(
+        animeService.updateAnime(
+          anime.id,
+          dto,
+          Object.assign(user, { id: 100 }),
+        ),
+      ).rejects.toThrowError(ForbiddenException);
     });
   });
 

@@ -16,7 +16,7 @@ export class TransactionHelper {
       return result;
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      throw new Error(err);
+      throw err;
     } finally {
       await queryRunner.release();
     }

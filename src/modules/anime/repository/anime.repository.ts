@@ -47,11 +47,12 @@ export class AnimeRepository extends Repository<Anime> {
       .getOne();
   }
 
-  findAnimeById(animeId: number) {
-    return this.findOne({
+  findAnimeWithUserById(animeId: number, manager?: EntityManager) {
+    return this.setManager(manager).findOne({
       where: {
         id: animeId,
       },
+      relations: ['user'],
     });
   }
 
@@ -264,5 +265,11 @@ export class AnimeRepository extends Repository<Anime> {
     return this.setManager(manager).update(animeId, { deleted: true });
   }
 
-  updateAnime;
+  updateAnime(
+    animeId: number,
+    updateProperties: Partial<Anime>,
+    manager?: EntityManager,
+  ) {
+    return this.setManager(manager).update(animeId, updateProperties);
+  }
 }

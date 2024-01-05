@@ -21,6 +21,7 @@ import { ReviewRepository } from '../review/repository/review.repository';
 import { FileRepository } from '../file/repository/file.repository';
 import { TagRepository } from '../tag/repository/tag.repository';
 import { TransactionHelper } from '../../common/helper/transaction.helper';
+import { cleanObject } from '../../common/utils/data.utils';
 
 @Injectable()
 export class AnimeService {
@@ -210,23 +211,17 @@ export class AnimeService {
     );
   }
 
-  async updateAnime(id: number, updateAnimeDto: UpdateAnimeDto, user) {
-    const {
-      title,
-      author = null,
-      thumbnail,
-      crew,
-      tags = [],
-      source,
-      description,
-    } = updateAnimeDto;
+  async updateAnime(id: number, updateAnimeDto: UpdateAnimeDto, user: User) {
+    const { title, author, thumbnail, crew, tags, source, description } =
+      updateAnimeDto;
 
     const result = await TransactionHelper.transaction(
       this.dataSource,
       async (entityManager) => {
-        const anime = await this.animeRepository
-          .setManager(entityManager)
-          .findOneBy({ id });
+        const anime = await this.animeRepository.findAnimeWithUserById(
+          id,
+          entityManager,
+        );
 
         if (user.id !== anime.user.id) {
           throw new ForbiddenException();
@@ -234,7 +229,7 @@ export class AnimeService {
 
         let tagData: Tag[] = [];
 
-        if (tags.length > 0) {
+        if (tags?.length > 0) {
           const tagsWithRelation = await this.tagRepository.findTagsByName(
             tags,
             entityManager,
@@ -249,17 +244,19 @@ export class AnimeService {
           tagData = tagsWithRelation.concat(newTags);
         }
 
-        return await this.animeRepository.setManager(entityManager).save({
-          ...anime,
-          title,
-          author,
-          source,
-          crew,
-          animeParentId: null,
-          thumbnail,
-          description,
-          tags: tagData.length === 0 ? null : tagData,
-        });
+        const updatedProperties = cleanObject(
+          Object.assign(updateAnimeDto, {
+            tags: tagData.length === 0 ? undefined : tagData,
+          }),
+        );
+
+        await this.animeRepository.updateAnime(
+          anime.id,
+          updatedProperties,
+          entityManager,
+        );
+
+        return Object.assign(anime, updatedProperties);
       },
     );
 
