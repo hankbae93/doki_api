@@ -160,22 +160,20 @@ export class AnimeService {
         let tagData: Tag[] = [];
 
         if (tags.length > 0) {
-          const tagsWithRelation = await this.tagRepository.findTagsByName(
+          const tagRecords = await this.tagRepository.findTagsByName(
             tags,
             entityManager,
           );
 
-          console.log({ tagsWithRelation });
           const newTags = await this.tagRepository.createTag(
-            tags.filter((tagValue) =>
-              tagsWithRelation.some((tag) => tag.name === tagValue),
+            tags.filter((tag) =>
+              tagRecords.some((tagRecord) => tagRecord.name === tag),
             ),
             entityManager,
           );
 
-          tagData = tagsWithRelation.concat(newTags);
+          tagData = tagRecords.concat(newTags);
         }
-        console.log(tagData);
 
         const newAnime = await this.animeRepository.createAnime(
           {
@@ -192,9 +190,7 @@ export class AnimeService {
           },
           entityManager,
         );
-        console.log(newAnime);
 
-        // 이미지 엔티티 업데이트
         await this.fileRepository.createFiles(
           files.file.map((file) => ({
             anime: newAnime,

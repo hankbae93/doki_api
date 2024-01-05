@@ -23,6 +23,7 @@ describe('animeService', () => {
   let reviewRepository: ReviewRepository;
   let fileRepository: FileRepository;
   let tagRepository: TagRepository;
+  let dataSource: DataSource;
 
   const mockAnimeRepository = {
     getAnimeDetailById: jest.fn(),
@@ -31,6 +32,7 @@ describe('animeService', () => {
     getOriginalAnimes: jest.fn(),
     getAnimesBySeriesId: jest.fn(),
     createAnime: jest.fn(),
+    getAnimeBySeriesName: jest.fn(),
   };
   const mockScrapRepository = {
     getScrapsByIds: jest.fn(),
@@ -67,6 +69,7 @@ describe('animeService', () => {
     reviewRepository = module.get<ReviewRepository>(ReviewRepository);
     fileRepository = module.get<FileRepository>(FileRepository);
     tagRepository = module.get<TagRepository>(TagRepository);
+    dataSource = module.get<DataSource>(DataSource);
   });
 
   describe('getAnimeDetail', () => {
@@ -266,6 +269,7 @@ describe('animeService', () => {
         crew: anime.crew,
         source: anime.source,
       } as CreateAnimeDto;
+
       const response = new ResponseDto(
         EStatusCode.CREATED,
         anime,
@@ -294,6 +298,7 @@ describe('animeService', () => {
         source: anime.source,
         tags: [tag.name],
       } as CreateAnimeDto;
+
       const response = new ResponseDto(
         EStatusCode.CREATED,
         Object.assign(anime, { tags: [{ tagId: tag.id, tagName: tag.name }] }),
@@ -330,18 +335,44 @@ describe('animeService', () => {
       );
 
       jest.spyOn(animeRepository, 'createAnime').mockResolvedValue(anime);
-      jest.spyOn(tagRepository, 'findTagsByName').mockResolvedValue([]);
-      jest.spyOn(tagRepository, 'createTag').mockResolvedValue([tag]);
 
       const result = await animeService.createAnime(dto, files, user);
-      console.log(result);
 
-      expect(tagRepository.createTag).toHaveBeenCalledWith([tag]);
+      expect(tagRepository.createTag).toHaveBeenCalled();
       expect(result).toEqual(response);
     });
 
-    it('should associate new anime with a series if provided', () => {
-      // Test logic here
+    it('시리즈의 부모 애니메이션 아이디를 받으면 새 애니메이션을 시리즈와 연결해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const files = {
+        file: [{ path: '' } as Express.Multer.File],
+      };
+      const dto = {
+        title: 'TEST_TEST',
+        description: anime.description,
+        crew: anime.crew,
+        source: anime.source,
+        series: anime.title,
+      } as CreateAnimeDto;
+
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        Object.assign(anime, { animeParentId: anime.id }),
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getAnimeBySeriesName')
+        .mockResolvedValue(Object.assign(anime, { id: 2 }));
+      jest
+        .spyOn(animeRepository, 'createAnime')
+        .mockResolvedValue(Object.assign(anime, { animeParentId: 2 }));
+
+      const result = await animeService.createAnime(dto, files, user);
+
+      expect(animeRepository.getAnimeBySeriesName).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
   });
 

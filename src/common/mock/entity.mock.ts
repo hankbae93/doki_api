@@ -57,6 +57,7 @@ export class EntityMock {
   static mockTag() {
     return {
       id: 1,
+      name: '스릴러',
       animes: [this.mockAnime()],
     } as Tag;
   }
