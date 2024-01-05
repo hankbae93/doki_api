@@ -111,6 +111,10 @@ export class AnimeService {
 
   async getAnimesBySeriesId(seriesId: number) {
     const animes = await this.animeRepository.getAnimesBySeriesId(seriesId);
+    if (animes.length === 0) {
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
+    }
+
     const series = animes.find((anime) => anime.id === seriesId);
 
     return new ResponseDto(

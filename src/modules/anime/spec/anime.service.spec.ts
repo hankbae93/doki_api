@@ -26,6 +26,8 @@ describe('animeService', () => {
     getAnimeDetailById: jest.fn(),
     getAnimesByPage: jest.fn(),
     getAnimesByPageAndUserId: jest.fn(),
+    getOriginalAnimes: jest.fn(),
+    getAnimesBySeriesId: jest.fn(),
   };
   const mockScrapRepository = {
     getScrapsByIds: jest.fn(),
@@ -174,20 +176,83 @@ describe('animeService', () => {
         limit: 10,
       } as GetAllAnimeQueryDto;
       const user = MockingHelper.mockUser();
+      const anime = MockingHelper.mockAnime();
+      const tag = MockingHelper.mockTag();
+      const response = new ResponseDto(
+        EStatusCode.OK,
+        {
+          animes: [
+            Object.assign(anime, {
+              tags: [{ tagId: tag.id, tagName: tag.name }],
+            }),
+          ],
+          total: 1,
+        },
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getAnimesByPageAndUserId')
+        .mockResolvedValue({ data: [anime], total: 1 });
 
       const result = await animeService.getAnimeListByUser(dto, user);
+
+      expect(animeRepository.getAnimesByPageAndUserId).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
   });
 
   describe('getAnimeSeries', () => {
-    it('should return a list of original animes', () => {
-      // Test logic here
+    it('부모가 되는 애니메이션 목록을 반환해야 합니다.', async () => {
+      const anime = MockingHelper.mockAnime();
+      const response = new ResponseDto(
+        EStatusCode.OK,
+        {
+          animes: [anime],
+        },
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getOriginalAnimes')
+        .mockResolvedValue([anime]);
+
+      const result = await animeService.getAnimeSeries();
+
+      expect(animeRepository.getOriginalAnimes).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
   });
 
   describe('getAnimesBySeriesId', () => {
-    it('should return a list of animes belonging to a series', () => {
-      // Test logic here
+    it('부모에 속하는 애니메이션 목록을 반환해야 합니다.', async () => {
+      const anime = MockingHelper.mockAnime();
+      const response = new ResponseDto(
+        EStatusCode.OK,
+        {
+          animes: [anime].filter((anime) => anime.id !== 1),
+          series: anime,
+        },
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getAnimesBySeriesId')
+        .mockResolvedValue([anime]);
+      const result = await animeService.getAnimesBySeriesId(anime.id);
+
+      expect(animeRepository.getAnimesBySeriesId).toHaveBeenCalled();
+      expect(result).toEqual(response);
+    });
+
+    it('부모에 속하는 애니메이션의 아이디가 유효하지 않으면 에러를 던집니다.', async () => {
+      const anime = MockingHelper.mockAnime();
+
+      jest.spyOn(animeRepository, 'getAnimesBySeriesId').mockResolvedValue([]);
+
+      await expect(
+        animeService.getAnimesBySeriesId(anime.id),
+      ).rejects.toThrowError(NotFoundException);
     });
   });
 
