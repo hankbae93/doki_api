@@ -7,7 +7,7 @@ import { Review } from '../../modules/review/entities/review.entity';
 import { AnimeSource } from '../../modules/anime/anime.enum';
 import { Tag } from '../../modules/tag/entities/tag.entity';
 
-export class MockingHelper {
+export class EntityMock {
   static mockProviders(providers: Provider[]) {
     return providers.map((provider) => {
       return {
@@ -57,6 +57,7 @@ export class MockingHelper {
   static mockTag() {
     return {
       id: 1,
+      name: '스릴러',
       animes: [this.mockAnime()],
     } as Tag;
   }

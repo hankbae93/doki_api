@@ -5,51 +5,68 @@ import { ScrapRepository } from '../../scrap/repository/scrap.repository';
 import { ReviewRepository } from '../../review/repository/review.repository';
 import { FileRepository } from '../../file/repository/file.repository';
 import { TagRepository } from '../../tag/repository/tag.repository';
-import { DataSource, QueryRunner } from 'typeorm';
-import { MockingHelper } from '../../../common/helper/mocking.helper';
+import { DataSource, UpdateResult } from 'typeorm';
+import { EntityMock } from '../../../common/mock/entity.mock';
 import { EResponseMessage } from '../../../common/enum/message.enum';
 import { EStatusCode } from '../../../common/enum/status.enum';
 import { ResponseDto } from '../../../common/dto/response.dto';
 import { Scrap } from '../../scrap/entities/scrap.entity';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { GetAllAnimeQueryDto } from '../dto/get-all-anime-query.dto';
+import { ConnectionMock } from '../../../common/mock/connection.mock';
+import { CreateAnimeDto } from '../dto/create-anime.dto';
+import { UpdateAnimeDto } from '../dto/update-anime.dto';
+import { TagService } from '../../tag/tag.service';
 
 describe('animeService', () => {
   let animeService: AnimeService;
+  let tagService: TagService;
   let animeRepository: AnimeRepository;
   let scrapRepository: ScrapRepository;
   let reviewRepository: ReviewRepository;
   let fileRepository: FileRepository;
   let tagRepository: TagRepository;
+  let dataSource: DataSource;
+
+  const mockTagService = {
+    findTagsAndCreate: jest.fn().mockResolvedValue([EntityMock.mockTag()]),
+  };
 
   const mockAnimeRepository = {
     getAnimeDetailById: jest.fn(),
     getAnimesByPage: jest.fn(),
     getAnimesByPageAndUserId: jest.fn(),
+    getOriginalAnimes: jest.fn(),
+    getAnimesBySeriesId: jest.fn(),
+    createAnime: jest.fn(),
+    getAnimeBySeriesName: jest.fn(),
+    findOneBy: jest.fn(),
+    findAnimeWithUserById: jest.fn(),
+    save: jest.fn(),
+    updateAnime: jest.fn(),
+    getAnimeToDeleteById: jest.fn(),
+    deleteAnime: jest.fn(),
   };
   const mockScrapRepository = {
     getScrapsByIds: jest.fn(),
   };
-  const mockReviewRepository = {};
-  const mockFileRepository = {};
-  const mockTagRepository = {
-    findAllWithAnimes: jest.fn().mockResolvedValue([MockingHelper.mockTag()]),
+  const mockReviewRepository = {
+    deleteReviews: jest.fn(),
   };
-
-  const qr = {
-    manager: {},
-  } as QueryRunner;
-
-  class ConnectionMock {
-    createQueryRunner(mode?: 'master' | 'slave'): QueryRunner {
-      return qr;
-    }
-  }
+  const mockFileRepository = {
+    createFiles: jest.fn(),
+  };
+  const mockTagRepository = {
+    findAllWithAnimes: jest.fn().mockResolvedValue([EntityMock.mockTag()]),
+    findTagsByName: jest.fn(),
+    createTag: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnimeService,
+        { provide: TagService, useValue: mockTagService },
         { provide: AnimeRepository, useValue: mockAnimeRepository },
         { provide: ScrapRepository, useValue: mockScrapRepository },
         { provide: ReviewRepository, useValue: mockReviewRepository },
@@ -63,16 +80,18 @@ describe('animeService', () => {
     }).compile();
 
     animeService = module.get<AnimeService>(AnimeService);
+    tagService = module.get<TagService>(TagService);
     animeRepository = module.get<AnimeRepository>(AnimeRepository);
     scrapRepository = module.get<ScrapRepository>(ScrapRepository);
     reviewRepository = module.get<ReviewRepository>(ReviewRepository);
     fileRepository = module.get<FileRepository>(FileRepository);
     tagRepository = module.get<TagRepository>(TagRepository);
+    dataSource = module.get<DataSource>(DataSource);
   });
 
   describe('getAnimeDetail', () => {
     it('비로그인 상태일 때, 애니메이션 정보만 조회된다.', async () => {
-      const anime = MockingHelper.mockAnime();
+      const anime = EntityMock.mockAnime();
       const response = new ResponseDto(
         EStatusCode.OK,
         { anime, isScrapped: false },
@@ -90,13 +109,13 @@ describe('animeService', () => {
     });
 
     it('로그인 상태일 때, 애니메이션 정보와 스크랩 정보가 조회된다.', async () => {
-      const anime = MockingHelper.mockAnime();
+      const anime = EntityMock.mockAnime();
       const response = new ResponseDto(
         EStatusCode.OK,
         { anime, isScrapped: true },
         EResponseMessage.SUCCESS,
       );
-      const user = MockingHelper.mockUser();
+      const user = EntityMock.mockUser();
       jest
         .spyOn(animeRepository, 'getAnimeDetailById')
         .mockResolvedValue(anime);
@@ -111,8 +130,8 @@ describe('animeService', () => {
     });
 
     it('애니메이션이 존재하지 않다면 에러를 던집니다.', async () => {
-      const animeId = MockingHelper.mockAnime().id;
-      const user = MockingHelper.mockUser();
+      const animeId = EntityMock.mockAnime().id;
+      const user = EntityMock.mockUser();
       jest.spyOn(animeRepository, 'getAnimeDetailById').mockResolvedValue(null);
 
       await expect(
@@ -123,8 +142,8 @@ describe('animeService', () => {
 
   describe('addTagToAnimeList', () => {
     it('리스트의 각 애니메이션에 태그를 추가해야 합니다.', async () => {
-      const anime = MockingHelper.mockAnime();
-      const tag = MockingHelper.mockTag();
+      const anime = EntityMock.mockAnime();
+      const tag = EntityMock.mockTag();
 
       const result = await animeService.addTagToAnimeList([anime]);
 
@@ -141,8 +160,8 @@ describe('animeService', () => {
         page: 1,
         limit: 10,
       } as GetAllAnimeQueryDto;
-      const anime = MockingHelper.mockAnime();
-      const tag = MockingHelper.mockTag();
+      const anime = EntityMock.mockAnime();
+      const tag = EntityMock.mockTag();
       const response = new ResponseDto(
         EStatusCode.OK,
         {
@@ -173,67 +192,260 @@ describe('animeService', () => {
         page: 1,
         limit: 10,
       } as GetAllAnimeQueryDto;
-      const user = MockingHelper.mockUser();
+      const user = EntityMock.mockUser();
+      const anime = EntityMock.mockAnime();
+      const tag = EntityMock.mockTag();
+      const response = new ResponseDto(
+        EStatusCode.OK,
+        {
+          animes: [
+            Object.assign(anime, {
+              tags: [{ tagId: tag.id, tagName: tag.name }],
+            }),
+          ],
+          total: 1,
+        },
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getAnimesByPageAndUserId')
+        .mockResolvedValue({ data: [anime], total: 1 });
 
       const result = await animeService.getAnimeListByUser(dto, user);
+
+      expect(animeRepository.getAnimesByPageAndUserId).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
   });
 
   describe('getAnimeSeries', () => {
-    it('should return a list of original animes', () => {
-      // Test logic here
+    it('부모가 되는 애니메이션 목록을 반환해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const response = new ResponseDto(
+        EStatusCode.OK,
+        {
+          animes: [anime],
+        },
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getOriginalAnimes')
+        .mockResolvedValue([anime]);
+
+      const result = await animeService.getAnimeSeries();
+
+      expect(animeRepository.getOriginalAnimes).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
   });
 
   describe('getAnimesBySeriesId', () => {
-    it('should return a list of animes belonging to a series', () => {
-      // Test logic here
+    it('부모에 속하는 애니메이션 목록을 반환해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const response = new ResponseDto(
+        EStatusCode.OK,
+        {
+          animes: [anime].filter((anime) => anime.id !== 1),
+          series: anime,
+        },
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getAnimesBySeriesId')
+        .mockResolvedValue([anime]);
+      const result = await animeService.getAnimesBySeriesId(anime.id);
+
+      expect(animeRepository.getAnimesBySeriesId).toHaveBeenCalled();
+      expect(result).toEqual(response);
+    });
+
+    it('부모에 속하는 애니메이션의 아이디가 유효하지 않으면 에러를 던집니다.', async () => {
+      const anime = EntityMock.mockAnime();
+
+      jest.spyOn(animeRepository, 'getAnimesBySeriesId').mockResolvedValue([]);
+
+      await expect(
+        animeService.getAnimesBySeriesId(anime.id),
+      ).rejects.toThrowError(NotFoundException);
     });
   });
 
   describe('createAnime', () => {
-    it('should create a new anime', () => {
-      // Test logic here
+    it('새로운 애니메이션을 생성해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const files = {
+        file: [{ path: '' } as Express.Multer.File],
+      };
+      const dto = {
+        title: anime.title,
+        description: anime.description,
+        crew: anime.crew,
+        source: anime.source,
+      } as CreateAnimeDto;
+
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        anime,
+        EResponseMessage.SUCCESS,
+      );
+
+      jest.spyOn(animeRepository, 'createAnime').mockResolvedValue(anime);
+
+      const result = await animeService.createAnime(dto, files, user);
+
+      expect(animeRepository.createAnime).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
 
-    it('should associate new anime with tags', () => {
-      // Test logic here
+    it('태그를 받으면 새 애니메이션을 태그와 연결해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const tag = EntityMock.mockTag();
+      const files = {
+        file: [{ path: '' } as Express.Multer.File],
+      };
+      const dto = {
+        title: anime.title,
+        description: anime.description,
+        crew: anime.crew,
+        source: anime.source,
+        tags: [tag.name],
+      } as CreateAnimeDto;
+
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        Object.assign(anime, { tags: [{ tagId: tag.id, tagName: tag.name }] }),
+        EResponseMessage.SUCCESS,
+      );
+
+      jest.spyOn(animeRepository, 'createAnime').mockResolvedValue(anime);
+
+      const result = await animeService.createAnime(dto, files, user);
+
+      expect(tagService.findTagsAndCreate).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
 
-    it('should associate new anime with a series if provided', () => {
-      // Test logic here
-    });
+    it('시리즈의 부모 애니메이션 아이디를 받으면 새 애니메이션을 시리즈와 연결해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const files = {
+        file: [{ path: '' } as Express.Multer.File],
+      };
+      const dto = {
+        title: 'TEST_TEST',
+        description: anime.description,
+        crew: anime.crew,
+        source: anime.source,
+        series: anime.title,
+      } as CreateAnimeDto;
 
-    it('should throw ForbiddenException if user is unauthorized', () => {
-      // Test logic here
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        Object.assign(anime, { animeParentId: anime.id }),
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getAnimeBySeriesName')
+        .mockResolvedValue(Object.assign(anime, { id: 2 }));
+      jest
+        .spyOn(animeRepository, 'createAnime')
+        .mockResolvedValue(Object.assign(anime, { animeParentId: 2 }));
+
+      const result = await animeService.createAnime(dto, files, user);
+
+      expect(animeRepository.getAnimeBySeriesName).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
   });
 
   describe('updateAnime', () => {
-    it('should update anime details', () => {
-      // Test logic here
+    it('애니메이션 정보를 업데이트해야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const dto = {
+        title: 'TEST',
+      } as UpdateAnimeDto;
+
+      const response = new ResponseDto(
+        EStatusCode.CREATED,
+        Object.assign(anime, dto),
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'findAnimeWithUserById')
+        .mockResolvedValue(Object.assign(anime, { user }));
+
+      jest
+        .spyOn(animeRepository, 'updateAnime')
+        .mockResolvedValue({} as UpdateResult);
+
+      const result = await animeService.updateAnime(anime.id, dto, user);
+
+      expect(animeRepository.updateAnime).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
 
-    it('should update tags associated with the anime', () => {
-      // Test logic here
-    });
+    it('애니메이션을 생성한 유저가 아닐 시 에러를 던저야 합니다.', async () => {
+      const anime = EntityMock.mockAnime();
+      const user = EntityMock.mockUser();
+      const dto = {
+        title: 'TEST',
+      } as UpdateAnimeDto;
 
-    it('should throw ForbiddenException if user is unauthorized', () => {
-      // Test logic here
+      jest
+        .spyOn(animeRepository, 'findAnimeWithUserById')
+        .mockResolvedValue(anime);
+
+      await expect(
+        animeService.updateAnime(
+          anime.id,
+          dto,
+          Object.assign(user, { id: 100 }),
+        ),
+      ).rejects.toThrowError(ForbiddenException);
     });
   });
 
-  describe('removeAnime', () => {
-    it('should remove an anime', () => {
-      // Test logic here
+  describe('deleteAnime', () => {
+    it('애니메이션과 관련된 리뷰의 삭제 컬럼을 업데이트해야 합니다.', async () => {
+      const user = EntityMock.mockUser();
+      const anime = EntityMock.mockAnime();
+      const response = new ResponseDto(
+        EStatusCode.OK,
+        null,
+        EResponseMessage.DELETE_ITEM,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getAnimeToDeleteById')
+        .mockResolvedValue(anime);
+
+      const result = await animeService.deleteAnime(anime.id, user);
+
+      expect(animeRepository.getAnimeToDeleteById).toHaveBeenCalled();
+      expect(reviewRepository.deleteReviews).toHaveBeenCalled();
+      expect(animeRepository.deleteAnime).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
 
-    it('should remove related reviews when deleting an anime', () => {
-      // Test logic here
-    });
+    it('애니메이션을 생성한 유저가 아닐 시 에러를 던저야 합니다.', async () => {
+      const user = Object.assign(EntityMock.mockUser(), { id: 100 });
+      const anime = EntityMock.mockAnime();
 
-    it('should throw ForbiddenException if user is unauthorized', () => {
-      // Test logic here
+      jest
+        .spyOn(animeRepository, 'getAnimeToDeleteById')
+        .mockResolvedValue(anime);
+
+      await expect(
+        animeService.deleteAnime(anime.id, user),
+      ).rejects.toThrowError(ForbiddenException);
     });
   });
 });

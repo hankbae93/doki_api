@@ -13,6 +13,7 @@ import { TagRepository } from '../tag/repository/tag.repository';
 import { ReviewRepository } from '../review/repository/review.repository';
 import { FileRepository } from '../file/repository/file.repository';
 import { AuthModule } from '../auth/auth.module';
+import { TagService } from '../tag/tag.service';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from '../auth/auth.module';
   controllers: [AnimeController],
   providers: [
     AnimeService,
+    TagService,
     AnimeRepository,
     FileRepository,
     ScrapRepository,

@@ -1,35 +1,30 @@
-import {
-  IsArray,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { AnimeSource } from '../anime.enum';
 
 export class UpdateAnimeDto {
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   title: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   description: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   thumbnail: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   crew: string;
 
   @IsArray()
+  @IsOptional()
   tags: string[];
 
   @IsString()
   @IsEnum(AnimeSource)
-  @IsNotEmpty()
+  @IsOptional()
   source: AnimeSource;
 
   @IsString()

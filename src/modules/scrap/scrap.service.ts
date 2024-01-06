@@ -23,7 +23,7 @@ export class ScrapService {
     return new ResponseDto(EStatusCode.OK, scraps, EResponseMessage.SUCCESS);
   }
   async scrapAnime(animeId: number, user: User) {
-    const anime = await this.animeRepository.findAnimeById(animeId);
+    const anime = await this.animeRepository.findAnimeWithUserById(animeId);
     const scrap = await this.scrapRepository.getScrapsByIds(animeId, user.id);
 
     if (scrap) {
