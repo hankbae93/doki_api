@@ -100,6 +100,6 @@ export class AnimeController {
   @Delete('/:id')
   @UseGuards(AuthGuard())
   removeAnime(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
-    return this.animeService.removeAnime(id, user);
+    return this.animeService.deleteAnime(id, user);
   }
 }

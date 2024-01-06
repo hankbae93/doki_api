@@ -44,11 +44,15 @@ describe('animeService', () => {
     findAnimeWithUserById: jest.fn(),
     save: jest.fn(),
     updateAnime: jest.fn(),
+    getAnimeToDeleteById: jest.fn(),
+    deleteAnime: jest.fn(),
   };
   const mockScrapRepository = {
     getScrapsByIds: jest.fn(),
   };
-  const mockReviewRepository = {};
+  const mockReviewRepository = {
+    deleteReviews: jest.fn(),
+  };
   const mockFileRepository = {
     createFiles: jest.fn(),
   };
@@ -409,17 +413,39 @@ describe('animeService', () => {
     });
   });
 
-  describe('removeAnime', () => {
-    it('should remove an anime', () => {
-      // Test logic here
+  describe('deleteAnime', () => {
+    it('애니메이션과 관련된 리뷰의 삭제 컬럼을 업데이트해야 합니다.', async () => {
+      const user = EntityMock.mockUser();
+      const anime = EntityMock.mockAnime();
+      const response = new ResponseDto(
+        EStatusCode.OK,
+        null,
+        EResponseMessage.DELETE_ITEM,
+      );
+
+      jest
+        .spyOn(animeRepository, 'getAnimeToDeleteById')
+        .mockResolvedValue(anime);
+
+      const result = await animeService.deleteAnime(anime.id, user);
+
+      expect(animeRepository.getAnimeToDeleteById).toHaveBeenCalled();
+      expect(reviewRepository.deleteReviews).toHaveBeenCalled();
+      expect(animeRepository.deleteAnime).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
 
-    it('should remove related reviews when deleting an anime', () => {
-      // Test logic here
-    });
+    it('애니메이션을 생성한 유저가 아닐 시 에러를 던저야 합니다.', async () => {
+      const user = Object.assign(EntityMock.mockUser(), { id: 100 });
+      const anime = EntityMock.mockAnime();
 
-    it('should throw ForbiddenException if user is unauthorized', () => {
-      // Test logic here
+      jest
+        .spyOn(animeRepository, 'getAnimeToDeleteById')
+        .mockResolvedValue(anime);
+
+      await expect(
+        animeService.deleteAnime(anime.id, user),
+      ).rejects.toThrowError(ForbiddenException);
     });
   });
 });

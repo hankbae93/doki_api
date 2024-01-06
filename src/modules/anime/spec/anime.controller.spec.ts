@@ -240,10 +240,10 @@ describe('UserController', () => {
         EResponseMessage.DELETE_ITEM,
       );
 
-      jest.spyOn(animeService, 'removeAnime').mockResolvedValue(responseData);
+      jest.spyOn(animeService, 'deleteAnime').mockResolvedValue(responseData);
       const result = await animeController.removeAnime(mockAnime.id, mockUser);
 
-      expect(animeService.removeAnime).toHaveBeenCalled();
+      expect(animeService.deleteAnime).toHaveBeenCalled();
       expect(result).toEqual(responseData);
     });
   });

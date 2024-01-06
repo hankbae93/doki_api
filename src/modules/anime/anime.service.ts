@@ -242,7 +242,7 @@ export class AnimeService {
     );
   }
 
-  async removeAnime(id: number, user: User) {
+  async deleteAnime(id: number, user: User) {
     await TransactionHelper.transaction(
       this.dataSource,
       async (entityManager) => {
