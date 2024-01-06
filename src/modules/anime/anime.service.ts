@@ -220,18 +220,12 @@ export class AnimeService {
         );
 
         const updatedColumns = cleanObject(
-          Object.assign(updateAnimeDto, {
-            tags: tagData.length === 0 ? undefined : tagData,
-          }),
+          Object.assign(updateAnimeDto, { tags: undefined }),
         );
 
-        await this.animeRepository.updateAnime(
-          anime.id,
-          updatedColumns,
-          entityManager,
-        );
-
-        return Object.assign(anime, updatedColumns);
+        return await this.animeRepository
+          .setManager(entityManager)
+          .save(Object.assign(anime, updatedColumns, { tags: tagData }));
       },
     );
 
