@@ -14,7 +14,6 @@ import {
   EErrorMessage,
   EResponseMessage,
 } from '../../common/enum/message.enum';
-import { Tag } from '../tag/entities/tag.entity';
 import { AnimeRepository } from './repository/anime.repository';
 import { ScrapRepository } from '../scrap/repository/scrap.repository';
 import { ReviewRepository } from '../review/repository/review.repository';
@@ -22,6 +21,7 @@ import { FileRepository } from '../file/repository/file.repository';
 import { TagRepository } from '../tag/repository/tag.repository';
 import { TransactionHelper } from '../../common/helper/transaction.helper';
 import { cleanObject } from '../../common/utils/data.utils';
+import { TagService } from '../tag/tag.service';
 
 @Injectable()
 export class AnimeService {
@@ -31,6 +31,7 @@ export class AnimeService {
     private reviewRepository: ReviewRepository,
     private fileRepository: FileRepository,
     private tagRepository: TagRepository,
+    private tagService: TagService,
     private dataSource: DataSource,
   ) {}
 
@@ -158,23 +159,10 @@ export class AnimeService {
           animeParentId = originAnime ? originAnime.id : null;
         }
 
-        let tagData: Tag[] = [];
-
-        if (tags.length > 0) {
-          const tagRecords = await this.tagRepository.findTagsByName(
-            tags,
-            entityManager,
-          );
-
-          const newTags = await this.tagRepository.createTag(
-            tags.filter((tag) =>
-              tagRecords.some((tagRecord) => tagRecord.name === tag),
-            ),
-            entityManager,
-          );
-
-          tagData = tagRecords.concat(newTags);
-        }
+        const tagData = await this.tagService.findTagsAndCreate(
+          tags,
+          entityManager,
+        );
 
         const newAnime = await this.animeRepository.createAnime(
           {
@@ -212,8 +200,7 @@ export class AnimeService {
   }
 
   async updateAnime(id: number, updateAnimeDto: UpdateAnimeDto, user: User) {
-    const { title, author, thumbnail, crew, tags, source, description } =
-      updateAnimeDto;
+    const { tags } = updateAnimeDto;
 
     const result = await TransactionHelper.transaction(
       this.dataSource,
@@ -227,24 +214,12 @@ export class AnimeService {
           throw new ForbiddenException();
         }
 
-        let tagData: Tag[] = [];
+        const tagData = await this.tagService.findTagsAndCreate(
+          tags,
+          entityManager,
+        );
 
-        if (tags?.length > 0) {
-          const tagsWithRelation = await this.tagRepository.findTagsByName(
-            tags,
-            entityManager,
-          );
-          const newTags = await this.tagRepository.createTag(
-            tags.filter((tagValue) =>
-              tagsWithRelation.some((tag) => tag.name === tagValue),
-            ),
-            entityManager,
-          );
-
-          tagData = tagsWithRelation.concat(newTags);
-        }
-
-        const updatedProperties = cleanObject(
+        const updatedColumns = cleanObject(
           Object.assign(updateAnimeDto, {
             tags: tagData.length === 0 ? undefined : tagData,
           }),
@@ -252,11 +227,11 @@ export class AnimeService {
 
         await this.animeRepository.updateAnime(
           anime.id,
-          updatedProperties,
+          updatedColumns,
           entityManager,
         );
 
-        return Object.assign(anime, updatedProperties);
+        return Object.assign(anime, updatedColumns);
       },
     );
 

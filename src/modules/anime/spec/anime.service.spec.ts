@@ -16,15 +16,21 @@ import { GetAllAnimeQueryDto } from '../dto/get-all-anime-query.dto';
 import { ConnectionMock } from '../../../common/mock/connection.mock';
 import { CreateAnimeDto } from '../dto/create-anime.dto';
 import { UpdateAnimeDto } from '../dto/update-anime.dto';
+import { TagService } from '../../tag/tag.service';
 
 describe('animeService', () => {
   let animeService: AnimeService;
+  let tagService: TagService;
   let animeRepository: AnimeRepository;
   let scrapRepository: ScrapRepository;
   let reviewRepository: ReviewRepository;
   let fileRepository: FileRepository;
   let tagRepository: TagRepository;
   let dataSource: DataSource;
+
+  const mockTagService = {
+    findTagsAndCreate: jest.fn().mockResolvedValue([EntityMock.mockTag()]),
+  };
 
   const mockAnimeRepository = {
     getAnimeDetailById: jest.fn(),
@@ -56,6 +62,7 @@ describe('animeService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnimeService,
+        { provide: TagService, useValue: mockTagService },
         { provide: AnimeRepository, useValue: mockAnimeRepository },
         { provide: ScrapRepository, useValue: mockScrapRepository },
         { provide: ReviewRepository, useValue: mockReviewRepository },
@@ -69,6 +76,7 @@ describe('animeService', () => {
     }).compile();
 
     animeService = module.get<AnimeService>(AnimeService);
+    tagService = module.get<TagService>(TagService);
     animeRepository = module.get<AnimeRepository>(AnimeRepository);
     scrapRepository = module.get<ScrapRepository>(ScrapRepository);
     reviewRepository = module.get<ReviewRepository>(ReviewRepository);
@@ -311,39 +319,10 @@ describe('animeService', () => {
       );
 
       jest.spyOn(animeRepository, 'createAnime').mockResolvedValue(anime);
-      jest.spyOn(tagRepository, 'findTagsByName').mockResolvedValue([tag]);
 
       const result = await animeService.createAnime(dto, files, user);
 
-      expect(tagRepository.findTagsByName).toHaveBeenCalled();
-      expect(result).toEqual(response);
-    });
-
-    it('태그가 테이블에 없으면 생성해서라도 새 애니메이션을 태그와 연결해야 합니다.', async () => {
-      const anime = EntityMock.mockAnime();
-      const user = EntityMock.mockUser();
-      const tag = EntityMock.mockTag();
-      const files = {
-        file: [{ path: '' } as Express.Multer.File],
-      };
-      const dto = {
-        title: anime.title,
-        description: anime.description,
-        crew: anime.crew,
-        source: anime.source,
-        tags: [tag.name],
-      } as CreateAnimeDto;
-      const response = new ResponseDto(
-        EStatusCode.CREATED,
-        Object.assign(anime, { tags: [{ tagId: tag.id, tagName: tag.name }] }),
-        EResponseMessage.SUCCESS,
-      );
-
-      jest.spyOn(animeRepository, 'createAnime').mockResolvedValue(anime);
-
-      const result = await animeService.createAnime(dto, files, user);
-
-      expect(tagRepository.createTag).toHaveBeenCalled();
+      expect(tagService.findTagsAndCreate).toHaveBeenCalled();
       expect(result).toEqual(response);
     });
 
@@ -382,7 +361,7 @@ describe('animeService', () => {
   });
 
   describe('updateAnime', () => {
-    it('should update anime details', async () => {
+    it('애니메이션 정보를 업데이트해야 합니다.', async () => {
       const anime = EntityMock.mockAnime();
       const user = EntityMock.mockUser();
       const dto = {
@@ -407,10 +386,6 @@ describe('animeService', () => {
 
       expect(animeRepository.updateAnime).toHaveBeenCalled();
       expect(result).toEqual(response);
-    });
-
-    it('should update tags associated with the anime', () => {
-      // Test logic here
     });
 
     it('애니메이션을 생성한 유저가 아닐 시 에러를 던저야 합니다.', async () => {

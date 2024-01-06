@@ -267,9 +267,9 @@ export class AnimeRepository extends Repository<Anime> {
 
   updateAnime(
     animeId: number,
-    updateProperties: Partial<Anime>,
+    updateColumns: Partial<Anime>,
     manager?: EntityManager,
   ) {
-    return this.setManager(manager).update(animeId, updateProperties);
+    return this.setManager(manager).update(animeId, updateColumns);
   }
 }
