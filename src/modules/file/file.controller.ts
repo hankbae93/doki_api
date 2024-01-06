@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Res } from '@nestjs/common';
 
-@Controller('file')
+@Controller('files')
 export class FileController {
   constructor() {}
 

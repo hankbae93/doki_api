@@ -61,7 +61,7 @@ export class AnimeService {
       tags.forEach((tag) => {
         const animeTag = tag.animes.find((anime) => anime.id === item.id);
         if (animeTag) {
-          data.push({ tagId: tag.id, tagName: tag.name });
+          data.push({ id: tag.id, name: tag.name });
         }
       });
 

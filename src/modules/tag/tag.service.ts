@@ -22,10 +22,12 @@ export class TagService {
       entityManager,
     );
 
+    const needCreatedTag = tags.filter(
+      (tag) => !tagRecords.some((tagRecord) => tagRecord.name === tag),
+    );
+
     const newTags = await this.tagRepository.createTag(
-      tags.filter((tagValue) =>
-        tagRecords.some((tag) => tag.name === tagValue),
-      ),
+      needCreatedTag,
       entityManager,
     );
 

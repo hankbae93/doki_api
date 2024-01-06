@@ -41,7 +41,7 @@ export class AnimeRepository extends Repository<Anime> {
       .leftJoinAndSelect('anime.user', 'user_id')
       .leftJoinAndSelect('anime.tags', 'tag')
       .leftJoinAndSelect('anime.reviews', 'review')
-      .leftJoinAndSelect('anime.images', 'image')
+      .leftJoinAndSelect('anime.files', 'image')
       .leftJoinAndSelect('review.user', 'user')
       .where('anime.id = :id', { id })
       .getOne();

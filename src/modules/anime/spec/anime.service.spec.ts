@@ -149,7 +149,7 @@ describe('animeService', () => {
 
       expect(tagRepository.findAllWithAnimes).toHaveBeenCalled();
       expect(result).toEqual([
-        Object.assign(anime, { tags: [{ tagId: tag.id, tagName: tag.name }] }),
+        Object.assign(anime, { tags: [{ id: tag.id, name: tag.name }] }),
       ]);
     });
   });
@@ -167,7 +167,7 @@ describe('animeService', () => {
         {
           animes: [
             Object.assign(anime, {
-              tags: [{ tagId: tag.id, tagName: tag.name }],
+              tags: [{ id: tag.id, name: tag.name }],
             }),
           ],
           total: 1,
@@ -200,7 +200,7 @@ describe('animeService', () => {
         {
           animes: [
             Object.assign(anime, {
-              tags: [{ tagId: tag.id, tagName: tag.name }],
+              tags: [{ id: tag.id, name: tag.name }],
             }),
           ],
           total: 1,
@@ -318,7 +318,7 @@ describe('animeService', () => {
 
       const response = new ResponseDto(
         EStatusCode.CREATED,
-        Object.assign(anime, { tags: [{ tagId: tag.id, tagName: tag.name }] }),
+        Object.assign(anime, { tags: [{ id: tag.id, name: tag.name }] }),
         EResponseMessage.SUCCESS,
       );
 

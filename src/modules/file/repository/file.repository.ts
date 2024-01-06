@@ -13,7 +13,7 @@ export class FileRepository extends Repository<File> {
     return manager ? manager.getRepository(File) : this;
   }
 
-  createFiles(
+  async createFiles(
     images: {
       anime: Anime;
       fileName: string;
