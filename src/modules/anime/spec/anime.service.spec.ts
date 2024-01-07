@@ -363,30 +363,32 @@ describe('animeService', () => {
   });
 
   describe('updateAnime', () => {
-    // it('애니메이션 정보를 업데이트해야 합니다.', async () => {
-    //   const anime = DataMock.mockAnime();
-    //   const user = DataMock.mockUser();
-    //   const dto = {
-    //     title: 'TEST',
-    //   } as UpdateAnimeDto;
-    //
-    //   const response = new ResponseDto(
-    //     EStatusCode.CREATED,
-    //     Object.assign(anime, dto),
-    //     EResponseMessage.SUCCESS,
-    //   );
-    //
-    //   jest
-    //     .spyOn(animeRepository, 'findAnimeWithUserById')
-    //     .mockResolvedValue(Object.assign(anime, { user }));
-    //
-    //   jest.spyOn(animeRepository, 'updateAnime').mockResolvedValue({} as Anime);
-    //
-    //   const result = await animeService.updateAnime(anime.id, dto, user);
-    //
-    //   expect(animeRepository.updateAnime).toHaveBeenCalled();
-    //   expect(result).toEqual(response);
-    // });
+    it('애니메이션 정보를 업데이트해야 합니다.', async () => {
+      const anime = DataMock.mockAnime();
+      const user = DataMock.mockUser();
+      const dto = {
+        title: 'TEST',
+      } as UpdateAnimeDto;
+
+      const response = DataMock.mockResponse(
+        EStatusCode.CREATED,
+        Object.assign(anime, dto),
+        EResponseMessage.SUCCESS,
+      );
+
+      jest
+        .spyOn(animeRepository, 'findAnimeWithUserById')
+        .mockResolvedValue(Object.assign(anime, { user }));
+
+      jest
+        .spyOn(animeRepository, 'updateAnime')
+        .mockResolvedValue(Object.assign(anime, dto));
+
+      const result = await animeService.updateAnime(anime.id, dto, user);
+
+      expect(animeRepository.updateAnime).toHaveBeenCalled();
+      expect(result).toEqual(response);
+    });
 
     it('애니메이션을 생성한 유저가 아닐 시 에러를 던저야 합니다.', async () => {
       const anime = DataMock.mockAnime();
