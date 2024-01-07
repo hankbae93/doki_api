@@ -14,6 +14,14 @@ export class AnimeRepository extends Repository<Anime> {
     return manager ? manager.getRepository(Anime) : this;
   }
 
+  findAnimeById(animeId: number, manager?: EntityManager) {
+    return this.setManager(manager).findOne({
+      where: {
+        id: animeId,
+      },
+    });
+  }
+
   createAnime(anime: Partial<Anime>, manager?: EntityManager) {
     const newAnime = this.setManager(manager).create(anime);
     return this.setManager(manager).save(newAnime);

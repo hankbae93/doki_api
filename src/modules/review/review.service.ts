@@ -48,10 +48,6 @@ export class ReviewService {
     const result = await TransactionHelper.transaction(
       this.dataSource,
       async (entityManager) => {
-        const anime = await this.animeRepository.getAnimeWithReviews(
-          animeId,
-          entityManager,
-        );
         const review = await this.reviewRepository.getReviewsByIds(
           animeId,
           user.id,
@@ -59,15 +55,19 @@ export class ReviewService {
         );
 
         if (review) {
-          return new ForbiddenException(EErrorMessage.EXISITEING_REVIEW);
+          throw new ForbiddenException(EErrorMessage.EXISITEING_REVIEW);
         }
+
+        const anime = await this.animeRepository.getAnimeWithReviews(
+          animeId,
+          entityManager,
+        );
 
         const newReview = await this.reviewRepository.createReview({
           content,
           score,
           anime,
           user,
-          img: '',
         });
 
         const scoreSum =
@@ -76,12 +76,9 @@ export class ReviewService {
           anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
         const averageScore = Math.floor(scoreSum / reviewCount);
 
-        await this.animeRepository.update(
-          { id: animeId },
-          {
-            averageScore,
-          },
-        );
+        await this.animeRepository.update(animeId, {
+          averageScore,
+        });
 
         const userReviews = await this.reviewRepository.getReviewsByUserId(
           user.id,
