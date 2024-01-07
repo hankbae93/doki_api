@@ -49,4 +49,8 @@ export class ScrapRepository extends Repository<Scrap> {
       relations,
     });
   }
+
+  getScrapById(scrapId: number, relations?: string[]) {
+    return this.findOne({ where: { id: scrapId }, relations });
+  }
 }

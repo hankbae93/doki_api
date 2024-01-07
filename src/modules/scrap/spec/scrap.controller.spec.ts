@@ -58,7 +58,7 @@ describe('ScrapController', () => {
   });
 
   describe('scrapAnime', () => {
-    it('스크랩 요청이 성공하면 스크랩 정보를 반환해야 합니다.', async () => {
+    it('스크랩을 요청하면 스크랩 정보를 반환해야 합니다.', async () => {
       const user = EntityMock.mockUser();
       const anime = EntityMock.mockAnime();
       const scrap = EntityMock.mockScrap();
@@ -78,9 +78,8 @@ describe('ScrapController', () => {
   });
 
   describe('removeScrapedAnime', () => {
-    it('스크랩 취소 요청이 성공하면 응답을 반환해야 합니다.', async () => {
+    it('스크랩 취소를 요청하면 응답을 반환해야 합니다.', async () => {
       const user = EntityMock.mockUser();
-      const anime = EntityMock.mockAnime();
       const scrap = EntityMock.mockScrap();
       const response = new ResponseDto(
         EStatusCode.OK,
@@ -92,7 +91,7 @@ describe('ScrapController', () => {
         .spyOn(scrapService, 'removeScrapedAnime')
         .mockResolvedValue(response);
 
-      const result = await scrapController.removeScrapedAnime(anime.id, user);
+      const result = await scrapController.removeScrapedAnime(scrap.id, user);
 
       expect(scrapService.removeScrapedAnime).toHaveBeenCalled();
       expect(result).toEqual(response);

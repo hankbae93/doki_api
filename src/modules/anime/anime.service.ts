@@ -48,7 +48,7 @@ export class AnimeService {
 
     return new ResponseDto(
       EStatusCode.OK,
-      { anime, isScrapped: !!scrap },
+      { anime, isScrapped: !!scrap, scrapId: scrap?.id ?? null },
       EResponseMessage.SUCCESS,
     );
   }
