@@ -4,7 +4,7 @@ import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
 import { AnimeController } from '../anime.controller';
 import { AnimeService } from '../anime.service';
-import { EntityMock } from '../../../common/mock/entity.mock';
+import { DataMock } from '../../../common/mock/data.mock';
 import { AnimeRepository } from '../repository/anime.repository';
 import { FileRepository } from '../../file/repository/file.repository';
 import { ScrapRepository } from '../../scrap/repository/scrap.repository';
@@ -56,13 +56,13 @@ describe('UserController', () => {
     getAnimesBySeriesId: jest.fn(),
     createAnime: jest.fn(),
     updateAnime: jest.fn(),
-    removeAnime: jest.fn(),
+    deleteAnime: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AnimeController],
-      providers: EntityMock.mockProviders([
+      providers: DataMock.mockProviders([
         AnimeRepository,
         FileRepository,
         ScrapRepository,

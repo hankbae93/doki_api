@@ -6,8 +6,11 @@ import { Scrap } from '../../modules/scrap/entities/scrap.entity';
 import { Review } from '../../modules/review/entities/review.entity';
 import { AnimeSource } from '../../modules/anime/anime.enum';
 import { Tag } from '../../modules/tag/entities/tag.entity';
+import { ResponseDto } from '../dto/response.dto';
+import { EStatusCode } from '../enum/status.enum';
+import { EResponseMessage } from '../enum/message.enum';
 
-export class EntityMock {
+export class DataMock {
   static mockProviders(providers: Provider[]) {
     return providers.map((provider) => {
       return {
@@ -68,5 +71,13 @@ export class EntityMock {
       name: '스릴러',
       animes: [this.mockAnime()],
     } as Tag;
+  }
+
+  static mockResponse(
+    code: EStatusCode,
+    data: any,
+    message: EResponseMessage | string,
+  ) {
+    return new ResponseDto(code, data, message);
   }
 }

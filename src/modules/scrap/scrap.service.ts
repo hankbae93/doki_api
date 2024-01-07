@@ -30,7 +30,7 @@ export class ScrapService {
     const scrap = await this.scrapRepository.getScrapsByIds(animeId, user.id);
 
     if (scrap) {
-      return new ForbiddenException('이미 스크랩으로 등록되었습니다.');
+      throw new ForbiddenException('이미 스크랩으로 등록되었습니다.');
     }
 
     const newScrap = await this.scrapRepository.createScrap(user, anime);

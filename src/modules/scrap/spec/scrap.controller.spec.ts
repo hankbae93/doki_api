@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PassportModule } from '@nestjs/passport';
 import { ScrapController } from '../scrap.controller';
 import { ScrapService } from '../scrap.service';
-import { EntityMock } from '../../../common/mock/entity.mock';
+import { DataMock } from '../../../common/mock/data.mock';
 import { ResponseDto } from '../../../common/dto/response.dto';
 import { EStatusCode } from '../../../common/enum/status.enum';
 import { EResponseMessage } from '../../../common/enum/message.enum';
@@ -40,8 +40,8 @@ describe('ScrapController', () => {
 
   describe('getMyScraps', () => {
     it('유저가 스크랩한 애니메이션 목록을 반환해야 합니다.', async () => {
-      const user = EntityMock.mockUser();
-      const scrap = EntityMock.mockScrap();
+      const user = DataMock.mockUser();
+      const scrap = DataMock.mockScrap();
       const response = new ResponseDto(
         EStatusCode.OK,
         [scrap],
@@ -59,9 +59,9 @@ describe('ScrapController', () => {
 
   describe('scrapAnime', () => {
     it('스크랩을 요청하면 스크랩 정보를 반환해야 합니다.', async () => {
-      const user = EntityMock.mockUser();
-      const anime = EntityMock.mockAnime();
-      const scrap = EntityMock.mockScrap();
+      const user = DataMock.mockUser();
+      const anime = DataMock.mockAnime();
+      const scrap = DataMock.mockScrap();
       const response = new ResponseDto(
         EStatusCode.CREATED,
         scrap,
@@ -79,8 +79,8 @@ describe('ScrapController', () => {
 
   describe('removeScrapedAnime', () => {
     it('스크랩 취소를 요청하면 응답을 반환해야 합니다.', async () => {
-      const user = EntityMock.mockUser();
-      const scrapId = EntityMock.mockScrap().id;
+      const user = DataMock.mockUser();
+      const scrapId = DataMock.mockScrap().id;
       const response = new ResponseDto(
         EStatusCode.OK,
         null,
