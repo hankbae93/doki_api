@@ -34,6 +34,14 @@ export class EntityMock {
     } as User;
   }
 
+  static mockScrap() {
+    return {
+      id: 1,
+      anime: this.mockAnime(),
+      user: this.mockUser(),
+    } as Scrap;
+  }
+
   static mockAnime() {
     return {
       id: 1,

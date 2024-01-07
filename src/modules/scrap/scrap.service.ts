@@ -18,7 +18,7 @@ export class ScrapService {
   ) {}
 
   async getMyScraps(user: User) {
-    const scraps = await this.scrapRepository.getScrapByUserId(user.id);
+    const scraps = await this.scrapRepository.getScrapsByUserId(user.id);
 
     return new ResponseDto(EStatusCode.OK, scraps, EResponseMessage.SUCCESS);
   }

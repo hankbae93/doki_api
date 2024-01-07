@@ -17,7 +17,7 @@ export class ScrapController {
 
   @Get()
   @UseGuards(AuthGuard())
-  findAll(@GetUser() user: User) {
+  getMyScraps(@GetUser() user: User) {
     return this.scrapService.getMyScraps(user);
   }
 
