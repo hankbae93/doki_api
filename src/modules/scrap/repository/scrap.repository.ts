@@ -25,7 +25,7 @@ export class ScrapRepository extends Repository<Scrap> {
     return newScrap;
   }
 
-  getScrapByUserId(userId: number) {
+  getScrapsByUserId(userId: number) {
     return this.find({
       where: {
         user: {
@@ -48,5 +48,9 @@ export class ScrapRepository extends Repository<Scrap> {
       },
       relations,
     });
+  }
+
+  getScrapById(scrapId: number, relations?: string[]) {
+    return this.findOne({ where: { id: scrapId }, relations });
   }
 }

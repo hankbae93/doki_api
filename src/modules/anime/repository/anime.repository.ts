@@ -187,6 +187,7 @@ export class AnimeRepository extends Repository<Anime> {
         'anime.average_score AS averageScore',
         `(EXISTS (SELECT 1 FROM scrap WHERE scrap.user_id = :userId AND scrap.anime_id = anime.id)) AS isScrapped`,
         'COUNT(review.id) AS reviewCount',
+        'scrap.id as scrapId',
       ])
       .groupBy('anime.id')
       .setParameter('userId', userId)
@@ -270,6 +271,8 @@ export class AnimeRepository extends Repository<Anime> {
     updateColumns: Partial<Anime>,
     manager?: EntityManager,
   ) {
-    return this.setManager(manager).update(animeId, updateColumns);
+    return this.setManager(manager).save(updateColumns);
+
+    // .setManager(manager).update(animeId, updateColumns);
   }
 }

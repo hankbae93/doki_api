@@ -1,12 +1,15 @@
 import {
   ForbiddenException,
   Injectable,
-  UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { User } from '../user/entities/user.entity';
 import { ResponseDto } from '../../common/dto/response.dto';
 import { EStatusCode } from '../../common/enum/status.enum';
-import { EResponseMessage } from '../../common/enum/message.enum';
+import {
+  EErrorMessage,
+  EResponseMessage,
+} from '../../common/enum/message.enum';
 import { ScrapRepository } from './repository/scrap.repository';
 import { AnimeRepository } from '../anime/repository/anime.repository';
 
@@ -18,7 +21,7 @@ export class ScrapService {
   ) {}
 
   async getMyScraps(user: User) {
-    const scraps = await this.scrapRepository.getScrapByUserId(user.id);
+    const scraps = await this.scrapRepository.getScrapsByUserId(user.id);
 
     return new ResponseDto(EStatusCode.OK, scraps, EResponseMessage.SUCCESS);
   }
@@ -27,7 +30,7 @@ export class ScrapService {
     const scrap = await this.scrapRepository.getScrapsByIds(animeId, user.id);
 
     if (scrap) {
-      return new ForbiddenException('이미 스크랩으로 등록되었습니다.');
+      throw new ForbiddenException('이미 스크랩으로 등록되었습니다.');
     }
 
     const newScrap = await this.scrapRepository.createScrap(user, anime);
@@ -39,13 +42,15 @@ export class ScrapService {
     );
   }
 
-  async removeScrapedAnime(animeId: number, user: User) {
-    const scrap = await this.scrapRepository.getScrapsByIds(animeId, user.id, [
-      'user',
-    ]);
+  async removeScrapedAnime(scrapId: number, user: User) {
+    const scrap = await this.scrapRepository.getScrapById(scrapId, ['user']);
+
+    if (!scrap) {
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
+    }
 
     if (scrap.user.id !== user.id) {
-      return new UnauthorizedException('누구십니까');
+      throw new ForbiddenException(EErrorMessage.NOT_PERMISSIONS);
     }
 
     await this.scrapRepository.remove(scrap);

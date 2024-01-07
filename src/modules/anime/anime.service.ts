@@ -48,7 +48,7 @@ export class AnimeService {
 
     return new ResponseDto(
       EStatusCode.OK,
-      { anime, isScrapped: !!scrap },
+      { anime, isScrapped: !!scrap, scrapId: scrap?.id ?? null },
       EResponseMessage.SUCCESS,
     );
   }
@@ -223,9 +223,11 @@ export class AnimeService {
           Object.assign(updateAnimeDto, { tags: undefined }),
         );
 
-        return await this.animeRepository
-          .setManager(entityManager)
-          .save(Object.assign(anime, updatedColumns, { tags: tagData }));
+        return await this.animeRepository.updateAnime(
+          anime.id,
+          Object.assign(anime, updatedColumns, { tags: tagData }),
+          entityManager,
+        );
       },
     );
 
