@@ -41,13 +41,13 @@ export class ReviewController {
     );
   }
 
-  @Post(':id')
+  @Post(':reviewId')
   @UseGuards(AuthGuard())
   updateMyReview(
     @Body() updateReviewDto: UpdateReviewDto,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('reviewId', ParseIntPipe) reviewId: number,
     @GetUser() user: User,
   ) {
-    return this.reviewService.updateMyReview(updateReviewDto, id, user);
+    return this.reviewService.updateMyReview(updateReviewDto, reviewId, user);
   }
 }

@@ -29,6 +29,15 @@ export class ReviewService {
     private dataSource: DataSource,
   ) {}
 
+  async getMyReviewByAnime(animeId: number, user: User) {
+    const review = await this.reviewRepository.getReviewsByIds(
+      animeId,
+      user.id,
+    );
+
+    return new ResponseDto(EStatusCode.OK, review, EResponseMessage.SUCCESS);
+  }
+
   async createReviewByAnime(
     createReviewDto: CreateReviewDto,
     animeId: number,
@@ -103,23 +112,14 @@ export class ReviewService {
     );
   }
 
-  async getMyReviewByAnime(animeId: number, user: User) {
-    const review = await this.reviewRepository.getReviewsByIds(
-      animeId,
-      user.id,
-    );
-
-    return new ResponseDto(EStatusCode.OK, review, EResponseMessage.SUCCESS);
-  }
-
   async updateMyReview(
     updateReviewDto: UpdateReviewDto,
-    id: number,
+    reviewId: number,
     user: User,
   ) {
     const review = await this.reviewRepository.findOne({
       where: {
-        id,
+        id: reviewId,
       },
       relations: ['user'],
     });
@@ -129,7 +129,7 @@ export class ReviewService {
       return new ForbiddenException('리뷰를 등록한 사용자가 아닙니다.');
 
     await this.reviewRepository.update(
-      { id },
+      { id: reviewId },
       {
         ...updateReviewDto,
       },
