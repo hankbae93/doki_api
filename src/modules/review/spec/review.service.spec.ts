@@ -221,6 +221,6 @@ describe('ReviewService', () => {
       ).rejects.toThrowError(ForbiddenException);
     });
 
-    it('리뷰 점수가 갱신이 되면 애니메이션 정보를 업데이트하고 리뷰 정보를 반환합니다.', async () => {});
+    it('리뷰 점수가 갱신이 되면 애니메이션 평점을 업데이트하고 리뷰 정보를 반환합니다.', async () => {});
   });
 });

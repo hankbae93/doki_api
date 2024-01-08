@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { ResponseDto } from '../../common/dto/response.dto';
 import { EStatusCode } from '../../common/enum/status.enum';
@@ -36,6 +36,27 @@ export class ReviewService {
     );
 
     return new ResponseDto(EStatusCode.OK, review, EResponseMessage.SUCCESS);
+  }
+
+  async updateAnimeAverageScore(
+    animeId: number,
+    score: number,
+    entityManager?: EntityManager,
+  ) {
+    const anime = await this.animeRepository.getAnimeWithReviews(
+      animeId,
+      entityManager,
+    );
+
+    const scoreSum =
+      anime.reviews.reduce((acc, cur) => acc + cur.score, 0) + score;
+    const reviewCount =
+      anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
+    const averageScore = Math.floor(scoreSum / reviewCount);
+
+    return await this.animeRepository
+      .setManager(entityManager)
+      .save(Object.assign(anime, { averageScore }));
   }
 
   async createReviewByAnime(
@@ -115,28 +136,52 @@ export class ReviewService {
     reviewId: number,
     user: User,
   ) {
-    const review = await this.reviewRepository.findReviewWithUserById(reviewId);
+    const result = await TransactionHelper.transaction(
+      this.dataSource,
+      async (entityManager) => {
+        const { animeId, ...dto } = updateReviewDto;
 
-    if (!review) {
-      throw new NotFoundException(EErrorMessage.NOT_FOUND);
-    }
-    if (review.user.id !== user.id) {
-      throw new ForbiddenException(EErrorMessage.NOT_PERMISSIONS);
-    }
+        const review = await this.reviewRepository.findReviewWithUserById(
+          reviewId,
+          entityManager,
+        );
 
-    await this.reviewRepository.update(
-      { id: reviewId },
-      {
-        ...updateReviewDto,
+        if (!review) {
+          throw new NotFoundException(EErrorMessage.NOT_FOUND);
+        }
+        if (review.user.id !== user.id) {
+          throw new ForbiddenException(EErrorMessage.NOT_PERMISSIONS);
+        }
+
+        const updatedReview = await this.reviewRepository.updateReview(
+          Object.assign(review, dto),
+          entityManager,
+        );
+
+        if (updateReviewDto.score && animeId) {
+          const anime = await this.animeRepository.getAnimeWithReviews(
+            animeId,
+            entityManager,
+          );
+
+          const scoreSum =
+            anime.reviews.reduce((acc, cur) => acc + cur.score, 0) +
+            updateReviewDto.score;
+          const reviewCount =
+            anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
+          const averageScore = Math.floor(scoreSum / reviewCount);
+          await this.animeRepository.update(animeId, {
+            averageScore,
+          });
+        }
+
+        return updatedReview;
       },
     );
 
     return new ResponseDto(
       EStatusCode.OK,
-      {
-        ...review,
-        ...updateReviewDto,
-      },
+      result,
       EResponseMessage.UPDATE_SUCCESS,
     );
   }

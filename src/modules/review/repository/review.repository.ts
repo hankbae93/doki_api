@@ -19,8 +19,12 @@ export class ReviewRepository extends Repository<Review> {
     return newReview;
   }
 
-  findReviewWithUserById(reviewId: number) {
-    return this.findOne({
+  async updateReview(review: Review, manager?: EntityManager) {
+    return this.setManager(manager).save(review);
+  }
+
+  findReviewWithUserById(reviewId: number, manager?: EntityManager) {
+    return this.setManager(manager).findOne({
       where: {
         id: reviewId,
       },
