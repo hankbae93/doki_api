@@ -85,7 +85,7 @@ export class DataMock {
     return {
       id: 1,
       content: 'TEST',
-      score: 0,
+      score: 4,
       deleted: false,
       anime: this.mockAnime(),
     } as Review;

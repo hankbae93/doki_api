@@ -85,11 +85,12 @@ export class ReviewService {
           entityManager,
         );
 
+        const userReviewCount = userReviews.length + 1;
         const { nextRank, rank } = getIsNextRank(
-          userReviews.length,
+          userReviewCount,
           UserRank[user.rank],
         );
-
+        console.log({ nextRank, rank });
         if (nextRank !== rank) {
           await this.userRepository.updateUserRank(
             user.id,
