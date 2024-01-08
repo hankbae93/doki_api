@@ -88,6 +88,7 @@ export class DataMock {
       score: 4,
       deleted: false,
       anime: this.mockAnime(),
+      user: this.mockUser(),
     } as Review;
   }
 }

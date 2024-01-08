@@ -90,7 +90,7 @@ export class ReviewService {
           userReviewCount,
           UserRank[user.rank],
         );
-        console.log({ nextRank, rank });
+
         if (nextRank !== rank) {
           await this.userRepository.updateUserRank(
             user.id,
@@ -115,16 +115,14 @@ export class ReviewService {
     reviewId: number,
     user: User,
   ) {
-    const review = await this.reviewRepository.findOne({
-      where: {
-        id: reviewId,
-      },
-      relations: ['user'],
-    });
+    const review = await this.reviewRepository.findReviewWithUserById(reviewId);
 
-    if (!review) return new NotFoundException('존재하지 않는 리뷰입니다.');
-    if (review.user.id !== user.id)
-      return new ForbiddenException('리뷰를 등록한 사용자가 아닙니다.');
+    if (!review) {
+      throw new NotFoundException(EErrorMessage.NOT_FOUND);
+    }
+    if (review.user.id !== user.id) {
+      throw new ForbiddenException(EErrorMessage.NOT_PERMISSIONS);
+    }
 
     await this.reviewRepository.update(
       { id: reviewId },

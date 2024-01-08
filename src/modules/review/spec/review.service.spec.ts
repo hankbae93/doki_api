@@ -10,7 +10,8 @@ import { DataMock } from '../../../common/mock/data.mock';
 import { EStatusCode } from '../../../common/enum/status.enum';
 import { EResponseMessage } from '../../../common/enum/message.enum';
 import { CreateReviewDto } from '../dto/create-review.dto';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { UpdateReviewDto } from '../dto/update-review.dto';
 
 describe('ReviewService', () => {
   let reviewService: ReviewService;
@@ -24,6 +25,8 @@ describe('ReviewService', () => {
     getReviewsByIds: jest.fn(),
     createReview: jest.fn(),
     getReviewsByUserId: jest.fn(),
+    update: jest.fn(),
+    findReviewWithUserById: jest.fn(),
   };
 
   const mockAnimeRepository = {
@@ -161,9 +164,63 @@ describe('ReviewService', () => {
         reviewService.createReviewByAnime(dto, anime.id, user),
       ).rejects.toThrowError(ForbiddenException);
     });
+  });
 
-    describe(scenarios.updateMyReview, () => {
-      it('', () => {});
+  describe(scenarios.updateMyReview, () => {
+    it('리뷰 갱신이 성공하면 업데이트된 리뷰 정보를 반환합니다.', async () => {
+      const review = DataMock.mockReview();
+      const user = DataMock.mockUser();
+      const dto = {
+        content: 'TEST_REVIEW',
+      } as UpdateReviewDto;
+      const response = DataMock.mockResponse(
+        EStatusCode.OK,
+        Object.assign(review, dto),
+        EResponseMessage.UPDATE_SUCCESS,
+      );
+
+      jest
+        .spyOn(reviewRepository, 'findReviewWithUserById')
+        .mockResolvedValue(review);
+
+      const result = await reviewService.updateMyReview(dto, review.id, user);
+
+      expect(reviewRepository.findReviewWithUserById).toHaveBeenCalled();
+      expect(result).toEqual(response);
     });
+
+    it('리뷰가 존재하지 않으면 에러를 던집니다.', async () => {
+      const review = DataMock.mockReview();
+      const user = DataMock.mockUser();
+      const dto = {
+        content: 'TEST_REVIEW',
+      } as UpdateReviewDto;
+
+      jest
+        .spyOn(reviewRepository, 'findReviewWithUserById')
+        .mockResolvedValue(null);
+
+      await expect(
+        reviewService.updateMyReview(dto, review.id, user),
+      ).rejects.toThrowError(NotFoundException);
+    });
+
+    it('리뷰를 생성한 유저가 아니면 에러를 던집니다.', async () => {
+      const review = DataMock.mockReview();
+      const user = Object.assign(DataMock.mockUser(), { id: 12 });
+      const dto = {
+        content: 'TEST_REVIEW',
+      } as UpdateReviewDto;
+
+      jest
+        .spyOn(reviewRepository, 'findReviewWithUserById')
+        .mockResolvedValue(review);
+
+      await expect(
+        reviewService.updateMyReview(dto, review.id, user),
+      ).rejects.toThrowError(ForbiddenException);
+    });
+
+    it('리뷰 점수가 갱신이 되면 애니메이션 정보를 업데이트하고 리뷰 정보를 반환합니다.', async () => {});
   });
 });
