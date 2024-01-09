@@ -14,6 +14,18 @@ export class AnimeRepository extends Repository<Anime> {
     return manager ? manager.getRepository(Anime) : this;
   }
 
+  saveAnime(anime: Anime, manager?: EntityManager) {
+    return this.setManager(manager).save(anime);
+  }
+
+  findAnimeById(animeId: number, manager?: EntityManager) {
+    return this.setManager(manager).findOne({
+      where: {
+        id: animeId,
+      },
+    });
+  }
+
   createAnime(anime: Partial<Anime>, manager?: EntityManager) {
     const newAnime = this.setManager(manager).create(anime);
     return this.setManager(manager).save(newAnime);
@@ -36,14 +48,14 @@ export class AnimeRepository extends Repository<Anime> {
     });
   }
 
-  getAnimeDetailById(id: number) {
+  getAnimeDetailById(animeId: number) {
     return this.createQueryBuilder('anime')
       .leftJoinAndSelect('anime.user', 'user_id')
       .leftJoinAndSelect('anime.tags', 'tag')
       .leftJoinAndSelect('anime.reviews', 'review')
-      .leftJoinAndSelect('anime.files', 'image')
+      .leftJoinAndSelect('anime.files', 'files')
       .leftJoinAndSelect('review.user', 'user')
-      .where('anime.id = :id', { id })
+      .where('anime.id = :id', { id: animeId })
       .getOne();
   }
 

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { ResponseDto } from '../../common/dto/response.dto';
 import { EStatusCode } from '../../common/enum/status.enum';
@@ -29,6 +29,37 @@ export class ReviewService {
     private dataSource: DataSource,
   ) {}
 
+  async getMyReviewByAnime(animeId: number, user: User) {
+    const review = await this.reviewRepository.getReviewsByIds(
+      animeId,
+      user.id,
+    );
+
+    return new ResponseDto(EStatusCode.OK, review, EResponseMessage.SUCCESS);
+  }
+
+  async updateAnimeAverageScore(
+    animeId: number,
+    score: number,
+    entityManager?: EntityManager,
+  ) {
+    const anime = await this.animeRepository.getAnimeWithReviews(
+      animeId,
+      entityManager,
+    );
+
+    const scoreSum =
+      anime.reviews.reduce((acc, cur) => acc + cur.score, 0) + score;
+    const reviewCount =
+      anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
+    const averageScore = Math.floor(scoreSum / reviewCount);
+
+    return await this.animeRepository.saveAnime(
+      Object.assign(anime, { averageScore }),
+      entityManager,
+    );
+  }
+
   async createReviewByAnime(
     createReviewDto: CreateReviewDto,
     animeId: number,
@@ -39,10 +70,6 @@ export class ReviewService {
     const result = await TransactionHelper.transaction(
       this.dataSource,
       async (entityManager) => {
-        const anime = await this.animeRepository.getAnimeWithReviews(
-          animeId,
-          entityManager,
-        );
         const review = await this.reviewRepository.getReviewsByIds(
           animeId,
           user.id,
@@ -50,37 +77,26 @@ export class ReviewService {
         );
 
         if (review) {
-          return new ForbiddenException(EErrorMessage.EXISITEING_REVIEW);
+          throw new ForbiddenException(EErrorMessage.EXISITEING_REVIEW);
         }
+
+        const anime = await this.updateAnimeAverageScore(animeId, score);
 
         const newReview = await this.reviewRepository.createReview({
           content,
           score,
           anime,
           user,
-          img: '',
         });
-
-        const scoreSum =
-          anime.reviews.reduce((acc, cur) => acc + cur.score, 0) + score;
-        const reviewCount =
-          anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
-        const averageScore = Math.floor(scoreSum / reviewCount);
-
-        await this.animeRepository.update(
-          { id: animeId },
-          {
-            averageScore,
-          },
-        );
 
         const userReviews = await this.reviewRepository.getReviewsByUserId(
           user.id,
           entityManager,
         );
 
+        const userReviewCount = userReviews.length + 1;
         const { nextRank, rank } = getIsNextRank(
-          userReviews.length,
+          userReviewCount,
           UserRank[user.rank],
         );
 
@@ -92,7 +108,7 @@ export class ReviewService {
           );
         }
 
-        return { review: newReview, averageScore };
+        return newReview;
       },
     );
 
@@ -103,44 +119,48 @@ export class ReviewService {
     );
   }
 
-  async getMyReviewByAnime(animeId: number, user: User) {
-    const review = await this.reviewRepository.getReviewsByIds(
-      animeId,
-      user.id,
-    );
-
-    return new ResponseDto(EStatusCode.OK, review, EResponseMessage.SUCCESS);
-  }
-
   async updateMyReview(
     updateReviewDto: UpdateReviewDto,
-    id: number,
+    reviewId: number,
     user: User,
   ) {
-    const review = await this.reviewRepository.findOne({
-      where: {
-        id,
-      },
-      relations: ['user'],
-    });
+    const result = await TransactionHelper.transaction(
+      this.dataSource,
+      async (entityManager) => {
+        const { animeId, ...dto } = updateReviewDto;
 
-    if (!review) return new NotFoundException('존재하지 않는 리뷰입니다.');
-    if (review.user.id !== user.id)
-      return new ForbiddenException('리뷰를 등록한 사용자가 아닙니다.');
+        const review = await this.reviewRepository.findReviewWithUserById(
+          reviewId,
+          entityManager,
+        );
 
-    await this.reviewRepository.update(
-      { id },
-      {
-        ...updateReviewDto,
+        if (!review) {
+          throw new NotFoundException(EErrorMessage.NOT_FOUND);
+        }
+        if (review.user.id !== user.id) {
+          throw new ForbiddenException(EErrorMessage.NOT_PERMISSIONS);
+        }
+
+        const updatedReview = await this.reviewRepository.updateReview(
+          Object.assign(review, dto),
+          entityManager,
+        );
+
+        if (updateReviewDto.score && animeId) {
+          await this.updateAnimeAverageScore(
+            animeId,
+            updateReviewDto.score,
+            entityManager,
+          );
+        }
+
+        return updatedReview;
       },
     );
 
     return new ResponseDto(
       EStatusCode.OK,
-      {
-        ...review,
-        ...updateReviewDto,
-      },
+      result,
       EResponseMessage.UPDATE_SUCCESS,
     );
   }

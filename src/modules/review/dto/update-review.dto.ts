@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateReviewDto } from './create-review.dto';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateReviewDto extends PartialType(CreateReviewDto) {
   @IsString()
@@ -10,4 +10,8 @@ export class UpdateReviewDto extends PartialType(CreateReviewDto) {
   @IsNumber()
   @IsOptional()
   score: number;
+
+  @IsNumber()
+  @IsOptional()
+  animeId: number;
 }

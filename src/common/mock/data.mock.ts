@@ -20,6 +20,14 @@ export class DataMock {
     }) as Provider[];
   }
 
+  static mockResponse(
+    code: EStatusCode,
+    data: any,
+    message: EResponseMessage | string,
+  ) {
+    return new ResponseDto(code, data, message);
+  }
+
   static mockUser() {
     return {
       id: 7,
@@ -73,11 +81,14 @@ export class DataMock {
     } as Tag;
   }
 
-  static mockResponse(
-    code: EStatusCode,
-    data: any,
-    message: EResponseMessage | string,
-  ) {
-    return new ResponseDto(code, data, message);
+  static mockReview() {
+    return {
+      id: 1,
+      content: 'TEST',
+      score: 4,
+      deleted: false,
+      anime: this.mockAnime(),
+      user: this.mockUser(),
+    } as Review;
   }
 }

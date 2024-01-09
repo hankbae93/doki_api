@@ -18,9 +18,6 @@ export class Review extends BaseEntity {
   content: string;
 
   @Column()
-  img: string;
-
-  @Column()
   score: number;
 
   @Column({ default: false })

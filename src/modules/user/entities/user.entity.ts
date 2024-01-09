@@ -37,7 +37,7 @@ export class User {
   @Column({ nullable: true })
   profile: string;
 
-  @Column({ default: false })
+  @Column({ default: false, select: false })
   retired: boolean;
 
   @Column('enum', { enum: UserRank, default: UserRank.d })

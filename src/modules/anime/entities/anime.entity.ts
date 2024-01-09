@@ -54,7 +54,7 @@ export class Anime extends BaseEntity {
   @OneToMany(() => Scrap, (scrap) => scrap.anime)
   scraps: Scrap[];
 
-  @OneToMany(() => File, (image) => image.anime)
+  @OneToMany(() => File, (file) => file.anime)
   files: File[];
 
   @ManyToOne(() => User, (user) => user.animes, { eager: false })
