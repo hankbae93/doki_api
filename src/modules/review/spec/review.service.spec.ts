@@ -27,12 +27,14 @@ describe('ReviewService', () => {
     getReviewsByUserId: jest.fn(),
     update: jest.fn(),
     findReviewWithUserById: jest.fn(),
+    updateReview: jest.fn(),
   };
 
   const mockAnimeRepository = {
     getAnimeWithReviews: jest.fn(),
     findAnimeById: jest.fn(),
     update: jest.fn(),
+    saveAnime: jest.fn(),
   };
 
   const mockUserRepository = {
@@ -78,6 +80,26 @@ describe('ReviewService', () => {
     });
   });
 
+  describe(scenarios.updateAnimeAverageScore, () => {
+    it('애니메이션의 평균 점수를 업데이트해야 합니다.', async () => {
+      const anime = DataMock.mockAnime();
+      const review = DataMock.mockReview();
+
+      jest
+        .spyOn(animeRepository, 'getAnimeWithReviews')
+        .mockResolvedValue(Object.assign(anime, { reviews: [review] }));
+      jest.spyOn(animeRepository, 'saveAnime').mockResolvedValue(anime);
+
+      const result = await reviewService.updateAnimeAverageScore(
+        anime.id,
+        4,
+        dataSource.createQueryRunner().manager,
+      );
+
+      expect(result).toEqual(anime);
+    });
+  });
+
   describe(scenarios.createReviewByAnime, () => {
     it('리뷰 생성이 성공하면 애니메이션 평점을 업데이트하고 리뷰 정보를 반환합니다.', async () => {
       const review = DataMock.mockReview();
@@ -89,7 +111,7 @@ describe('ReviewService', () => {
       } as CreateReviewDto;
       const response = DataMock.mockResponse(
         EStatusCode.CREATED,
-        { review, averageScore: review.score },
+        review,
         EResponseMessage.SUCCESS,
       );
 
@@ -101,6 +123,9 @@ describe('ReviewService', () => {
         );
       jest.spyOn(reviewRepository, 'createReview').mockResolvedValue(review);
       jest.spyOn(reviewRepository, 'getReviewsByUserId').mockResolvedValue([]);
+      jest
+        .spyOn(reviewService, 'updateAnimeAverageScore')
+        .mockResolvedValue(anime);
 
       const result = await reviewService.createReviewByAnime(
         dto,
@@ -108,9 +133,6 @@ describe('ReviewService', () => {
         user,
       );
 
-      expect(animeRepository.update).toHaveBeenCalledWith(anime.id, {
-        averageScore: review.score,
-      });
       expect(result).toEqual(response);
     });
 
@@ -124,7 +146,7 @@ describe('ReviewService', () => {
       } as CreateReviewDto;
       const response = DataMock.mockResponse(
         EStatusCode.CREATED,
-        { review, averageScore: review.score },
+        review,
         EResponseMessage.SUCCESS,
       );
 
@@ -138,6 +160,9 @@ describe('ReviewService', () => {
       jest
         .spyOn(reviewRepository, 'getReviewsByUserId')
         .mockResolvedValue(Array(5).fill(review));
+      jest
+        .spyOn(reviewService, 'updateAnimeAverageScore')
+        .mockResolvedValue(anime);
 
       const result = await reviewService.createReviewByAnime(
         dto,
@@ -182,11 +207,37 @@ describe('ReviewService', () => {
       jest
         .spyOn(reviewRepository, 'findReviewWithUserById')
         .mockResolvedValue(review);
+      jest
+        .spyOn(reviewRepository, 'updateReview')
+        .mockResolvedValue(Object.assign(review, dto));
 
       const result = await reviewService.updateMyReview(dto, review.id, user);
 
       expect(reviewRepository.findReviewWithUserById).toHaveBeenCalled();
       expect(result).toEqual(response);
+    });
+
+    it('리뷰 점수가 갱신이 되면 애니메이션 정보를 업데이트합니다.', async () => {
+      const anime = DataMock.mockAnime();
+      const review = DataMock.mockReview();
+      const user = DataMock.mockUser();
+      const dto = {
+        content: 'TEST_REVIEW',
+        score: 5,
+        animeId: 1,
+      } as UpdateReviewDto;
+
+      jest
+        .spyOn(reviewService, 'updateAnimeAverageScore')
+        .mockResolvedValue(anime);
+
+      await reviewService.updateMyReview(dto, review.id, user);
+
+      expect(reviewService.updateAnimeAverageScore).toHaveBeenCalledWith(
+        dto.animeId,
+        dto.score,
+        dataSource.createQueryRunner().manager,
+      );
     });
 
     it('리뷰가 존재하지 않으면 에러를 던집니다.', async () => {
@@ -220,7 +271,5 @@ describe('ReviewService', () => {
         reviewService.updateMyReview(dto, review.id, user),
       ).rejects.toThrowError(ForbiddenException);
     });
-
-    it('리뷰 점수가 갱신이 되면 애니메이션 평점을 업데이트하고 리뷰 정보를 반환합니다.', async () => {});
   });
 });

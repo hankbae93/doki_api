@@ -54,9 +54,10 @@ export class ReviewService {
       anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
     const averageScore = Math.floor(scoreSum / reviewCount);
 
-    return await this.animeRepository
-      .setManager(entityManager)
-      .save(Object.assign(anime, { averageScore }));
+    return await this.animeRepository.saveAnime(
+      Object.assign(anime, { averageScore }),
+      entityManager,
+    );
   }
 
   async createReviewByAnime(
@@ -79,26 +80,13 @@ export class ReviewService {
           throw new ForbiddenException(EErrorMessage.EXISITEING_REVIEW);
         }
 
-        const anime = await this.animeRepository.getAnimeWithReviews(
-          animeId,
-          entityManager,
-        );
+        const anime = await this.updateAnimeAverageScore(animeId, score);
 
         const newReview = await this.reviewRepository.createReview({
           content,
           score,
           anime,
           user,
-        });
-
-        const scoreSum =
-          anime.reviews.reduce((acc, cur) => acc + cur.score, 0) + score;
-        const reviewCount =
-          anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
-        const averageScore = Math.floor(scoreSum / reviewCount);
-
-        await this.animeRepository.update(animeId, {
-          averageScore,
         });
 
         const userReviews = await this.reviewRepository.getReviewsByUserId(
@@ -120,7 +108,7 @@ export class ReviewService {
           );
         }
 
-        return { review: newReview, averageScore };
+        return newReview;
       },
     );
 
@@ -159,20 +147,11 @@ export class ReviewService {
         );
 
         if (updateReviewDto.score && animeId) {
-          const anime = await this.animeRepository.getAnimeWithReviews(
+          await this.updateAnimeAverageScore(
             animeId,
+            updateReviewDto.score,
             entityManager,
           );
-
-          const scoreSum =
-            anime.reviews.reduce((acc, cur) => acc + cur.score, 0) +
-            updateReviewDto.score;
-          const reviewCount =
-            anime.reviews.length === 0 ? 1 : anime.reviews.length + 1;
-          const averageScore = Math.floor(scoreSum / reviewCount);
-          await this.animeRepository.update(animeId, {
-            averageScore,
-          });
         }
 
         return updatedReview;
