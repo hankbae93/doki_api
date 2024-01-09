@@ -17,6 +17,7 @@ export enum EErrorMessage {
   NOT_PERMISSIONS = 'You do not have the necessary permissions',
   NOT_CREATE_PERIOD = "Can't not create period, it's not time yet",
   NOT_TIME_YET = "it's not time yet",
+  RETIRED_ACCOUNT = 'Retired Account, please contact FAQ pages',
   EXISITEING_REVIEW = 'There are already reviews created.',
   EXISITING_USER = 'Existing User Email',
   LOGIN_FAILED = 'login Failed',

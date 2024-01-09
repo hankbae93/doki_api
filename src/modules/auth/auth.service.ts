@@ -1,8 +1,8 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import {
@@ -33,12 +33,12 @@ export class AuthService {
     }
 
     if (user.retired) {
-      throw new NotFoundException('Retired Account, please contact FAQ pages');
+      throw new ForbiddenException(EErrorMessage.RETIRED_ACCOUNT);
     }
 
     const isCorrectPassword = await bcrypt.compare(password, user.password);
     if (!isCorrectPassword) {
-      throw new UnauthorizedException(EErrorMessage.LOGIN_FAILED);
+      throw new NotFoundException(EErrorMessage.LOGIN_FAILED);
     }
 
     const payload = { email };
@@ -49,7 +49,7 @@ export class AuthService {
 
     return new ResponseDto(
       EStatusCode.OK,
-      { accessToken, user: userInfo },
+      { accessToken, user: Object.assign(userInfo, { password: null }) },
       EResponseMessage.LOGIN_SUCCESS,
     );
   }
@@ -71,6 +71,7 @@ export class AuthService {
     });
 
     await this.userRepository.insert(user);
+
     return new ResponseDto(
       EStatusCode.CREATED,
       null,
