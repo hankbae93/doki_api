@@ -13,13 +13,12 @@ import { FileModule } from './modules/file/file.module';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 
-const ENV = process.env.NODE_ENV;
-
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ENV === 'production' ? `.env.${ENV}` : '.env',
+      envFilePath:
+        process.env.NODE_ENV === 'production' ? '.env.production' : '.env',
     }),
     TypeOrmModule.forRootAsync(typeOrmConfig),
     MulterModule.register({
