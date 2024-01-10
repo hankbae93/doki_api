@@ -201,7 +201,7 @@ export class AnimeRepository extends Repository<Anime> {
         'COUNT(review.id) AS reviewCount',
         'scrap.id as scrapId',
       ])
-      .groupBy('anime.id')
+      .groupBy('anime.id,scrap.id')
       .setParameter('userId', userId)
       .offset(page - 1)
       .limit(limit);
