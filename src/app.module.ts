@@ -1,17 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AnimeModule } from './modules/anime/anime.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './modules/user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { TagModule } from './modules/tag/tag.module';
 import { ReviewModule } from './modules/review/review.module';
 import { ScrapModule } from './modules/scrap/scrap.module';
-import { typeOrmConfig } from './config/typeorm.config';
 import { MulterModule } from '@nestjs/platform-express';
 import { AuthModule } from './modules/auth/auth.module';
 import { FileModule } from './modules/file/file.module';
 import { diskStorage } from 'multer';
 import * as path from 'path';
+import { DatabaseModule } from './provider/database.module';
 
 @Module({
   imports: [
@@ -20,7 +19,7 @@ import * as path from 'path';
       envFilePath:
         process.env.NODE_ENV === 'production' ? '.env.production' : '.env',
     }),
-    TypeOrmModule.forRootAsync(typeOrmConfig),
+    DatabaseModule,
     MulterModule.register({
       storage: diskStorage({
         destination: './files', // or any path you wish to store files
