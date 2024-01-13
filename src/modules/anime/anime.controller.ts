@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { AnimeService } from './anime.service';
+import { AnimeWriteService } from './service/anime.write.service';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -21,14 +21,18 @@ import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { editFileName } from '../../common/utils/file-uploading.util';
+import { AnimeReadService } from './service/anime.read.service';
 
 @Controller('anime')
 export class AnimeController {
-  constructor(private readonly animeService: AnimeService) {}
+  constructor(
+    private readonly animeWriteService: AnimeWriteService,
+    private readonly animeReadService: AnimeReadService,
+  ) {}
 
   @Get()
   getAnimeList(@Query() getAllAnimeQueryDto: GetAllAnimeQueryDto) {
-    return this.animeService.getAnimeList(getAllAnimeQueryDto);
+    return this.animeReadService.getAnimeList(getAllAnimeQueryDto);
   }
 
   @Get('/auth')
@@ -37,17 +41,17 @@ export class AnimeController {
     @Query() getAllAnimeQueryDto: GetAllAnimeQueryDto,
     @GetUser() user: User,
   ) {
-    return this.animeService.getAnimeListByUser(getAllAnimeQueryDto, user);
+    return this.animeReadService.getAnimeListByUser(getAllAnimeQueryDto, user);
   }
 
   @Get('/series')
   getAnimeSeries() {
-    return this.animeService.getAnimeSeries();
+    return this.animeReadService.getAnimeSeries();
   }
 
   @Get('/series/:seriesId')
   getAnimeSeriesBySeriesId(@Param('seriesId', ParseIntPipe) seriesId: number) {
-    return this.animeService.getAnimesBySeriesId(seriesId);
+    return this.animeReadService.getAnimesBySeriesId(seriesId);
   }
 
   @Get('/:id')
@@ -56,7 +60,7 @@ export class AnimeController {
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user?: User,
   ) {
-    return this.animeService.getAnimeDetail(id, user);
+    return this.animeReadService.getAnimeDetail(id, user);
   }
 
   @Post()
@@ -84,7 +88,7 @@ export class AnimeController {
     @Body() createAnimeDto: CreateAnimeDto,
     @GetUser() user?: User,
   ) {
-    return this.animeService.createAnime(createAnimeDto, files, user);
+    return this.animeWriteService.createAnime(createAnimeDto, files, user);
   }
 
   @Post('/:id')
@@ -94,12 +98,12 @@ export class AnimeController {
     @Body() updateAnimeDto: UpdateAnimeDto,
     @GetUser() user: User,
   ) {
-    return this.animeService.updateAnime(id, updateAnimeDto, user);
+    return this.animeWriteService.updateAnime(id, updateAnimeDto, user);
   }
 
   @Delete('/:id')
   @UseGuards(AuthGuard())
   removeAnime(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
-    return this.animeService.deleteAnime(id, user);
+    return this.animeWriteService.deleteAnime(id, user);
   }
 }

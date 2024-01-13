@@ -1,6 +1,6 @@
 import { DataSource, EntityManager } from 'typeorm';
 
-export class TransactionHelper {
+export class TransactionHandler {
   static async transaction(
     dataSource: DataSource,
     callback: (entityManager: EntityManager) => Promise<any>,

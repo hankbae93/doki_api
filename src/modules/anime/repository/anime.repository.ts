@@ -10,37 +10,37 @@ export class AnimeRepository extends Repository<Anime> {
     super(Anime, dataSource.createEntityManager());
   }
 
-  setManager(manager?: EntityManager): Repository<Anime> {
-    return manager ? manager.getRepository(Anime) : this;
+  setManager(manager: EntityManager) {
+    return manager ? (manager.getRepository(Anime) as AnimeRepository) : this;
   }
 
-  saveAnime(anime: Anime, manager?: EntityManager) {
-    return this.setManager(manager).save(anime);
+  saveAnime(anime: Anime) {
+    return this.save(anime);
   }
 
-  findAnimeById(animeId: number, manager?: EntityManager) {
-    return this.setManager(manager).findOne({
+  findAnimeById(animeId: number) {
+    return this.findOne({
       where: {
         id: animeId,
       },
     });
   }
 
-  createAnime(anime: Partial<Anime>, manager?: EntityManager) {
-    const newAnime = this.setManager(manager).create(anime);
-    return this.setManager(manager).save(newAnime);
+  createAnime(anime: Partial<Anime>) {
+    const newAnime = this.create(anime);
+    return this.save(newAnime);
   }
 
-  getAnimeBySeriesName(series: string, manager?: EntityManager) {
-    return this.setManager(manager).findOne({
+  getAnimeBySeriesName(series: string) {
+    return this.findOne({
       where: {
         title: Like(`%${series}%`),
       },
     });
   }
 
-  getAnimeWithReviews(animeId: number, manager?: EntityManager) {
-    return this.setManager(manager).findOne({
+  getAnimeWithReviews(animeId: number) {
+    return this.findOne({
       where: {
         id: animeId,
       },
@@ -59,8 +59,8 @@ export class AnimeRepository extends Repository<Anime> {
       .getOne();
   }
 
-  findAnimeWithUserById(animeId: number, manager?: EntityManager) {
-    return this.setManager(manager).findOne({
+  findAnimeWithUserById(animeId: number) {
+    return this.findOne({
       where: {
         id: animeId,
       },
@@ -267,24 +267,20 @@ export class AnimeRepository extends Repository<Anime> {
     });
   }
 
-  getAnimeToDeleteById(animeId: number, manager?: EntityManager) {
-    return this.setManager(manager).findOne({
+  getAnimeToDeleteById(animeId: number) {
+    return this.findOne({
       where: { id: animeId },
       relations: ['user', 'reviews'],
     });
   }
 
-  deleteAnime(animeId: number, manager?: EntityManager) {
-    return this.setManager(manager).update(animeId, { deleted: true });
+  deleteAnime(animeId: number) {
+    return this.update(animeId, { deleted: true });
   }
 
-  updateAnime(
-    animeId: number,
-    updateColumns: Partial<Anime>,
-    manager?: EntityManager,
-  ) {
-    return this.setManager(manager).save(updateColumns);
+  updateAnime(animeId: number, updateColumns: Partial<Anime>) {
+    return this.save(updateColumns);
 
-    // .setManager(manager).update(animeId, updateColumns);
+    // .update(animeId, updateColumns);
   }
 }

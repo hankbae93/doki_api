@@ -8,8 +8,8 @@ export class TagRepository extends Repository<Tag> {
     super(Tag, dataSource.createEntityManager());
   }
 
-  setManager(manager?: EntityManager): Repository<Tag> {
-    return manager ? manager.getRepository(Tag) : this;
+  setManager(manager?: EntityManager) {
+    return manager ? (manager.getRepository(Tag) as TagRepository) : this;
   }
 
   findAllWithAnimes() {
@@ -18,20 +18,20 @@ export class TagRepository extends Repository<Tag> {
     });
   }
 
-  findTagsByName(value: string[], manager?: EntityManager) {
-    return this.setManager(manager).find({
+  findTagsByName(value: string[]) {
+    return this.find({
       where: {
         name: In(value),
       },
     });
   }
 
-  createTag(name: string | string[], manager?: EntityManager) {
+  createTag(name: string | string[]) {
     const data = Array.isArray(name)
       ? name.map((value) => ({ name: value }))
       : [{ name }];
-    const newTag = this.setManager(manager).create(data);
+    const newTag = this.create(data);
 
-    return this.setManager(manager).save(newTag);
+    return this.save(newTag);
   }
 }

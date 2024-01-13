@@ -9,8 +9,8 @@ export class FileRepository extends Repository<File> {
     super(File, dataSource.createEntityManager());
   }
 
-  setManager(manager?: EntityManager): Repository<File> {
-    return manager ? manager.getRepository(File) : this;
+  setManager(manager?: EntityManager) {
+    return manager ? (manager.getRepository(File) as FileRepository) : this;
   }
 
   async createFiles(
@@ -18,10 +18,9 @@ export class FileRepository extends Repository<File> {
       anime: Anime;
       fileName: string;
     }[],
-    manager?: EntityManager,
   ) {
-    const newImages = this.setManager(manager).create(images);
+    const newImages = this.create(images);
 
-    return this.setManager(manager).insert(newImages);
+    return this.insert(newImages);
   }
 }

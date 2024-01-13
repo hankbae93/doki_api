@@ -17,7 +17,7 @@ import { UserRank } from '../user/user.enum';
 import { getIsNextRank } from './review.util';
 import { ReviewRepository } from './repository/review.repository';
 import { AnimeRepository } from '../anime/repository/anime.repository';
-import { TransactionHelper } from '../../common/helper/transaction.helper';
+import { TransactionHandler } from '../../common/handler/transaction.handler';
 import { UserRepository } from '../user/repository/user.repository';
 
 @Injectable()
@@ -67,7 +67,7 @@ export class ReviewService {
   ) {
     const { content, score } = createReviewDto;
 
-    const result = await TransactionHelper.transaction(
+    const result = await TransactionHandler.transaction(
       this.dataSource,
       async (entityManager) => {
         const review = await this.reviewRepository.getReviewsByIds(
@@ -124,7 +124,7 @@ export class ReviewService {
     reviewId: number,
     user: User,
   ) {
-    const result = await TransactionHelper.transaction(
+    const result = await TransactionHandler.transaction(
       this.dataSource,
       async (entityManager) => {
         const { animeId, ...dto } = updateReviewDto;

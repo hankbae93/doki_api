@@ -16,20 +16,12 @@ export class TagService {
 
   async findTagsAndCreate(tags: string[], entityManager?: EntityManager) {
     if (!tags || tags.length === 0) return [];
-
-    const tagRecords = await this.tagRepository.findTagsByName(
-      tags,
-      entityManager,
-    );
-
+    const tagRepository = this.tagRepository.setManager(entityManager);
+    const tagRecords = await tagRepository.findTagsByName(tags);
     const needCreatedTag = tags.filter(
       (tag) => !tagRecords.some((tagRecord) => tagRecord.name === tag),
     );
-
-    const newTags = await this.tagRepository.createTag(
-      needCreatedTag,
-      entityManager,
-    );
+    const newTags = await tagRepository.createTag(needCreatedTag);
 
     return tagRecords.concat(newTags);
   }

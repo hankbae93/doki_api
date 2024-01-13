@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Scrap } from '../../scrap/entities/scrap.entity';
 import { Review } from '../../review/entities/review.entity';
 import { AnimeController } from '../anime.controller';
-import { AnimeService } from '../anime.service';
+import { AnimeWriteService } from '../service/anime.write.service';
 import { DataMock } from '../../../common/mock/data.mock';
 import { AnimeRepository } from '../repository/anime.repository';
 import { FileRepository } from '../../file/repository/file.repository';
@@ -24,7 +24,7 @@ import { UpdateAnimeDto } from '../dto/update-anime.dto';
 
 describe('UserController', () => {
   let animeController: AnimeController;
-  let animeService: AnimeService;
+  let animeService: AnimeWriteService;
 
   const mockUser: User = {
     id: 7,
@@ -69,14 +69,14 @@ describe('UserController', () => {
         TagRepository,
         ReviewRepository,
       ]).concat({
-        provide: AnimeService,
+        provide: AnimeWriteService,
         useValue: mockAnimeService,
       }),
       imports: [PassportModule.register({ defaultStrategy: 'jwt' })],
     }).compile();
 
     animeController = module.get<AnimeController>(AnimeController);
-    animeService = module.get<AnimeService>(AnimeService);
+    animeService = module.get<AnimeWriteService>(AnimeWriteService);
   });
 
   it('should be defined', () => {

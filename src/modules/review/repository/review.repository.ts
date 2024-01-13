@@ -8,23 +8,23 @@ export class ReviewRepository extends Repository<Review> {
     super(Review, dataSource.createEntityManager());
   }
 
-  setManager(manager?: EntityManager): Repository<Review> {
-    return manager ? manager.getRepository(Review) : this;
+  setManager(manager?: EntityManager) {
+    return manager ? (manager.getRepository(Review) as ReviewRepository) : this;
   }
 
-  async createReview(review: DeepPartial<Review>, manager?: EntityManager) {
-    const newReview = this.setManager(manager).create(review);
+  async createReview(review: DeepPartial<Review>) {
+    const newReview = this.create(review);
     await this.insert(newReview);
 
     return newReview;
   }
 
-  async updateReview(review: Review, manager?: EntityManager) {
-    return this.setManager(manager).save(review);
+  async updateReview(review: Review) {
+    return this.save(review);
   }
 
-  findReviewWithUserById(reviewId: number, manager?: EntityManager) {
-    return this.setManager(manager).findOne({
+  findReviewWithUserById(reviewId: number) {
+    return this.findOne({
       where: {
         id: reviewId,
       },
@@ -32,8 +32,8 @@ export class ReviewRepository extends Repository<Review> {
     });
   }
 
-  getReviewsByIds(animeId: number, userId: number, manager?: EntityManager) {
-    return this.setManager(manager).findOne({
+  getReviewsByIds(animeId: number, userId: number) {
+    return this.findOne({
       where: {
         anime: {
           id: animeId,
@@ -45,8 +45,8 @@ export class ReviewRepository extends Repository<Review> {
     });
   }
 
-  getReviewsByUserId(userId: number, manager?: EntityManager) {
-    return this.setManager(manager).find({
+  getReviewsByUserId(userId: number) {
+    return this.find({
       where: {
         user: {
           id: userId,
@@ -55,7 +55,7 @@ export class ReviewRepository extends Repository<Review> {
     });
   }
 
-  deleteReviews(reviewIds: number[], manager?: EntityManager) {
-    return this.setManager(manager).update(reviewIds, { deleted: true });
+  deleteReviews(reviewIds: number[]) {
+    return this.update(reviewIds, { deleted: true });
   }
 }

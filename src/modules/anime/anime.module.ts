@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AnimeService } from './anime.service';
+import { AnimeWriteService } from './service/anime.write.service';
 import { AnimeController } from './anime.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Anime } from './entities/anime.entity';
@@ -14,6 +14,7 @@ import { ReviewRepository } from '../review/repository/review.repository';
 import { FileRepository } from '../file/repository/file.repository';
 import { AuthModule } from '../auth/auth.module';
 import { TagService } from '../tag/tag.service';
+import { AnimeReadService } from './service/anime.read.service';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { TagService } from '../tag/tag.service';
   ],
   controllers: [AnimeController],
   providers: [
-    AnimeService,
+    AnimeReadService,
+    AnimeWriteService,
     TagService,
     AnimeRepository,
     FileRepository,

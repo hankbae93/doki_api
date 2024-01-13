@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AnimeService } from '../anime.service';
+import { AnimeWriteService } from '../service/anime.write.service';
 import { AnimeRepository } from '../repository/anime.repository';
 import { ScrapRepository } from '../../scrap/repository/scrap.repository';
 import { ReviewRepository } from '../../review/repository/review.repository';
@@ -18,7 +18,7 @@ import { UpdateAnimeDto } from '../dto/update-anime.dto';
 import { TagService } from '../../tag/tag.service';
 
 describe('animeService', () => {
-  let animeService: AnimeService;
+  let animeService: AnimeWriteService;
   let tagService: TagService;
   let animeRepository: AnimeRepository;
   let scrapRepository: ScrapRepository;
@@ -64,7 +64,7 @@ describe('animeService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AnimeService,
+        AnimeWriteService,
         { provide: TagService, useValue: mockTagService },
         { provide: AnimeRepository, useValue: mockAnimeRepository },
         { provide: ScrapRepository, useValue: mockScrapRepository },
@@ -78,7 +78,7 @@ describe('animeService', () => {
       ],
     }).compile();
 
-    animeService = module.get<AnimeService>(AnimeService);
+    animeService = module.get<AnimeWriteService>(AnimeWriteService);
     tagService = module.get<TagService>(TagService);
     animeRepository = module.get<AnimeRepository>(AnimeRepository);
     scrapRepository = module.get<ScrapRepository>(ScrapRepository);
