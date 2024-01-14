@@ -13,6 +13,7 @@ import { FileRepository } from '../../file/repository/file.repository';
 import { TagRepository } from '../../tag/repository/tag.repository';
 import { TransactionHandler } from '../../../common/handler/transaction.handler';
 import { TagService } from '../../tag/tag.service';
+import { StorageService } from '../../file/storage.service';
 
 @Injectable()
 export class AnimeWriteService {
@@ -22,6 +23,7 @@ export class AnimeWriteService {
     private reviewRepository: ReviewRepository,
     private fileRepository: FileRepository,
     private tagRepository: TagRepository,
+    private storageService: StorageService,
     private tagService: TagService,
     private dataSource: DataSource,
   ) {}
@@ -63,13 +65,19 @@ export class AnimeWriteService {
           entityManager,
         );
 
+        const filePathList = await Promise.all(
+          files.file.map(
+            async (fileItem) => await this.storageService.uploadFile(fileItem),
+          ),
+        );
+
         const newAnime = await animeRepository.createAnime({
           title,
           author,
           source,
           averageScore: 0,
           animeParentId,
-          thumbnail: files.file[0].path,
+          thumbnail: filePathList[0],
           description,
           crew,
           tags: tagData.length === 0 ? null : tagData,
@@ -77,10 +85,7 @@ export class AnimeWriteService {
         });
 
         await fileRepository.createFiles(
-          files.file.map((file) => ({
-            anime: newAnime,
-            fileName: file.path,
-          })),
+          filePathList.map((path) => ({ anime: newAnime, fileName: path })),
         );
 
         return newAnime;

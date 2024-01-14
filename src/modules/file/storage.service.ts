@@ -4,7 +4,7 @@ import { Storage } from '@google-cloud/storage';
 import { parse } from 'path';
 
 @Injectable()
-export class CloudStorageService {
+export class StorageService {
   private storage: Storage;
   private bucket: string;
 
@@ -23,7 +23,7 @@ export class CloudStorageService {
     this.bucket = configService.get('GOOGLE_STORAGE_MEDIA_BUCKET');
   }
 
-  async save(file: Express.Multer.File) {
+  async uploadFile(file: Express.Multer.File) {
     const fileName = this.setFilename(file);
 
     try {
@@ -32,10 +32,10 @@ export class CloudStorageService {
         .file(fileName)
         .save(file.buffer, { contentType: file.mimetype });
     } catch (err) {
-      throw new Error('upload image failed');
+      throw new Error(err);
     }
 
-    return `https://storage.googleapis.com/${this.bucket}/${fileName}`;
+    return `${this.bucket}/${fileName}`;
   }
 
   private setFilename(uploadedFile: Express.Multer.File): string {

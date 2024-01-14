@@ -19,8 +19,6 @@ import { GetUser } from '../user/decorator/get-user.decorator';
 import { User } from '../user/entities/user.entity';
 import { GetAllAnimeQueryDto } from './dto/get-all-anime-query.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { editFileName } from '../../common/utils/file-uploading.util';
 import { AnimeReadService } from './service/anime.read.service';
 
 @Controller('anime')
@@ -66,18 +64,10 @@ export class AnimeController {
   @Post()
   @UseGuards(AuthGuard())
   @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'file', maxCount: 5 },
-        { name: 'video', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: './files',
-          filename: editFileName,
-        }),
-      },
-    ),
+    FileFieldsInterceptor([
+      { name: 'file', maxCount: 5 },
+      { name: 'video', maxCount: 1 },
+    ]),
   )
   async createAnime(
     @UploadedFiles()
@@ -94,18 +84,10 @@ export class AnimeController {
   @Post('/:id')
   @UseGuards(AuthGuard())
   @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'file', maxCount: 5 },
-        { name: 'video', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: './files',
-          filename: editFileName,
-        }),
-      },
-    ),
+    FileFieldsInterceptor([
+      { name: 'file', maxCount: 5 },
+      { name: 'video', maxCount: 1 },
+    ]),
   )
   updateAnime(
     @Param('id', ParseIntPipe) id: number,

@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { FileController } from './file.controller';
-import { CloudStorageService } from './cloud-storage.service';
+import { StorageService } from './storage.service';
 
 @Module({
-  controllers: [FileController],
-  providers: [CloudStorageService],
-  exports: [CloudStorageService],
+  providers: [StorageService],
+  exports: [StorageService],
 })
 export class FileModule {}

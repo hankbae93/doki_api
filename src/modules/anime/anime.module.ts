@@ -15,6 +15,7 @@ import { FileRepository } from '../file/repository/file.repository';
 import { AuthModule } from '../auth/auth.module';
 import { TagService } from '../tag/tag.service';
 import { AnimeReadService } from './service/anime.read.service';
+import { StorageService } from '../file/storage.service';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AnimeReadService } from './service/anime.read.service';
     AnimeReadService,
     AnimeWriteService,
     TagService,
+    StorageService,
     AnimeRepository,
     FileRepository,
     ScrapRepository,
