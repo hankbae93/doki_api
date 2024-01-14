@@ -1,3 +1,5 @@
+import { isArray } from 'class-validator';
+
 interface ToNumberOptions {
   default?: number;
   min?: number;
@@ -44,3 +46,9 @@ export function toNumber(value: string, opts: ToNumberOptions = {}): number {
 
 export const findKeyByValue = (value: string | number, obj: object) =>
   obj[value];
+
+export const tagsToArray = (value: string | string[]) => {
+  if (!value) return [];
+  if (!isArray(value)) return [value];
+  return value;
+};

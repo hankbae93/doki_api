@@ -28,8 +28,8 @@ export class GetAllAnimeQueryDto {
   title: string;
 
   @Transform(({ value }) => (isArray(value) ? value : [value]))
-  @IsOptional()
   @IsArray()
+  @IsOptional()
   tag: string[];
 
   @IsOptional()

@@ -12,7 +12,6 @@ import { ReviewRepository } from '../../review/repository/review.repository';
 import { FileRepository } from '../../file/repository/file.repository';
 import { TagRepository } from '../../tag/repository/tag.repository';
 import { TransactionHandler } from '../../../common/handler/transaction.handler';
-import { cleanObject } from '../../../common/utils/data.utils';
 import { TagService } from '../../tag/tag.service';
 
 @Injectable()
@@ -95,13 +94,20 @@ export class AnimeWriteService {
     );
   }
 
-  async updateAnime(id: number, updateAnimeDto: UpdateAnimeDto, user: User) {
-    const { tags } = updateAnimeDto;
-
+  async updateAnime(
+    id: number,
+    files: {
+      video?: Express.Multer.File[];
+      file?: Express.Multer.File[];
+    },
+    updateAnimeDto: UpdateAnimeDto,
+    user: User,
+  ) {
     const result = await TransactionHandler.transaction(
       this.dataSource,
       async (entityManager) => {
         const animeRepository = this.animeRepository.setManager(entityManager);
+        const fileRepository = this.fileRepository.setManager(entityManager);
         const anime = await animeRepository.findAnimeWithUserById(id);
 
         if (user.id !== anime.user.id) {
@@ -109,18 +115,48 @@ export class AnimeWriteService {
         }
 
         const tagData = await this.tagService.findTagsAndCreate(
-          tags,
+          updateAnimeDto.tags,
           entityManager,
         );
 
-        const updatedColumns = cleanObject(
-          Object.assign(updateAnimeDto, { tags: undefined }),
+        const changedField = {};
+        const fieldsToUpdate: (keyof UpdateAnimeDto)[] = [
+          'title',
+          'description',
+          'thumbnail',
+          'source',
+          'author',
+          'crew',
+        ];
+        fieldsToUpdate.forEach((field) => {
+          if (
+            updateAnimeDto[field] !== undefined &&
+            updateAnimeDto[field] !== anime[field]
+          ) {
+            changedField[field] = updateAnimeDto[field];
+          }
+        });
+
+        const updatedAnime = await animeRepository.save(
+          Object.assign(
+            anime,
+            {
+              tags: tagData,
+            },
+            changedField,
+          ),
         );
 
-        return await animeRepository.updateAnime(
-          anime.id,
-          Object.assign(anime, updatedColumns, { tags: tagData }),
-        );
+        if (files.file?.length > 0) {
+          await fileRepository.save(
+            files.file.map((file) => ({
+              anime: updatedAnime,
+              fileName: file.path,
+            })),
+          );
+        }
+
+        return updatedAnime;
       },
     );
 

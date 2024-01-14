@@ -1,5 +1,7 @@
 import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { AnimeSource } from '../anime.enum';
+import { Transform } from 'class-transformer';
+import { tagsToArray } from '../../../common/utils/format-data.util';
 
 export class UpdateAnimeDto {
   @IsString()
@@ -18,6 +20,7 @@ export class UpdateAnimeDto {
   @IsOptional()
   crew: string;
 
+  @Transform(({ value }) => tagsToArray(value))
   @IsArray()
   @IsOptional()
   tags: string[];

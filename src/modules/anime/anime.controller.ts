@@ -93,12 +93,31 @@ export class AnimeController {
 
   @Post('/:id')
   @UseGuards(AuthGuard())
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'file', maxCount: 5 },
+        { name: 'video', maxCount: 1 },
+      ],
+      {
+        storage: diskStorage({
+          destination: './files',
+          filename: editFileName,
+        }),
+      },
+    ),
+  )
   updateAnime(
     @Param('id', ParseIntPipe) id: number,
+    @UploadedFiles()
+    files: {
+      video?: Express.Multer.File[];
+      file?: Express.Multer.File[];
+    },
     @Body() updateAnimeDto: UpdateAnimeDto,
     @GetUser() user: User,
   ) {
-    return this.animeWriteService.updateAnime(id, updateAnimeDto, user);
+    return this.animeWriteService.updateAnime(id, files, updateAnimeDto, user);
   }
 
   @Delete('/:id')

@@ -43,10 +43,7 @@ export class ReviewService {
     score: number,
     entityManager?: EntityManager,
   ) {
-    const anime = await this.animeRepository.getAnimeWithReviews(
-      animeId,
-      entityManager,
-    );
+    const anime = await this.animeRepository.getAnimeWithReviews(animeId);
 
     const scoreSum =
       anime.reviews.reduce((acc, cur) => acc + cur.score, 0) + score;
@@ -56,7 +53,6 @@ export class ReviewService {
 
     return await this.animeRepository.saveAnime(
       Object.assign(anime, { averageScore }),
-      entityManager,
     );
   }
 
@@ -70,11 +66,14 @@ export class ReviewService {
     const result = await TransactionHandler.transaction(
       this.dataSource,
       async (entityManager) => {
-        const review = await this.reviewRepository.getReviewsByIds(
-          animeId,
-          user.id,
+        const reviewRepository = await this.reviewRepository.setManager(
           entityManager,
         );
+        const userRepository = await this.userRepository.setManager(
+          entityManager,
+        );
+
+        const review = await reviewRepository.getReviewsByIds(animeId, user.id);
 
         if (review) {
           throw new ForbiddenException(EErrorMessage.EXISITEING_REVIEW);
@@ -82,17 +81,14 @@ export class ReviewService {
 
         const anime = await this.updateAnimeAverageScore(animeId, score);
 
-        const newReview = await this.reviewRepository.createReview({
+        const newReview = await reviewRepository.createReview({
           content,
           score,
           anime,
           user,
         });
 
-        const userReviews = await this.reviewRepository.getReviewsByUserId(
-          user.id,
-          entityManager,
-        );
+        const userReviews = await reviewRepository.getReviewsByUserId(user.id);
 
         const userReviewCount = userReviews.length + 1;
         const { nextRank, rank } = getIsNextRank(
@@ -101,11 +97,7 @@ export class ReviewService {
         );
 
         if (nextRank !== rank) {
-          await this.userRepository.updateUserRank(
-            user.id,
-            UserRank[nextRank],
-            entityManager,
-          );
+          await userRepository.updateUserRank(user.id, UserRank[nextRank]);
         }
 
         return newReview;
@@ -129,29 +121,25 @@ export class ReviewService {
       async (entityManager) => {
         const { animeId, ...dto } = updateReviewDto;
 
-        const review = await this.reviewRepository.findReviewWithUserById(
-          reviewId,
-          entityManager,
-        );
+        const reviewRepository =
+          this.reviewRepository.setManager(entityManager);
+
+        const review = await reviewRepository.findReviewWithUserById(reviewId);
 
         if (!review) {
           throw new NotFoundException(EErrorMessage.NOT_FOUND);
         }
+
         if (review.user.id !== user.id) {
           throw new ForbiddenException(EErrorMessage.NOT_PERMISSIONS);
         }
 
-        const updatedReview = await this.reviewRepository.updateReview(
+        const updatedReview = await reviewRepository.updateReview(
           Object.assign(review, dto),
-          entityManager,
         );
 
         if (updateReviewDto.score && animeId) {
-          await this.updateAnimeAverageScore(
-            animeId,
-            updateReviewDto.score,
-            entityManager,
-          );
+          await this.updateAnimeAverageScore(animeId, updateReviewDto.score);
         }
 
         return updatedReview;

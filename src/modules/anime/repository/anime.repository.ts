@@ -11,7 +11,24 @@ export class AnimeRepository extends Repository<Anime> {
   }
 
   setManager(manager: EntityManager) {
-    return manager ? (manager.getRepository(Anime) as AnimeRepository) : this;
+    if (!manager) return this;
+
+    const allProperties = Object.getOwnPropertyNames(
+      Object.getPrototypeOf(this),
+    );
+
+    // 'setManager' 제외하고 필터링
+    const methodsToExtend = allProperties.filter((property) => {
+      return typeof this[property] === 'function' && property !== 'setManager';
+    });
+
+    // extend 메소드에 전달할 객체 생성
+    const methods = methodsToExtend.reduce((obj, method) => {
+      obj[method] = this[method];
+      return obj;
+    }, {}) as AnimeRepository;
+
+    return manager.getRepository(Anime).extend(methods);
   }
 
   saveAnime(anime: Anime) {

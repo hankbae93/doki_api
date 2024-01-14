@@ -6,6 +6,8 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { tagsToArray } from '../../../common/utils/format-data.util';
 
 export class CreateAnimeDto {
   @IsString()
@@ -24,7 +26,9 @@ export class CreateAnimeDto {
   @IsOptional()
   series: string;
 
+  @Transform(({ value }) => tagsToArray(value))
   @IsArray()
+  @IsOptional()
   tags: string[];
 
   @IsString()

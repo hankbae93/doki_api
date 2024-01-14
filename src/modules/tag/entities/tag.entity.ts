@@ -12,7 +12,7 @@ export class Tag extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @ManyToMany(() => Anime, (anime) => anime.tags)

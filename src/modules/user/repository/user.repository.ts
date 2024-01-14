@@ -9,8 +9,25 @@ export class UserRepository extends Repository<User> {
     super(User, dataSource.createEntityManager());
   }
 
-  setManager(manager?: EntityManager): Repository<User> {
-    return manager ? manager.getRepository(User) : this;
+  setManager(manager?: EntityManager) {
+    if (!manager) return this;
+
+    const allProperties = Object.getOwnPropertyNames(
+      Object.getPrototypeOf(this),
+    );
+
+    // 'setManager' 제외하고 필터링
+    const methodsToExtend = allProperties.filter((property) => {
+      return typeof this[property] === 'function' && property !== 'setManager';
+    });
+
+    // extend 메소드에 전달할 객체 생성
+    const methods = methodsToExtend.reduce((obj, method) => {
+      obj[method] = this[method];
+      return obj;
+    }, {}) as UserRepository;
+
+    return manager.getRepository(User).extend(methods);
   }
 
   findRawOneByEmail(email: string) {
@@ -45,7 +62,7 @@ export class UserRepository extends Repository<User> {
     });
   }
 
-  updateUserRank(userId: number, rank: UserRank, manager?: EntityManager) {
-    return this.setManager(manager).update(userId, { rank });
+  updateUserRank(userId: number, rank: UserRank) {
+    return this.update(userId, { rank });
   }
 }
