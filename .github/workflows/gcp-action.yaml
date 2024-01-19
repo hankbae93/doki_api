@@ -12,8 +12,31 @@ jobs:
       - name: Checkout Branch
         uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Generate ENV File
+        env:
+          GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+          GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
+          GOOGLE_STORAGE_MEDIA_BUCKET: ${{ secrets.GOOGLE_STORAGE_MEDIA_BUCKET }}
+          GOOGLE_CLIENT_EMAIL: ${{ secrets.GOOGLE_CLIENT_EMAIL }}
+          APP_SECRET: ${{ secrets.APP_SECRET }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_SCHEMA: ${{ secrets.DB_SCHEMA }}
+          DB_TYPE: ${{ secrets.DB_TYPE }}
+        run: |
+          echo "GOOGLE_PROJECT_ID=$GOOGLE_PROJECT_ID" >> .env
+          echo "GOOGLE_PRIVATE_KEY=$GOOGLE_PRIVATE_KEY" >> .env
+          echo "GOOGLE_STORAGE_MEDIA_BUCKET=$GOOGLE_STORAGE_MEDIA_BUCKET" >> .env
+          echo "GOOGLE_CLIENT_EMAIL=$GOOGLE_CLIENT_EMAIL" >> .env
+          echo "APP_SECRET=$APP_SECRET" >> .env
+          echo "DB_USERNAME=$DB_USERNAME" >> .env
+          echo "DB_PASSWORD=$DB_PASSWORD" >> .env
+          echo "DB_PORT=$DB_PORT" >> .env
+          echo "DB_HOST=$DB_HOST" >> .env
+          echo "DB_SCHEMA=$DB_SCHEMA" >> .env
+          echo "DB_TYPE=$DB_TYPE" >> .env
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -31,30 +54,18 @@ jobs:
           push: true
           tags: murata211guard/doki-backend:latest
 
-#      - name: Generate ENV File
-#        env:
-#          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-#          GOOGLE_API_KEY: ${{ secrets.GCP_API_KEY }}
-#          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-#          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-#          GOOGLE_CALLBACK_URL: ${{ secrets.GOOGLE_CALLBACK_URL }}
-#          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-#          CLIENT_HOST_URL: ${{ secrets.CLIENT_HOST_URL }}
-#          DB_HOST: ${{ secrets.DB_HOST }}
-#          DB_USER: ${{ secrets.DB_USER }}
-#          DB_PORT: ${{ secrets.DB_PORT }}
-#          DB_DATABASE: ${{ secrets.DB_DATABASE }}
-#          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-#          TZ: ${{ secrets.TZ }}
-#        run: |
-#          echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> .env
-#          echo "GOOGLE_API_KEY=$GOOGLE_API_KEY" >> .env
-#          echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env
-#          echo "JWT_SECRET=$JWT_SECRET" >> .env
-#          echo "CLIENT_HOST_URL=$CLIENT_HOST_URL" >> .env
-#          echo "DB_HOST=$DB_HOST" >> .env
-#          echo "DB_USER=$DB_USER" >> .env
-#          echo "DB_PORT=$DB_PORT" >> .env
-#          echo "DB_DATABASE=$DB_DATABASE" >> .env
-#          echo "DB_PASSWORD=$DB_PASSWORD" >> .env
-#          echo "TZ=$TZ" >> .env
+      - name: Set up GCP Cloud SDK
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      - name: Deploy to GCP
+        run: |
+          gcloud auth configure-docker
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_VM_USERNAME }}@${{ secrets.GCP_VM_IP }} << EOF
+            docker pull murata211guard/doki-backend:latest
+            docker stop <container-name> || true
+            docker run -d --name <new-container-name> murata211guard/doki-backend:latest
+          EOF
+
