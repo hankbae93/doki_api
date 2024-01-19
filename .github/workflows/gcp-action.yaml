@@ -57,7 +57,7 @@ jobs:
 
       - name: Run Docker
         run: |
-          docker stop do && docker rm murata211guard/doki-backend && docker rmi murata211guard/doki-backend:latest
-          docker run -d -p 8000:8000 --name murata211guard/doki-backend --restart always murata211guard/doki-backend:latest
+          docker stop do && docker rm doki-backend && docker rmi murata211guard/doki-backend:latest
+          docker run -d -p 8000:8000 --name doki-backend --restart always murata211guard/doki-backend:latest
 
 
