@@ -57,7 +57,8 @@ jobs:
 
       - name: Run Docker
         run: |
-          docker ps -a | grep 'murata211guard/doki-backend' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f
-          docker run -d -p 8000:8000 murata211guard/doki-backend:latest 
+          docker ps -a | grep 'murata211guard/doki-backend' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f 
 
-
+      - name: Test Docker
+        run: |
+          docker run -d -p 8000:8000 murata211guard/doki-backend:latest
