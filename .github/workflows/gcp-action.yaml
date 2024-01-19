@@ -59,10 +59,9 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT }}
-  
+
       - name: Deploy to GCP
         run: |
-          gcloud auth configure-docker
           ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_VM_USERNAME }}@${{ secrets.GCP_VM_IP }} << EOF
             docker pull murata211guard/doki-backend:latest
             docker stop <container-name> || true
