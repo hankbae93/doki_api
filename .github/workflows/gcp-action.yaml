@@ -9,45 +9,45 @@ jobs:
     name: Doki API Action
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Branch
-        uses: actions/checkout@v3
-
-      - name: Generate ENV File
-        env:
-          GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
-          GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
-          GOOGLE_STORAGE_MEDIA_BUCKET: ${{ secrets.GOOGLE_STORAGE_MEDIA_BUCKET }}
-          GOOGLE_CLIENT_EMAIL: ${{ secrets.GOOGLE_CLIENT_EMAIL }}
-          APP_SECRET: ${{ secrets.APP_SECRET }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_SCHEMA: ${{ secrets.DB_SCHEMA }}
-          DB_TYPE: ${{ secrets.DB_TYPE }}
-        run: |
-          echo "GOOGLE_PROJECT_ID=$GOOGLE_PROJECT_ID" >> .env
-          echo "GOOGLE_PRIVATE_KEY=$GOOGLE_PRIVATE_KEY" >> .env
-          echo "GOOGLE_STORAGE_MEDIA_BUCKET=$GOOGLE_STORAGE_MEDIA_BUCKET" >> .env
-          echo "GOOGLE_CLIENT_EMAIL=$GOOGLE_CLIENT_EMAIL" >> .env
-          echo "APP_SECRET=$APP_SECRET" >> .env
-          echo "DB_USERNAME=$DB_USERNAME" >> .env
-          echo "DB_PASSWORD=$DB_PASSWORD" >> .env
-          echo "DB_PORT=$DB_PORT" >> .env
-          echo "DB_HOST=$DB_HOST" >> .env
-          echo "DB_SCHEMA=$DB_SCHEMA" >> .env
-          echo "DB_TYPE=$DB_TYPE" >> .env
-
-      - name: Docker Login
-        uses: docker/login-action@v2.0.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and Push Container
-        run: |
-          docker build -t murata211guard/doki-backend:latest .
-          docker push murata211guard/doki-backend:latest
+#      - name: Checkout Branch
+#        uses: actions/checkout@v3
+#
+#      - name: Generate ENV File
+#        env:
+#          GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+#          GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
+#          GOOGLE_STORAGE_MEDIA_BUCKET: ${{ secrets.GOOGLE_STORAGE_MEDIA_BUCKET }}
+#          GOOGLE_CLIENT_EMAIL: ${{ secrets.GOOGLE_CLIENT_EMAIL }}
+#          APP_SECRET: ${{ secrets.APP_SECRET }}
+#          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+#          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+#          DB_PORT: ${{ secrets.DB_PORT }}
+#          DB_HOST: ${{ secrets.DB_HOST }}
+#          DB_SCHEMA: ${{ secrets.DB_SCHEMA }}
+#          DB_TYPE: ${{ secrets.DB_TYPE }}
+#        run: |
+#          echo "GOOGLE_PROJECT_ID=$GOOGLE_PROJECT_ID" >> .env
+#          echo "GOOGLE_PRIVATE_KEY=$GOOGLE_PRIVATE_KEY" >> .env
+#          echo "GOOGLE_STORAGE_MEDIA_BUCKET=$GOOGLE_STORAGE_MEDIA_BUCKET" >> .env
+#          echo "GOOGLE_CLIENT_EMAIL=$GOOGLE_CLIENT_EMAIL" >> .env
+#          echo "APP_SECRET=$APP_SECRET" >> .env
+#          echo "DB_USERNAME=$DB_USERNAME" >> .env
+#          echo "DB_PASSWORD=$DB_PASSWORD" >> .env
+#          echo "DB_PORT=$DB_PORT" >> .env
+#          echo "DB_HOST=$DB_HOST" >> .env
+#          echo "DB_SCHEMA=$DB_SCHEMA" >> .env
+#          echo "DB_TYPE=$DB_TYPE" >> .env
+#
+#      - name: Docker Login
+#        uses: docker/login-action@v2.0.0
+#        with:
+#          username: ${{ secrets.DOCKERHUB_USERNAME }}
+#          password: ${{ secrets.DOCKERHUB_TOKEN }}
+#
+#      - name: Build and Push Container
+#        run: |
+#          docker build -t murata211guard/doki-backend:latest .
+#          docker push murata211guard/doki-backend:latest
 
       - name: Set up GCP Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.0
@@ -58,9 +58,12 @@ jobs:
       - name: Deploy to GCP
         run: |-
             sudo su
-            docker pull murata211guard/doki-backend:latest
+          if docker ps -a | grep -q 'murata211guard/doki-backend:latest'; then
             docker stop murata211guard/doki-backend:latest
-            docker run -d -p 8000:8000 murata211guard/doki-backend:latest
+            docker rm murata211guard/doki-backend:latest
+          fi
+          docker pull murata211guard/doki-backend:latest
+          docker run -d --name doki-backend -p 8000:8000 murata211guard/doki-backend:latest
 
 
 
