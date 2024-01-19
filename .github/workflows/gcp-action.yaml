@@ -57,12 +57,7 @@ jobs:
 
       - name: Deploy to GCP
         run: |-
-            sudo su
-          if docker ps -a | grep -q 'murata211guard/doki-backend:latest'; then
-            docker stop murata211guard/doki-backend:latest
-            docker rm murata211guard/doki-backend:latest
-          fi
-          docker pull murata211guard/doki-backend:latest
+          docker ps -a | grep 'murata211guard/doki-backend:latest' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f
           docker run -d --name doki-backend -p 8000:8000 murata211guard/doki-backend:latest
 
 
