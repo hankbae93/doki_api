@@ -59,8 +59,8 @@ jobs:
         run: |-
             sudo su
             docker pull murata211guard/doki-backend:latest
-            docker stop <container-name> || true
-            docker run -d --name <new-container-name> murata211guard/doki-backend:latest
+            docker stop murata211guard/doki-backend:latest
+            docker run -d -p 8000:8000 murata211guard/doki-backend:latest
 
 
 
