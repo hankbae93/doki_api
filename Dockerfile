@@ -1,13 +1,10 @@
 FROM node:16-alpine
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-COPY .env /app/.env
-COPY package*.json ./
+ADD . /app/
 
-RUN npm install
-
-COPY . .
+RUN npm ci
 
 RUN npm run build
 
