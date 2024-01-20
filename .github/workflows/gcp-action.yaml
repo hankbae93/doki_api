@@ -18,15 +18,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-#
-      - name: Generate ENV File
+      - name : Build Docker Image
         run: |
           touch .env
           echo "${{ secrets.ENV_PRODUCTION }}" > .env
           cat .env
-
-      - name : Build Docker Image
-        run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest .
 
       - name : Push Docker Image to Docker hub
