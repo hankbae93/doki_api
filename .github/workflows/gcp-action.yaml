@@ -63,9 +63,9 @@ jobs:
           username: ${{ secrets.GCP_VM_USERNAME }}
           port: 22
           script: |
-            docker ps -a | grep 'murata211guard/doki-backend' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f
-            docker run -d -p 8000:8000 murata211guard/doki-backend:latest
-            docker ps
+            sudo docker ps -a | grep 'murata211guard/doki-backend' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f
+            sudo docker run -d -p 8000:8000 murata211guard/doki-backend:latest
+            sudo docker ps
 
 
           
