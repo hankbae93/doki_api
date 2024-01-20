@@ -2,12 +2,9 @@ FROM node:16-alpine
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+ADD . /usr/src/app
 
 RUN npm ci
-
-COPY . .
-COPY .env ./
 
 RUN npm run build
 
