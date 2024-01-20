@@ -17,32 +17,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
 #
       - name: Generate ENV File
-        env:
-          GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
-          GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
-          GOOGLE_STORAGE_MEDIA_BUCKET: ${{ secrets.GOOGLE_STORAGE_MEDIA_BUCKET }}
-          GOOGLE_CLIENT_EMAIL: ${{ secrets.GOOGLE_CLIENT_EMAIL }}
-          APP_SECRET: ${{ secrets.APP_SECRET }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_SCHEMA: ${{ secrets.DB_SCHEMA }}
-          DB_TYPE: ${{ secrets.DB_TYPE }}
         run: |
-          echo "GOOGLE_PROJECT_ID=$GOOGLE_PROJECT_ID" >> .env
-          echo "GOOGLE_PRIVATE_KEY=$GOOGLE_PRIVATE_KEY" >> .env
-          echo "GOOGLE_STORAGE_MEDIA_BUCKET=$GOOGLE_STORAGE_MEDIA_BUCKET" >> .env
-          echo "GOOGLE_CLIENT_EMAIL=$GOOGLE_CLIENT_EMAIL" >> .env
-          echo "APP_SECRET=$APP_SECRET" >> .env
-          echo "DB_USERNAME=$DB_USERNAME" >> .env
-          echo "DB_PASSWORD=$DB_PASSWORD" >> .env
-          echo "DB_PORT=$DB_PORT" >> .env
-          echo "DB_HOST=$DB_HOST" >> .env
-          echo "DB_SCHEMA=$DB_SCHEMA" >> .env
-          echo "DB_TYPE=$DB_TYPE" >> .env
+          touch .env
+          echo "${{ secrets.ENV_PRODUCTION }}" > .env
+          cat .env
 
       - name : Build and Push Docker Images
         uses : docker/build-push-action@v3.0.0
