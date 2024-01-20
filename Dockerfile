@@ -2,6 +2,7 @@ FROM node:16-alpine
 
 WORKDIR /usr/src/app
 
+COPY .env /app/.env
 COPY package*.json ./
 
 RUN npm install
