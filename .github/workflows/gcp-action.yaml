@@ -47,7 +47,7 @@ jobs:
       - name : Build and Push Docker Images
         uses : docker/build-push-action@v3.0.0
         with :
-          context: .
+          context: ${{ github.workspace }}
           file : ./Dockerfile
           push : true
           platforms: linux/amd64
