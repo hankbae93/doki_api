@@ -9,6 +9,8 @@ export class StorageService {
   private bucket: string;
 
   constructor(private configService: ConfigService) {
+    console.log(configService.get('GOOGLE_PROJECT_ID'));
+
     this.storage = new Storage({
       projectId: configService.get('GOOGLE_PROJECT_ID'),
       credentials: {
