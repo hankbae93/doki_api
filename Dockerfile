@@ -2,7 +2,7 @@ FROM node:16-alpine
 
 WORKDIR /app
 
-ADD . /app/
+COPY . ..
 
 RUN npm ci
 
