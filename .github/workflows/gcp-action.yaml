@@ -31,6 +31,21 @@ jobs:
       - name: Push Docker Image to Hub
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest
 
+
+      - name: SSH into GCP VM and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          key: ${{ secrets.GCP_SSH_KEY }}
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_VM_USERNAME }}
+          port: 22
+          script: |
+            sudo echo "${{ secrets.ENV_PRODUCTION }}" > .env
+            cat .env
+            sudo docker ps -a | grep 'murata211guard/doki-backend' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f
+            sudo docker run --env-file ./.env -d -p 8000:8000 murata211guard/doki-backend:latest
+            sudo docker ps
+
       - name: Send Build Success Message
         uses: appleboy/telegram-action@master
         if: success()
@@ -62,21 +77,6 @@ jobs:
             Commit message: ${{ github.event.commits[0].message }}
 
             [link](https://github.com/${{ github.repository }}/actions)
-
-      - name: SSH into GCP VM and Deploy
-        uses: appleboy/ssh-action@master
-        with:
-          key: ${{ secrets.GCP_SSH_KEY }}
-          host: ${{ secrets.GCP_VM_IP }}
-          username: ${{ secrets.GCP_VM_USERNAME }}
-          port: 22
-          script: |
-            sudo echo "${{ secrets.ENV_PRODUCTION }}" > .env
-            cat .env
-            sudo docker ps -a | grep 'murata211guard/doki-backend' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f
-            sudo docker run --env-file ./.env -d -p 8000:8000 murata211guard/doki-backend:latest
-            sudo docker ps
-
      
 
           
