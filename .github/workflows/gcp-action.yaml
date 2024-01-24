@@ -39,8 +39,17 @@ jobs:
           script: |
             sudo echo "${{ secrets.ENV_PRODUCTION }}" > .env
             cat .env
-            sudo docker ps -a | grep 'murata211guard/doki-backend' | awk '{print $1}' | xargs --no-run-if-empty docker rm -f
-            sudo docker run --env-file ./.env -d -p 8000:8000 murata211guard/doki-backend:latest
+            
+            if sudo docker ps -a | grep -q 'container-8000'; then
+            sudo docker rm -f container-8000
+            fi
+            sudo docker run --name container-8000 --env-file ./.env -d -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest
+      
+            if sudo docker ps -a | grep -q 'container-8001'; then
+            sudo docker rm -f container-8001
+            fi
+            sudo docker run --name container-8001 --env-file ./.env -d -p 8001:8000 ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest
+      
             sudo docker ps
 
       - name: Send Build Success Message
