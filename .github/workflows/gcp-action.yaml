@@ -41,7 +41,7 @@ jobs:
             cat .env
             
             sudo sed -i "s/server 127.0.0.1:8000.*/server 127.0.0.1:8000 down;/" /etc/nginx/nginx.conf
-            systemctl reload nginx 
+            sudo systemctl reload nginx 
             
             if sudo docker ps -a | grep -q 'container-8000'; then
             sudo docker rm -f container-8000
@@ -60,7 +60,7 @@ jobs:
             sudo docker ps
             
             sudo sed -i "s/server 127.0.0.1:8001 down;/server 127.0.0.1:8001;/" /etc/nginx/nginx.conf
-            systemctl reload nginx 
+            sudo systemctl reload nginx 
 
       - name: Send Build Success Message
         uses: appleboy/telegram-action@master
