@@ -40,9 +40,8 @@ jobs:
             sudo echo "${{ secrets.ENV_PRODUCTION }}" > .env
             cat .env
             
-            sudo sed -i "s/server 127.0.0.1:8000.*/server 127.0.0.1:8000 down;/" /etc/nginx/nginx.conf
-            sudo systemctl reload nginx 
-            sleep 10
+#            sudo sed -i "s/server 127.0.0.1:8000.*/server 127.0.0.1:8000 down;/" /etc/nginx/nginx.conf
+#            sudo systemctl reload nginx
             
             if sudo docker ps -a | grep -q 'container-8000'; then
             sudo docker rm -f container-8000
@@ -50,10 +49,9 @@ jobs:
             sudo docker run --name container-8000 --env-file ./.env -d -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest
             sleep 10
             
-            sudo sed -i "s/server 127.0.0.1:8000 down;/server 127.0.0.1:8000;/" /etc/nginx/nginx.conf
-            sudo sed -i "s/server 127.0.0.1:8001.*/server 127.0.0.1:8001 down;/" /etc/nginx/nginx.conf
-            sudo systemctl reload nginx 
-            sleep 10
+#            sudo sed -i "s/server 127.0.0.1:8000 down;/server 127.0.0.1:8000;/" /etc/nginx/nginx.conf
+#            sudo sed -i "s/server 127.0.0.1:8001.*/server 127.0.0.1:8001 down;/" /etc/nginx/nginx.conf
+#            sudo systemctl reload nginx 
             
             if sudo docker ps -a | grep -q 'container-8001'; then
             sudo docker rm -f container-8001
@@ -62,11 +60,9 @@ jobs:
             sleep 10
             
             sudo docker ps
-            
-            sleep 10
-            
-            sudo sed -i "s/server 127.0.0.1:8001 down;/server 127.0.0.1:8001;/" /etc/nginx/nginx.conf
-            sudo systemctl reload nginx 
+#
+#            sudo sed -i "s/server 127.0.0.1:8001 down;/server 127.0.0.1:8001;/" /etc/nginx/nginx.conf
+#            sudo systemctl reload nginx
 
       - name: Send Build Success Message
         uses: appleboy/telegram-action@master
