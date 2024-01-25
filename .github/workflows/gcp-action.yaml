@@ -94,7 +94,3 @@ jobs:
 
             [link](https://github.com/${{ github.repository }}/actions)
      
-
-          
-  sudo sed -i "s/server 127.0.0.1:8000.*/server 127.0.0.1:8000 down;/" /etc/nginx/nginx.conf
-  nginx -s reload
