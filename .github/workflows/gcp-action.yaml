@@ -50,7 +50,7 @@ jobs:
             
             sudo sed -i "s/server 127.0.0.1:8000 down;/server 127.0.0.1:8000;/" /etc/nginx/nginx.conf
             sudo sed -i "s/server 127.0.0.1:8001.*/server 127.0.0.1:8001 down;/" /etc/nginx/nginx.conf
-            sudo  nginx -s reload
+            sudo systemctl reload nginx 
       
             if sudo docker ps -a | grep -q 'container-8001'; then
             sudo docker rm -f container-8001
