@@ -220,7 +220,7 @@ export class AnimeRepository extends Repository<Anime> {
       ])
       .groupBy('anime.id,scrap.id')
       .setParameter('userId', userId)
-      .offset(page - 1)
+      .offset((page - 1) * limit)
       .limit(limit);
 
     if (source) {
