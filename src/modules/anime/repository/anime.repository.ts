@@ -131,7 +131,7 @@ export class AnimeRepository extends Repository<Anime> {
         'COUNT(review.id) AS reviewCount',
       ])
       .groupBy('anime.id')
-      .offset(page - 1)
+      .offset((page - 1) * limit)
       .limit(limit);
 
     if (source) {

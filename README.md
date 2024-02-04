@@ -16,7 +16,9 @@
 - 회원이 맘에 드는 애니메이션을 스크랩하고 따로 조회할 수 있도록 제공
 
 ## Tech
-> database: MySQL 8.0, TypeORM
+> **Nest.js, TypeORM**
+> 
+> database: MySQL 8.0
 > 
 > tools: dbeaver, docker, erd-cloud, postman, swagger
 > 
