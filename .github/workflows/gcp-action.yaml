@@ -22,11 +22,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest .
+      - name: Get Latest Docker Image Tag
+        id: latest_tag
+        run: |
+          latest_tag=$(curl -s "https://registry.hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/doki-backend/tags/" | jq -r '.results|.[]|.name' | grep -E '^[0-9]+$' | sort -n | tail -1)
+          next_tag=$((latest_tag + 1))
+          echo "::set-output name=tag::$next_tag"
 
-      - name: Push Docker Image to Hub
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest
+      - name: Build Docker Image with Latest Tag
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/doki-frontend:${{ steps.latest_tag.outputs.tag }} .
 
 
       - name: SSH into GCP VM and Deploy
@@ -46,7 +51,7 @@ jobs:
             if sudo docker ps -a | grep -q 'container-8000'; then
             sudo docker rm -f container-8000
             fi
-            sudo docker run --name container-8000 --env-file ./.env -d -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest
+            sudo docker run --name container-8000 --env-file ./.env -d -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:${{ steps.latest_tag.outputs.tag }}
             sleep 10
             
             sudo sed -i "s/server 127.0.0.1:8000 down;/server 127.0.0.1:8000;/" /etc/nginx/nginx.conf
@@ -56,7 +61,7 @@ jobs:
             if sudo docker ps -a | grep -q 'container-8001'; then
             sudo docker rm -f container-8001
             fi
-            sudo docker run --name container-8001 --env-file ./.env -d -p 8001:8000 ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:latest
+            sudo docker run --name container-8001 --env-file ./.env -d -p 8001:8000 ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:${{ steps.latest_tag.outputs.tag }}
             sleep 10
             
             sudo docker ps
