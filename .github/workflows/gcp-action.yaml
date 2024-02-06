@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Docker Image with Latest Tag
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/doki-frontend:${{ steps.latest_tag.outputs.tag }} .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/doki-backend:${{ steps.latest_tag.outputs.tag }} .
 
 
       - name: SSH into GCP VM and Deploy
